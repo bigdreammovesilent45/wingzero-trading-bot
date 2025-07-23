@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TradingEngine } from '@/services/TradingEngine';
-import { BrokerConnection, Order, RiskMetrics } from '@/types/broker';
+import { Order, RiskMetrics } from '@/types/broker';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useBrokerAPI } from './useBrokerAPI';
 
 interface TradingEngineState {
   isRunning: boolean;
@@ -17,8 +18,16 @@ interface TradingEngineState {
 export const useTradingEngine = () => {
   const { toast } = useToast();
   const [engine] = useState(() => new TradingEngine());
-  const [brokerConnection] = useLocalStorage<BrokerConnection | null>('broker-connection', null);
-  const [tradingConfig] = useLocalStorage('wingzero-strategy', {});
+  const { brokerConnection, isConfigured } = useBrokerAPI();
+  const [tradingConfig] = useLocalStorage('wingzero-strategy', {
+    maxRiskPerTrade: 2,
+    stopLossPips: 20,
+    takeProfitPips: 60,
+    minSignalStrength: 70,
+    minConfidence: 70,
+    onePositionPerSymbol: true,
+    closeOnStop: false
+  });
   
   const [state, setState] = useState<TradingEngineState>({
     isRunning: false,
@@ -32,30 +41,33 @@ export const useTradingEngine = () => {
 
   // Initialize engine when broker connection is available
   useEffect(() => {
-    if (brokerConnection) {
+    if (brokerConnection && isConfigured) {
+      console.log('Initializing trading engine with broker connection:', brokerConnection.name);
+      
       engine.setBrokerConnection(brokerConnection)
         .then(() => {
           setState(prev => ({ ...prev, isConnected: true, error: null }));
-          toast({
-            title: "Broker Connected",
-            description: `Connected to ${brokerConnection.name}`,
-          });
+          console.log('Trading engine connected to broker successfully');
         })
         .catch(error => {
-          setState(prev => ({ ...prev, error: error.message }));
-          toast({
-            title: "Connection Failed",
-            description: error.message,
-            variant: "destructive"
-          });
+          console.error('Failed to connect trading engine to broker:', error);
+          setState(prev => ({ ...prev, error: error.message, isConnected: false }));
         });
+    } else if (!isConfigured) {
+      setState(prev => ({ 
+        ...prev, 
+        isConnected: false, 
+        error: 'Broker not configured. Please set up MT5 connection in Settings.' 
+      }));
     }
-  }, [brokerConnection, engine, toast]);
+  }, [brokerConnection, isConfigured, engine]);
 
   // Update state periodically when engine is running
   useEffect(() => {
-    if (!state.isRunning) return;
+    if (!state.isRunning || !state.isConnected) return;
 
+    console.log('Starting trading engine status updates...');
+    
     const updateInterval = setInterval(() => {
       try {
         const status = engine.getEngineStatus();
@@ -72,23 +84,44 @@ export const useTradingEngine = () => {
         }));
       } catch (error) {
         console.error('Error updating trading engine state:', error);
+        setState(prev => ({
+          ...prev,
+          error: 'Failed to update engine status'
+        }));
       }
     }, 2000);
 
-    return () => clearInterval(updateInterval);
-  }, [state.isRunning, engine]);
+    return () => {
+      console.log('Stopping trading engine status updates');
+      clearInterval(updateInterval);
+    };
+  }, [state.isRunning, state.isConnected, engine]);
 
   const startEngine = useCallback(async () => {
-    if (!brokerConnection) {
+    if (!isConfigured) {
+      const errorMsg = "No broker connection configured. Please set up MT5 connection in Settings.";
+      setState(prev => ({ ...prev, error: errorMsg }));
       toast({
         title: "No Broker Connection",
-        description: "Please configure a broker connection first",
+        description: errorMsg,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!brokerConnection) {
+      const errorMsg = "Broker connection not available. Please check Settings.";
+      setState(prev => ({ ...prev, error: errorMsg }));
+      toast({
+        title: "Connection Error",
+        description: errorMsg,
         variant: "destructive"
       });
       return;
     }
 
     try {
+      console.log('Starting Wing Zero trading engine...');
       setState(prev => ({ ...prev, error: null }));
       
       await engine.start({
@@ -100,10 +133,13 @@ export const useTradingEngine = () => {
       setState(prev => ({ ...prev, isRunning: true }));
       
       toast({
-        title: "Trading Engine Started",
-        description: "Wing Zero is now actively trading with optimized parameters",
+        title: "Wing Zero Started",
+        description: "Trading engine is now active with MT5 synchronization",
       });
+      
+      console.log('Wing Zero trading engine started successfully');
     } catch (error: any) {
+      console.error('Failed to start trading engine:', error);
       setState(prev => ({ ...prev, error: error.message }));
       toast({
         title: "Failed to Start Engine",
@@ -111,18 +147,22 @@ export const useTradingEngine = () => {
         variant: "destructive"
       });
     }
-  }, [brokerConnection, engine, tradingConfig, toast]);
+  }, [brokerConnection, isConfigured, engine, tradingConfig, toast]);
 
   const stopEngine = useCallback(async () => {
     try {
+      console.log('Stopping Wing Zero trading engine...');
       await engine.stop();
       setState(prev => ({ ...prev, isRunning: false }));
       
       toast({
-        title: "Trading Engine Stopped",
-        description: "All trading operations have been halted",
+        title: "Wing Zero Stopped",
+        description: "Trading engine has been halted",
       });
+      
+      console.log('Wing Zero trading engine stopped successfully');
     } catch (error: any) {
+      console.error('Error stopping trading engine:', error);
       toast({
         title: "Error Stopping Engine",
         description: error.message,
@@ -186,6 +226,6 @@ export const useTradingEngine = () => {
     winRate: state.riskMetrics?.winRate || 0,
     profitFactor: state.riskMetrics?.profitFactor || 0,
     currentExposure: state.riskMetrics?.totalExposure || 0,
-    isOperational: state.isConnected && !state.error
+    isOperational: state.isConnected && !state.error && isConfigured
   };
 };

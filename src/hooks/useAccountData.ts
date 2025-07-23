@@ -1,50 +1,38 @@
+
 import { useState, useEffect } from 'react';
 import { Account } from '@/types/trading';
 import { useBrokerAPI } from './useBrokerAPI';
-import { useWebSocket } from './useWebSocket';
 
 export const useAccountData = () => {
   const [account, setAccount] = useState<Account | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const { getAccountData, isConfigured } = useBrokerAPI();
+  const { getAccountData, isConfigured, brokerConnection } = useBrokerAPI();
   
-  // Disable WebSocket for now since MT5 API may not support it
-  // const { lastMessage, isConnected } = useWebSocket({
-  //   url: 'ws://localhost:6542/ws', // MT5 WebSocket endpoint
-  //   reconnectInterval: 3000,
-  //   maxReconnectAttempts: 5
-  // });
-  const lastMessage = null;
-  const isConnected = isConfigured; // Use REST API connection status instead
-
-  // Handle real-time updates from WebSocket
-  useEffect(() => {
-    if (lastMessage?.type === 'account_update') {
-      setAccount(prevAccount => ({
-        ...prevAccount,
-        ...lastMessage.data
-      }));
-    }
-  }, [lastMessage]);
+  // Use broker connection status for real-time connectivity
+  const isConnected = isConfigured && !!brokerConnection;
 
   // Initial data fetch
   useEffect(() => {
     const fetchAccountData = async () => {
       if (!isConfigured) {
-        setError('Broker API not configured');
+        setError('Broker API not configured. Please set up MT5 connection in Settings.');
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log('Fetching account data from MT5...');
         setIsLoading(true);
         const accountData = await getAccountData();
         setAccount(accountData);
         setError(null);
+        console.log('Account data fetched successfully:', accountData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch account data');
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch account data';
+        console.error('Account data fetch failed:', errorMsg);
+        setError(errorMsg);
       } finally {
         setIsLoading(false);
       }
@@ -52,19 +40,23 @@ export const useAccountData = () => {
 
     fetchAccountData();
     
-    // Refresh every 30 seconds as fallback
+    // Refresh every 30 seconds
     const interval = setInterval(fetchAccountData, 30000);
     return () => clearInterval(interval);
   }, [getAccountData, isConfigured]);
 
   const refreshAccount = async () => {
     try {
+      console.log('Manually refreshing account data...');
       setIsLoading(true);
       const accountData = await getAccountData();
       setAccount(accountData);
       setError(null);
+      console.log('Account data refreshed successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to refresh account data');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to refresh account data';
+      console.error('Account refresh failed:', errorMsg);
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
