@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target } from "lucide-react";
+import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target, Wifi, WifiOff, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTradingEngine } from "@/hooks/useTradingEngine";
+import { useAccountData } from "@/hooks/useAccountData";
 
 interface StrategyConfig {
   // Risk Management
@@ -48,6 +50,23 @@ const ControlPanel = () => {
   const [autoTrading, setAutoTrading] = useState(true);
   const [riskManagement, setRiskManagement] = useState(true);
   
+  // Trading engine integration
+  const {
+    isRunning,
+    isConnected,
+    openPositions,
+    dailyPnL,
+    totalProfit,
+    error,
+    startEngine,
+    stopEngine,
+    closeAllPositions,
+    isOperational
+  } = useTradingEngine();
+  
+  // MT5 account data
+  const { account, isLoading: accountLoading, error: accountError } = useAccountData();
+  
   const [strategyConfig, setStrategyConfig] = useLocalStorage<StrategyConfig>('wingzero-strategy', {
     maxRiskPerTrade: 1.5,
     maxDailyLoss: 5,
@@ -68,7 +87,16 @@ const ControlPanel = () => {
     maxPositionSize: 3.0
   });
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    if (!isConnected) {
+      toast({
+        title: "No MT5 Connection",
+        description: "Please configure MT5 connection in Settings first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!riskManagement) {
       toast({
         title: "Warning",
@@ -76,19 +104,12 @@ const ControlPanel = () => {
         variant: "destructive"
       });
     }
-    toast({
-      title: "Bot Started",
-      description: `Wing Zero activated with optimized strategy settings`,
-    });
-    console.log('Starting bot with config:', strategyConfig);
+    
+    await startEngine();
   };
 
-  const handleStop = () => {
-    toast({
-      title: "Bot Stopped",
-      description: "All trading operations have been halted",
-    });
-    console.log('Stopping bot...');
+  const handleStop = async () => {
+    await stopEngine();
   };
 
   const handleReset = () => {
@@ -164,6 +185,77 @@ const ControlPanel = () => {
         </CardContent>
       </Card>
 
+      {/* MT5 Real-time Synchronization Status */}
+      <Card className={`border-2 ${isConnected ? 'border-green-500/20 bg-green-50/50 dark:bg-green-950/20' : 'border-red-500/20 bg-red-50/50 dark:bg-red-950/20'}`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isConnected ? (
+                <Wifi className="h-6 w-6 text-green-600" />
+              ) : (
+                <WifiOff className="h-6 w-6 text-red-600" />
+              )}
+              <div>
+                <h3 className="text-lg font-semibold">MT5 Connection Status</h3>
+                <p className="text-sm text-muted-foreground">
+                  {isConnected ? 'Real-time sync active' : 'Not connected to MT5'}
+                </p>
+              </div>
+            </div>
+            <div className="text-right space-y-2">
+              <Badge variant={isConnected ? "default" : "destructive"} className="mb-2">
+                {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
+              </Badge>
+              {account && (
+                <div className="text-sm">
+                  <div>Balance: ${account.balance.toFixed(2)}</div>
+                  <div className={`${account.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    P&L: ${account.profit.toFixed(2)}
+                  </div>
+                </div>
+              )}
+              {error && (
+                <div className="flex items-center gap-1 text-red-600 text-sm">
+                  <AlertTriangle className="h-3 w-3" />
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {isConnected && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-sm text-muted-foreground">Engine Status</div>
+                  <Badge variant={isRunning ? "default" : "secondary"}>
+                    {isRunning ? "🚀 Running" : "⏸️ Stopped"}
+                  </Badge>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Open Positions</div>
+                  <div className="font-semibold">{openPositions.length}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Daily P&L</div>
+                  <div className={`font-semibold ${dailyPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ${dailyPnL.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {!isConnected && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-muted-foreground text-center">
+                Configure MT5 connection in Settings to enable real-time trading
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -176,15 +268,17 @@ const ControlPanel = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button 
               onClick={handleStart}
-              className="bg-[#00AEEF] hover:bg-[#00AEEF]/80 text-black font-medium"
+              disabled={isRunning || !isConnected}
+              className="bg-[#00AEEF] hover:bg-[#00AEEF]/80 text-black font-medium disabled:opacity-50"
             >
               <Play className="h-4 w-4 mr-2" />
-              Start Optimized Bot
+              {isRunning ? "Bot Running" : "Start Optimized Bot"}
             </Button>
             <Button 
               onClick={handleStop}
+              disabled={!isRunning}
               variant="outline"
-              className="border-[#00AEEF]/20 hover:border-[#00AEEF]/40 hover:bg-[#00AEEF]/10"
+              className="border-[#00AEEF]/20 hover:border-[#00AEEF]/40 hover:bg-[#00AEEF]/10 disabled:opacity-50"
             >
               <Pause className="h-4 w-4 mr-2" />
               Stop Bot

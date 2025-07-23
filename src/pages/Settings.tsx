@@ -51,10 +51,31 @@ const SettingsPage = () => {
     setTestingConnection(true);
     
     try {
-      // Simulate connection test
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
       const config = brokerConfigs[selectedBroker];
+      
+      // For MT5, test the actual REST API connection
+      if (selectedBroker === 'mt5') {
+        const mt5Config = config as any;
+        const apiUrl = mt5Config.serverAddress || 'http://localhost:6542';
+        
+        // Test the MT5 REST API
+        const response = await fetch(`${apiUrl}/info`);
+        if (!response.ok) {
+          throw new Error('Failed to connect to MT5 REST API. Make sure RestApi EA is running.');
+        }
+        
+        // Store the broker config for useBrokerAPI
+        const brokerConfig = {
+          apiKey: mt5Config.login || '',
+          apiSecret: mt5Config.password || '',
+          baseUrl: apiUrl,
+          broker: 'mt5' as const
+        };
+        
+        // Save to localStorage for useBrokerAPI hook
+        localStorage.setItem('broker_config', JSON.stringify(brokerConfig));
+      }
+      
       const connectionId = `${selectedBroker}_${Date.now()}`;
       
       // Type-safe way to get account and server info
@@ -90,10 +111,10 @@ const SettingsPage = () => {
         title: "🎉 Connection Successful!",
         description: `Ready for live trading with ${selectedBroker.toUpperCase()}!`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Connection Failed",
-        description: "Please check your credentials and try again.",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive"
       });
     } finally {
@@ -295,41 +316,59 @@ const SettingsPage = () => {
                     {/* MetaTrader 5 Configuration */}
                     {selectedBroker === 'mt5' && (
                       <div className="space-y-4 p-4 border rounded-lg">
-                        <h3 className="font-semibold">MetaTrader 5 Configuration</h3>
+                        <h3 className="font-semibold flex items-center gap-2">
+                          🚀 MetaTrader 5 REST API Configuration
+                        </h3>
+                        <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg mb-4">
+                          <p className="text-sm text-green-800 dark:text-green-200">
+                            ✅ <strong>RestApi EA Detected:</strong> Using direct REST API connection to MT5.
+                            <br />
+                            🔗 Default endpoint: http://localhost:6542
+                          </p>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label>Server Address *</Label>
+                            <Label>REST API URL *</Label>
                             <Input
-                              value={brokerConfigs.mt5.serverAddress}
+                              value={brokerConfigs.mt5.serverAddress || 'http://localhost:6542'}
                               onChange={(e) => updateBrokerConfig('mt5', 'serverAddress', e.target.value)}
-                              placeholder="broker-server.com:443"
+                              placeholder="http://localhost:6542"
                             />
+                            <p className="text-xs text-muted-foreground">Your MT5 RestApi EA endpoint</p>
                           </div>
                           <div>
-                            <Label>Login *</Label>
+                            <Label>API Key (Optional)</Label>
                             <Input
                               value={brokerConfigs.mt5.login}
                               onChange={(e) => updateBrokerConfig('mt5', 'login', e.target.value)}
-                              placeholder="12345678"
+                              placeholder="API key if required"
                             />
+                            <p className="text-xs text-muted-foreground">Only if RestApi EA requires authentication</p>
                           </div>
                           <div>
-                            <Label>Password *</Label>
+                            <Label>API Secret (Optional)</Label>
                             <Input
                               type="password"
                               value={brokerConfigs.mt5.password}
                               onChange={(e) => updateBrokerConfig('mt5', 'password', e.target.value)}
-                              placeholder="Your MT5 password"
+                              placeholder="API secret if required"
                             />
+                            <p className="text-xs text-muted-foreground">Only if RestApi EA requires authentication</p>
                           </div>
                           <div>
                             <Label>Account Number</Label>
                             <Input
                               value={brokerConfigs.mt5.account}
                               onChange={(e) => updateBrokerConfig('mt5', 'account', e.target.value)}
-                              placeholder="Account number"
+                              placeholder="MT5 account number"
                             />
+                            <p className="text-xs text-muted-foreground">Your MT5 account number</p>
                           </div>
+                        </div>
+                        <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            💡 <strong>Quick Test:</strong> Open <a href="http://localhost:6542" target="_blank" className="underline">http://localhost:6542</a> to verify RestApi EA is running.
+                          </p>
                         </div>
                       </div>
                     )}
