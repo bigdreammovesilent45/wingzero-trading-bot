@@ -240,40 +240,53 @@ const SettingsPage = () => {
                     {/* MetaTrader 4 Configuration */}
                     {selectedBroker === 'mt4' && (
                       <div className="space-y-4 p-4 border rounded-lg">
-                        <h3 className="font-semibold">MetaTrader 4 Configuration</h3>
+                        <h3 className="font-semibold flex items-center gap-2">
+                          💹 MetaTrader 4 Configuration
+                        </h3>
+                        <div className="bg-yellow-50 dark:bg-yellow-950 p-3 rounded-lg mb-4">
+                          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                            ⚠️ <strong>Bridge Required:</strong> You need to install an MT4 Bridge Server first.
+                            <br />
+                            📖 <a href="/MT4_BRIDGE_SETUP.md" target="_blank" className="underline">Read the setup guide</a>
+                          </p>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label>Server Address *</Label>
+                            <Label>Bridge Server URL *</Label>
                             <Input
-                              value={brokerConfigs.mt4.serverAddress}
+                              value={brokerConfigs.mt4.serverAddress || 'http://localhost:8080'}
                               onChange={(e) => updateBrokerConfig('mt4', 'serverAddress', e.target.value)}
-                              placeholder="broker-server.com:443"
+                              placeholder="http://localhost:8080"
                             />
+                            <p className="text-xs text-muted-foreground">Default: http://localhost:8080</p>
                           </div>
                           <div>
-                            <Label>Login *</Label>
+                            <Label>MT4 Account Number *</Label>
                             <Input
-                              value={brokerConfigs.mt4.login}
-                              onChange={(e) => updateBrokerConfig('mt4', 'login', e.target.value)}
-                              placeholder="12345678"
+                              value={brokerConfigs.mt4.account}
+                              onChange={(e) => updateBrokerConfig('mt4', 'account', e.target.value)}
+                              placeholder="Your account number"
                             />
+                            <p className="text-xs text-muted-foreground">From your MT4 terminal</p>
                           </div>
                           <div>
-                            <Label>Password *</Label>
+                            <Label>MT4 Server *</Label>
+                            <Input
+                              value={brokerConfigs.mt4.login || 'MetaQuotes-Demo'}
+                              onChange={(e) => updateBrokerConfig('mt4', 'login', e.target.value)}
+                              placeholder="MetaQuotes-Demo"
+                            />
+                            <p className="text-xs text-muted-foreground">Your MT4 server name</p>
+                          </div>
+                          <div>
+                            <Label>Password (Optional)</Label>
                             <Input
                               type="password"
                               value={brokerConfigs.mt4.password}
                               onChange={(e) => updateBrokerConfig('mt4', 'password', e.target.value)}
-                              placeholder="Your MT4 password"
+                              placeholder="Bridge authentication"
                             />
-                          </div>
-                          <div>
-                            <Label>Account Number</Label>
-                            <Input
-                              value={brokerConfigs.mt4.account}
-                              onChange={(e) => updateBrokerConfig('mt4', 'account', e.target.value)}
-                              placeholder="Account number"
-                            />
+                            <p className="text-xs text-muted-foreground">Only if bridge requires auth</p>
                           </div>
                         </div>
                       </div>
