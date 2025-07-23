@@ -1,0 +1,63 @@
+
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BotMetrics from "@/components/wingzero/BotMetrics";
+import TradeHistory from "@/components/wingzero/TradeHistory";
+import ControlPanel from "@/components/wingzero/ControlPanel";
+import { ArrowLeft, Zap } from "lucide-react";
+
+const WingZeroDashboardPage = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Link to="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-8 h-8 bg-[#00AEEF]/20 rounded-lg">
+                <Zap className="h-5 w-5 text-[#00AEEF]" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-[#00AEEF]">Wing Zero</h1>
+                <p className="text-sm text-muted-foreground">Trading Bot Control</p>
+              </div>
+            </div>
+          </div>
+          <Link to="/settings">
+            <Button variant="outline">Settings</Button>
+          </Link>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="metrics" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="metrics">Bot Metrics</TabsTrigger>
+            <TabsTrigger value="trades">Trade History</TabsTrigger>
+            <TabsTrigger value="control">Control Panel</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="metrics" className="space-y-6">
+            <BotMetrics />
+          </TabsContent>
+          
+          <TabsContent value="trades" className="space-y-6">
+            <TradeHistory />
+          </TabsContent>
+          
+          <TabsContent value="control" className="space-y-6">
+            <ControlPanel />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default WingZeroDashboardPage;
