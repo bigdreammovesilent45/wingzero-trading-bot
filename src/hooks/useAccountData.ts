@@ -9,11 +9,15 @@ export const useAccountData = () => {
   const [error, setError] = useState<string | null>(null);
   
   const { getAccountData, isConfigured } = useBrokerAPI();
-  const { lastMessage, isConnected } = useWebSocket({
-    url: 'ws://localhost:6542/ws', // MT5 WebSocket endpoint
-    reconnectInterval: 3000,
-    maxReconnectAttempts: 5
-  });
+  
+  // Disable WebSocket for now since MT5 API may not support it
+  // const { lastMessage, isConnected } = useWebSocket({
+  //   url: 'ws://localhost:6542/ws', // MT5 WebSocket endpoint
+  //   reconnectInterval: 3000,
+  //   maxReconnectAttempts: 5
+  // });
+  const lastMessage = null;
+  const isConnected = isConfigured; // Use REST API connection status instead
 
   // Handle real-time updates from WebSocket
   useEffect(() => {
