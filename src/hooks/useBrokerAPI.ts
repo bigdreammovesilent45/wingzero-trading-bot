@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from './useLocalStorage';
@@ -26,7 +27,7 @@ export const useBrokerAPI = () => {
       name: 'MT5 Trading Account',
       type: 'mt5',
       status: 'connected',
-      account: config.apiKey, // Use apiKey as account identifier
+      account: config.apiKey || 'demo-account',
       server: config.baseUrl
     };
   }, [config]);
@@ -36,20 +37,40 @@ export const useBrokerAPI = () => {
       throw new Error('Broker configuration not found. Please set up API credentials.');
     }
 
-    const response = await fetch(`${config.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-        ...options.headers,
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`);
+    try {
+      const response = await fetch(`${config.baseUrl}${endpoint}`, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': config.apiKey ? `Bearer ${config.apiKey}` : undefined,
+          ...options.headers,
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          throw new Error('Connection timeout - MT5 RestApi EA may not be running');
+        }
+        if (err.message.includes('Failed to fetch')) {
+          throw new Error('Cannot connect to MT5 RestApi EA. Please ensure:\n1. MT5 terminal is open\n2. RestApi EA is installed and running\n3. Server URL is correct (default: http://localhost:6542)');
+        }
+      }
+      throw err;
     }
-
-    return response.json();
   }, [config]);
 
   const getAccountData = useCallback(async (): Promise<Account> => {
@@ -61,9 +82,10 @@ export const useBrokerAPI = () => {
         throw new Error('Broker configuration not found. Please set up broker connection.');
       }
 
-      // MT5/MT4 API call for account information
-      const endpoint = config.broker === 'mt5' ? '/info' : '/account/info';
-      const response = await makeRequest(endpoint);
+      console.log('Attempting to fetch account data from:', config.baseUrl);
+      
+      // Try to fetch from MT5 RestApi EA
+      const response = await makeRequest('/info');
       
       const account: Account = {
         balance: response.balance || 10000,
@@ -75,13 +97,14 @@ export const useBrokerAPI = () => {
         currency: response.currency || 'USD'
       };
       
+      console.log('Account data fetched successfully:', account);
       return account;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch MT5 account data';
       setError(errorMessage);
+      console.warn('MT5 connection failed, using demo data:', errorMessage);
       
-      // Return mock data for demo purposes when API fails
-      console.warn('Using mock account data:', errorMessage);
+      // Return demo data when MT5 is not available
       return {
         balance: 10000,
         equity: 10000,
@@ -110,7 +133,7 @@ export const useBrokerAPI = () => {
         status: 'pending',
         timestamp: new Date().toISOString(),
         method: 'bank_transfer',
-        fee: amount * 0.001, // 0.1% fee
+        fee: amount * 0.001,
         reference: `REF${Math.random().toString(36).substr(2, 9).toUpperCase()}`
       };
       
@@ -143,12 +166,14 @@ export const useBrokerAPI = () => {
         throw new Error('No broker configuration found');
       }
 
-      // Test the actual connection
+      console.log('Testing connection to:', config.baseUrl);
+      
+      // Test the actual connection with detailed error handling
       await makeRequest('/info');
       
       toast({
-        title: "Connection Test",
-        description: "Broker API connection successful",
+        title: "✅ Connection Successful",
+        description: "MT5 RestApi EA is responding correctly",
       });
       
       return true;
@@ -156,10 +181,13 @@ export const useBrokerAPI = () => {
       const errorMessage = err instanceof Error ? err.message : 'Connection test failed';
       setError(errorMessage);
       
-      // Don't show error toast for connection test - just log it
-      console.warn('Connection test failed, using mock mode:', errorMessage);
+      toast({
+        title: "❌ Connection Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
       
-      return true; // Return true for demo purposes
+      return false;
     } finally {
       setIsLoading(false);
     }
