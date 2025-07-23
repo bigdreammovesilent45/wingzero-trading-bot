@@ -26,15 +26,8 @@ export const useBrokerAPI = () => {
       name: 'MT5 Trading Account',
       type: 'mt5',
       status: 'connected',
-      apiKey: config.apiKey,
-      apiSecret: config.apiSecret,
-      baseUrl: config.baseUrl,
-      settings: {
-        maxPositions: 10,
-        riskPerTrade: 2,
-        stopLoss: 20,
-        takeProfit: 60
-      }
+      account: config.apiKey, // Use apiKey as account identifier
+      server: config.baseUrl
     };
   }, [config]);
 
