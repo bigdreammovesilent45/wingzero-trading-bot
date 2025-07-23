@@ -7,7 +7,7 @@ interface BrokerConfig {
   apiKey: string;
   apiSecret: string;
   baseUrl: string;
-  broker: 'interactive_brokers' | 'alpaca' | 'forex_com';
+  broker: 'interactive_brokers' | 'alpaca' | 'forex_com' | 'mt5';
 }
 
 export const useBrokerAPI = () => {
@@ -43,11 +43,12 @@ export const useBrokerAPI = () => {
     
     try {
       if (!config) {
-        throw new Error('MT4 configuration not found. Please set up MT4 connection.');
+        throw new Error('Broker configuration not found. Please set up broker connection.');
       }
 
-      // MT4 API call for account information
-      const response = await makeRequest('/account/info');
+      // MT5/MT4 API call for account information
+      const endpoint = config.broker === 'mt5' ? '/info' : '/account/info';
+      const response = await makeRequest(endpoint);
       
       const account: Account = {
         balance: response.balance || 0,
@@ -64,7 +65,7 @@ export const useBrokerAPI = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch MT4 account data';
       setError(errorMessage);
       toast({
-        title: "MT4 Connection Error",
+        title: "Broker Connection Error",
         description: errorMessage,
         variant: "destructive",
       });
