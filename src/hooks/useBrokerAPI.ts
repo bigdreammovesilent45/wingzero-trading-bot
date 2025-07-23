@@ -42,25 +42,29 @@ export const useBrokerAPI = () => {
     setError(null);
     
     try {
-      // For now, return mock data with loading simulation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!config) {
+        throw new Error('MT4 configuration not found. Please set up MT4 connection.');
+      }
+
+      // MT4 API call for account information
+      const response = await makeRequest('/account/info');
       
       const account: Account = {
-        balance: 2470.32 + Math.random() * 100,
-        equity: 2480.15 + Math.random() * 100,
-        margin: 150.00,
-        freeMargin: 2330.15,
-        marginLevel: 1653.43,
-        profit: 310.00 + Math.random() * 50,
-        currency: 'USD'
+        balance: response.balance || 0,
+        equity: response.equity || 0,
+        margin: response.margin || 0,
+        freeMargin: response.freeMargin || 0,
+        marginLevel: response.marginLevel || 0,
+        profit: response.profit || 0,
+        currency: response.currency || 'USD'
       };
       
       return account;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch account data';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch MT4 account data';
       setError(errorMessage);
       toast({
-        title: "API Error",
+        title: "MT4 Connection Error",
         description: errorMessage,
         variant: "destructive",
       });
