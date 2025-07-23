@@ -10,7 +10,7 @@ export const useAccountData = () => {
   
   const { getAccountData, isConfigured } = useBrokerAPI();
   const { lastMessage, isConnected } = useWebSocket({
-    url: 'ws://localhost:8080/mt4/stream', // MT4 WebSocket endpoint
+    url: 'ws://localhost:6542/ws', // MT5 WebSocket endpoint
     reconnectInterval: 3000,
     maxReconnectAttempts: 5
   });
