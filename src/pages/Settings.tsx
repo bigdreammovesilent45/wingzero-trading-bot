@@ -12,6 +12,10 @@ import { ArrowLeft, Settings, Bell, Shield, User, DollarSign, Link as LinkIcon, 
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { BrokerConnection } from "@/types/broker";
+import { WingZeroSetup } from "@/components/wingzero/WingZeroSetup";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { AccountSettings } from "@/components/settings/AccountSettings";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -204,6 +208,19 @@ const SettingsPage = () => {
           
           {/* Broker Setup Tab */}
           <TabsContent value="broker" className="space-y-6">
+            <WingZeroSetup />
+          </TabsContent>
+          
+          <TabsContent value="notifications" className="space-y-6">
+            <NotificationSettings />
+          </TabsContent>
+          
+          <TabsContent value="security" className="space-y-6">
+            <SecuritySettings />
+          </TabsContent>
+          
+          <TabsContent value="account" className="space-y-6">
+            <AccountSettings />
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
