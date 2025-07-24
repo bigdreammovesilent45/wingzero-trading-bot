@@ -116,7 +116,7 @@ const SettingsPage = () => {
       if (selectedBroker === 'cplugin') {
         const cpluginConfig = config as any;
         account = 'cplugin-mt5';
-        server = cpluginConfig.serverUrl;
+        server = cpluginConfig.serverUrl || 'https://admin.cplugin.net';
       } else if (selectedBroker === 'oanda') {
         const oandaConfig = config as any;
         account = oandaConfig.accountId || 'demo';
@@ -169,7 +169,7 @@ const SettingsPage = () => {
     setBrokerConfigs(prev => ({
       ...prev,
       [broker]: {
-        ...prev[broker],
+        ...(prev[broker] || {}),
         [field]: value
       }
     }));
