@@ -1,7 +1,7 @@
 export interface BrokerConnection {
   id: string;
   name: string;
-  type: 'mt4' | 'mt5' | 'oanda' | 'ib' | 'alpaca';
+  type: 'cplugin' | 'mt4' | 'mt5' | 'oanda' | 'ib' | 'alpaca';
   status: 'connected' | 'disconnected' | 'error';
   account: string;
   server?: string;

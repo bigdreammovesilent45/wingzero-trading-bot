@@ -19,6 +19,12 @@ const SettingsPage = () => {
   const [brokerConnection, setBrokerConnection] = useLocalStorage<BrokerConnection | null>('broker-connection', null);
   
   const [brokerConfigs, setBrokerConfigs] = useLocalStorage('broker-configs', {
+    cplugin: {
+      clientId: '',
+      clientSecret: '',
+      serverUrl: 'https://admin.cplugin.net', // CPlugin server
+      environment: 'demo' // demo or live
+    },
     oanda: {
       apiKey: '',
       accountId: '',
@@ -44,7 +50,7 @@ const SettingsPage = () => {
     }
   });
 
-  const [selectedBroker, setSelectedBroker] = useState<'oanda' | 'mt4' | 'mt5' | 'alpaca'>('oanda');
+  const [selectedBroker, setSelectedBroker] = useState<'cplugin' | 'oanda' | 'mt4' | 'mt5' | 'alpaca'>('cplugin');
   const [testingConnection, setTestingConnection] = useState(false);
 
   const handleTestConnection = async () => {
@@ -53,8 +59,33 @@ const SettingsPage = () => {
     try {
       const config = brokerConfigs[selectedBroker];
       
-      // For MT5, test the actual REST API connection
-      if (selectedBroker === 'mt5') {
+      // Handle different broker types
+      if (selectedBroker === 'cplugin') {
+        const cpluginConfig = config as any;
+        
+        // Store the broker config for useBrokerAPI
+        const brokerConfig = {
+          apiKey: cpluginConfig.clientId || '',
+          apiSecret: cpluginConfig.clientSecret || '',
+          baseUrl: cpluginConfig.serverUrl || 'https://admin.cplugin.net',
+          broker: 'mt5' as const
+        };
+        
+        // Save to localStorage for useBrokerAPI hook
+        localStorage.setItem('broker_config', JSON.stringify(brokerConfig));
+        
+        // Test the connection
+        const testResponse = await fetch(`${brokerConfig.baseUrl}/api/test`, {
+          headers: {
+            'Authorization': `Bearer ${brokerConfig.apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!testResponse.ok) {
+          throw new Error('Failed to connect to CPlugin WebAPI. Please check your credentials.');
+        }
+      } else if (selectedBroker === 'mt5') {
         const mt5Config = config as any;
         const apiUrl = mt5Config.serverAddress || 'http://localhost:6542';
         
@@ -82,7 +113,11 @@ const SettingsPage = () => {
       let account = 'demo';
       let server = '';
       
-      if (selectedBroker === 'oanda') {
+      if (selectedBroker === 'cplugin') {
+        const cpluginConfig = config as any;
+        account = 'cplugin-mt5';
+        server = cpluginConfig.serverUrl;
+      } else if (selectedBroker === 'oanda') {
         const oandaConfig = config as any;
         account = oandaConfig.accountId || 'demo';
         server = oandaConfig.server;
@@ -206,13 +241,80 @@ const SettingsPage = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="oanda">OANDA (Recommended)</SelectItem>
+                          <SelectItem value="cplugin">CPlugin WebAPI (Recommended)</SelectItem>
+                          <SelectItem value="oanda">OANDA</SelectItem>
                           <SelectItem value="mt4">MetaTrader 4</SelectItem>
                           <SelectItem value="mt5">MetaTrader 5</SelectItem>
                           <SelectItem value="alpaca">Alpaca Markets</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* CPlugin WebAPI Configuration */}
+                    {selectedBroker === 'cplugin' && (
+                      <div className="space-y-4 p-4 border rounded-lg">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          🚀 CPlugin WebAPI Configuration (Professional MT5)
+                        </h3>
+                        <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg mb-4">
+                          <p className="text-sm text-green-800 dark:text-green-200">
+                            ✅ <strong>Professional Solution:</strong> Enterprise-grade MT5 REST API & WebSocket support.
+                            <br />
+                            🔗 Use your credentials from: https://admin.cplugin.net
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label>Client ID *</Label>
+                            <Input
+                              value={brokerConfigs.cplugin.clientId}
+                              onChange={(e) => updateBrokerConfig('cplugin', 'clientId', e.target.value)}
+                              placeholder="4b0fd032-2f35-4360-8e2b-08b7d011158a"
+                            />
+                            <p className="text-xs text-muted-foreground">From your CPlugin dashboard</p>
+                          </div>
+                          <div>
+                            <Label>Client Secret *</Label>
+                            <Input
+                              type="password"
+                              value={brokerConfigs.cplugin.clientSecret}
+                              onChange={(e) => updateBrokerConfig('cplugin', 'clientSecret', e.target.value)}
+                              placeholder="d1626da8-a689-4d4b-9fd9-7b862ebbb265"
+                            />
+                            <p className="text-xs text-muted-foreground">From your CPlugin dashboard</p>
+                          </div>
+                          <div>
+                            <Label>Server URL</Label>
+                            <Input
+                              value={brokerConfigs.cplugin.serverUrl}
+                              onChange={(e) => updateBrokerConfig('cplugin', 'serverUrl', e.target.value)}
+                              placeholder="https://admin.cplugin.net"
+                            />
+                            <p className="text-xs text-muted-foreground">CPlugin API server</p>
+                          </div>
+                          <div>
+                            <Label>Environment</Label>
+                            <Select 
+                              value={brokerConfigs.cplugin.environment} 
+                              onValueChange={(value) => updateBrokerConfig('cplugin', 'environment', value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="demo">📊 Demo Account</SelectItem>
+                                <SelectItem value="live">💰 Live Trading</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            💡 <strong>Ready to use:</strong> Enter your credentials above and test the connection.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* OANDA Configuration */}
                     {selectedBroker === 'oanda' && (
