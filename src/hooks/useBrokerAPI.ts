@@ -167,9 +167,11 @@ export const useBrokerAPI = () => {
       }
 
       console.log('Testing connection to:', config.baseUrl);
+      console.log('Full config:', config);
       
       // Test the actual connection with detailed error handling
-      await makeRequest('/info');
+      const response = await makeRequest('/info');
+      console.log('Connection test response:', response);
       
       toast({
         title: "✅ Connection Successful",
