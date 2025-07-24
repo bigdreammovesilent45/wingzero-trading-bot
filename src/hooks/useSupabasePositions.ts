@@ -1,0 +1,165 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+export interface SupabasePosition {
+  id: string;
+  symbol: string;
+  position_type: 'buy' | 'sell';
+  volume: number;
+  entry_price: number;
+  current_price: number;
+  unrealized_pnl: number;
+  stop_loss?: number;
+  take_profit?: number;
+  status: 'open' | 'closed';
+  opened_at: string;
+  closed_at?: string;
+  created_at: string;
+}
+
+export const useSupabasePositions = () => {
+  const [positions, setPositions] = useState<SupabasePosition[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const fetchPositions = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error: fetchError } = await supabase
+        .from('positions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      
+      setPositions(data || []);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch positions';
+      setError(errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createPosition = async (position: Omit<SupabasePosition, 'id' | 'created_at'>) => {
+    try {
+      const { data, error: insertError } = await supabase
+        .from('positions')
+        .insert(position)
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      
+      setPositions(prev => [data, ...prev]);
+      toast({
+        title: "Success",
+        description: "Position opened successfully",
+      });
+      
+      return data;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to create position';
+      setError(errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
+  const updatePosition = async (id: string, updates: Partial<SupabasePosition>) => {
+    try {
+      const { data, error: updateError } = await supabase
+        .from('positions')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      
+      setPositions(prev => prev.map(pos => pos.id === id ? data : pos));
+      toast({
+        title: "Success",
+        description: "Position updated successfully",
+      });
+      
+      return data;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update position';
+      setError(errorMsg);
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      throw err;
+    }
+  };
+
+  const closePosition = async (id: string, exitPrice: number) => {
+    try {
+      const position = positions.find(p => p.id === id);
+      if (!position) throw new Error('Position not found');
+
+      const realizedPnl = position.position_type === 'buy' 
+        ? (exitPrice - position.entry_price) * position.volume
+        : (position.entry_price - exitPrice) * position.volume;
+
+      await updatePosition(id, {
+        current_price: exitPrice,
+        unrealized_pnl: realizedPnl,
+        status: 'closed',
+        closed_at: new Date().toISOString()
+      });
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateCurrentPrice = async (id: string, currentPrice: number) => {
+    try {
+      const position = positions.find(p => p.id === id);
+      if (!position) throw new Error('Position not found');
+
+      const unrealizedPnl = position.position_type === 'buy' 
+        ? (currentPrice - position.entry_price) * position.volume
+        : (position.entry_price - currentPrice) * position.volume;
+
+      await updatePosition(id, {
+        current_price: currentPrice,
+        unrealized_pnl: unrealizedPnl
+      });
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  useEffect(() => {
+    fetchPositions();
+  }, []);
+
+  return {
+    positions,
+    isLoading,
+    error,
+    fetchPositions,
+    createPosition,
+    updatePosition,
+    closePosition,
+    updateCurrentPrice,
+    clearError: () => setError(null)
+  };
+};
