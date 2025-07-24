@@ -60,7 +60,8 @@ const SAWDashboard = () => {
         stop_loss: 1.0800,
         take_profit: 1.0900,
         status: "open" as const,
-        opened_at: new Date().toISOString()
+        opened_at: new Date().toISOString(),
+        user_id: "test-user-123" // Add temporary user_id for testing
       };
       
       console.log("Creating position with data:", testPosition);
