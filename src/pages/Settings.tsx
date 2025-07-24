@@ -267,7 +267,7 @@ const SettingsPage = () => {
                           <div>
                             <Label>Client ID *</Label>
                             <Input
-                              value={brokerConfigs.cplugin.clientId}
+                              value={brokerConfigs.cplugin?.clientId || ''}
                               onChange={(e) => updateBrokerConfig('cplugin', 'clientId', e.target.value)}
                               placeholder="4b0fd032-2f35-4360-8e2b-08b7d011158a"
                             />
@@ -277,7 +277,7 @@ const SettingsPage = () => {
                             <Label>Client Secret *</Label>
                             <Input
                               type="password"
-                              value={brokerConfigs.cplugin.clientSecret}
+                              value={brokerConfigs.cplugin?.clientSecret || ''}
                               onChange={(e) => updateBrokerConfig('cplugin', 'clientSecret', e.target.value)}
                               placeholder="d1626da8-a689-4d4b-9fd9-7b862ebbb265"
                             />
@@ -286,7 +286,7 @@ const SettingsPage = () => {
                           <div>
                             <Label>Server URL</Label>
                             <Input
-                              value={brokerConfigs.cplugin.serverUrl}
+                              value={brokerConfigs.cplugin?.serverUrl || 'https://admin.cplugin.net'}
                               onChange={(e) => updateBrokerConfig('cplugin', 'serverUrl', e.target.value)}
                               placeholder="https://admin.cplugin.net"
                             />
@@ -295,7 +295,7 @@ const SettingsPage = () => {
                           <div>
                             <Label>Environment</Label>
                             <Select 
-                              value={brokerConfigs.cplugin.environment} 
+                              value={brokerConfigs.cplugin?.environment || 'demo'} 
                               onValueChange={(value) => updateBrokerConfig('cplugin', 'environment', value)}
                             >
                               <SelectTrigger>
