@@ -8,13 +8,17 @@ import { useAccountData } from "@/hooks/useAccountData";
 import { useBrokerAPI } from "@/hooks/useBrokerAPI";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, TrendingUp, Shield, AlertTriangle, RefreshCw } from "lucide-react";
+import { useSupabasePositions } from "@/hooks/useSupabasePositions";
+import { DollarSign, TrendingUp, Shield, AlertTriangle, RefreshCw, Database } from "lucide-react";
 
 const SAWDashboard = () => {
   const { account, isLoading, error, isConnected, isConfigured, refreshAccount } = useAccountData();
   const { requestWithdrawal, testConnection, isLoading: apiLoading } = useBrokerAPI();
   const { notifyWithdrawalTriggered } = useNotifications();
   const { toast } = useToast();
+  
+  // Supabase connection test
+  const { positions, isLoading: positionsLoading, error: positionsError, createPosition } = useSupabasePositions();
 
   const handleManualWithdrawal = async () => {
     if (!account) return;
@@ -35,6 +39,33 @@ const SAWDashboard = () => {
       title: "Test Notification Sent",
       description: "Check your configured notification channels",
     });
+  };
+
+  const handleTestDatabase = async () => {
+    try {
+      await createPosition({
+        symbol: "EURUSD",
+        position_type: "buy",
+        volume: 0.1,
+        entry_price: 1.0850,
+        current_price: 1.0860,
+        unrealized_pnl: 10.0,
+        stop_loss: 1.0800,
+        take_profit: 1.0900,
+        status: "open",
+        opened_at: new Date().toISOString()
+      });
+      toast({
+        title: "Database Test Successful",
+        description: "Successfully created test position in Supabase",
+      });
+    } catch (error) {
+      toast({
+        title: "Database Test Failed",
+        description: error instanceof Error ? error.message : "Failed to connect to Supabase",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isConfigured) {
@@ -190,6 +221,15 @@ const SAWDashboard = () => {
             >
               <AlertTriangle className="h-4 w-4 mr-2" />
               Test Notifications
+            </Button>
+            <Button 
+              onClick={handleTestDatabase}
+              variant="outline" 
+              className="w-full justify-start border-[#00FFC2]/20 hover:border-[#00FFC2]/40 hover:bg-[#00FFC2]/10"
+              disabled={positionsLoading}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Test Database
             </Button>
           </CardContent>
         </Card>
