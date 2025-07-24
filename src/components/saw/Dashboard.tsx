@@ -43,23 +43,41 @@ const SAWDashboard = () => {
 
   const handleTestDatabase = async () => {
     try {
-      await createPosition({
+      console.log("Starting database test...");
+      console.log("Supabase positions hook state:", { 
+        isLoading: positionsLoading, 
+        error: positionsError,
+        positionsCount: positions.length 
+      });
+      
+      const testPosition = {
         symbol: "EURUSD",
-        position_type: "buy",
+        position_type: "buy" as const,
         volume: 0.1,
         entry_price: 1.0850,
         current_price: 1.0860,
         unrealized_pnl: 10.0,
         stop_loss: 1.0800,
         take_profit: 1.0900,
-        status: "open",
+        status: "open" as const,
         opened_at: new Date().toISOString()
-      });
+      };
+      
+      console.log("Creating position with data:", testPosition);
+      const result = await createPosition(testPosition);
+      console.log("Position created successfully:", result);
+      
       toast({
         title: "Database Test Successful",
         description: "Successfully created test position in Supabase",
       });
     } catch (error) {
+      console.error("Database test error:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
+      
       toast({
         title: "Database Test Failed",
         description: error instanceof Error ? error.message : "Failed to connect to Supabase",
