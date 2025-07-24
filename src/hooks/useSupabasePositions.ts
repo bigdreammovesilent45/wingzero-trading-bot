@@ -7,14 +7,14 @@ export interface SupabasePosition {
   symbol: string;
   position_type: 'buy' | 'sell';
   volume: number;
-  entry_price: number;
+  open_price: number;
   current_price: number;
   unrealized_pnl: number;
   stop_loss?: number;
   take_profit?: number;
-  status: 'open' | 'closed';
   opened_at: string;
-  closed_at?: string;
+  updated_at: string;
+  user_id: string;
   created_at: string;
 }
 
@@ -50,7 +50,7 @@ export const useSupabasePositions = () => {
     }
   };
 
-  const createPosition = async (position: Omit<SupabasePosition, 'id' | 'created_at'>) => {
+  const createPosition = async (position: Omit<SupabasePosition, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error: insertError } = await supabase
         .from('positions')
@@ -109,34 +109,14 @@ export const useSupabasePositions = () => {
     }
   };
 
-  const closePosition = async (id: string, exitPrice: number) => {
-    try {
-      const position = positions.find(p => p.id === id);
-      if (!position) throw new Error('Position not found');
-
-      const realizedPnl = position.position_type === 'buy' 
-        ? (exitPrice - position.entry_price) * position.volume
-        : (position.entry_price - exitPrice) * position.volume;
-
-      await updatePosition(id, {
-        current_price: exitPrice,
-        unrealized_pnl: realizedPnl,
-        status: 'closed',
-        closed_at: new Date().toISOString()
-      });
-    } catch (err) {
-      throw err;
-    }
-  };
-
   const updateCurrentPrice = async (id: string, currentPrice: number) => {
     try {
       const position = positions.find(p => p.id === id);
       if (!position) throw new Error('Position not found');
 
       const unrealizedPnl = position.position_type === 'buy' 
-        ? (currentPrice - position.entry_price) * position.volume
-        : (position.entry_price - currentPrice) * position.volume;
+        ? (currentPrice - position.open_price) * position.volume
+        : (position.open_price - currentPrice) * position.volume;
 
       await updatePosition(id, {
         current_price: currentPrice,
@@ -158,7 +138,6 @@ export const useSupabasePositions = () => {
     fetchPositions,
     createPosition,
     updatePosition,
-    closePosition,
     updateCurrentPrice,
     clearError: () => setError(null)
   };
