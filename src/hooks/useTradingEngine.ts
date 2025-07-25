@@ -62,7 +62,7 @@ export const useTradingEngine = () => {
         error: 'Broker not configured. Please set up MT5 connection in Settings.' 
       }));
     }
-  }, [brokerConnection, isConfigured, engine]);
+  }, [brokerConnection, isConfigured]); // Removed engine from dependencies - it's stable
 
   // Update state periodically when engine is running
   useEffect(() => {
@@ -104,7 +104,7 @@ export const useTradingEngine = () => {
       console.log('Stopping trading engine status updates');
       clearInterval(updateInterval);
     };
-  }, [state.isRunning, state.isConnected, engine]); // Removed syncMT5Position to prevent infinite loop
+  }, [state.isRunning, state.isConnected]); // Removed engine and syncMT5Position to prevent infinite loop
 
   const startEngine = useCallback(async () => {
     if (!isConfigured) {
