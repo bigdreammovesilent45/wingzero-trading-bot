@@ -64,8 +64,8 @@ const SAWDashboard = () => {
         unrealized_pnl: 10.0,
         stop_loss: 1.0800,
         take_profit: 1.0900,
-        opened_at: new Date().toISOString(),
-        user_id: "123e4567-e89b-12d3-a456-426614174000" // Valid UUID format
+        opened_at: new Date().toISOString()
+        // Removed user_id for testing - you can add it back later
       };
       
       console.log("Creating position with data:", testPosition);

@@ -14,7 +14,7 @@ export interface SupabasePosition {
   take_profit?: number;
   opened_at: string;
   updated_at: string;
-  user_id: string;
+  user_id?: string; // Made optional for testing
 }
 
 export const useSupabasePositions = () => {
