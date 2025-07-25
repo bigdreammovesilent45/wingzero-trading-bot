@@ -104,7 +104,7 @@ export const useTradingEngine = () => {
       console.log('Stopping trading engine status updates');
       clearInterval(updateInterval);
     };
-  }, [state.isRunning, state.isConnected, engine]);
+  }, [state.isRunning, state.isConnected, engine]); // Removed syncMT5Position to prevent infinite loop
 
   const startEngine = useCallback(async () => {
     if (!isConfigured) {
