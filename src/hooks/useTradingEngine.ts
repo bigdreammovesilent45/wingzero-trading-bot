@@ -104,7 +104,7 @@ export const useTradingEngine = () => {
       console.log('Stopping trading engine status updates');
       clearInterval(updateInterval);
     };
-  }, [state.isRunning, state.isConnected, engine, syncMT5Position]);
+  }, [state.isRunning, state.isConnected, engine]);
 
   const startEngine = useCallback(async () => {
     if (!isConfigured) {
