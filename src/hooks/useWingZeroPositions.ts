@@ -187,7 +187,7 @@ export const useWingZeroPositions = () => {
   // Fetch positions on mount
   useEffect(() => {
     fetchPositions();
-  }, [fetchPositions]);
+  }, []); // Remove fetchPositions from dependency array to prevent infinite loop
 
   return {
     positions,
