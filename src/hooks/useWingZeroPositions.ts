@@ -184,10 +184,11 @@ export const useWingZeroPositions = () => {
       .reduce((total, pos) => total + pos.unrealized_pnl, 0);
   }, [positions]);
 
-  // Fetch positions on mount
-  useEffect(() => {
-    fetchPositions();
-  }, []); // Remove fetchPositions from dependency array to prevent infinite loop
+  // Don't fetch positions automatically to prevent errors when table doesn't exist
+  // Users should call fetchPositions manually after setting up the database
+  // useEffect(() => {
+  //   fetchPositions();
+  // }, []);
 
   return {
     positions,
