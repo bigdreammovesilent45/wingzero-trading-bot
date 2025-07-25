@@ -1,0 +1,510 @@
+import { MarketDataService } from './MarketDataService';
+import { AdvancedRiskManager } from './AdvancedRiskManager';
+import { MarketIntelligenceService } from './MarketIntelligenceService';
+import { AISignalGenerator } from './AISignalGenerator';
+import { EconomicCalendarService } from './EconomicCalendarService';
+import { OrderManager } from './OrderManager';
+import { Order, RiskMetrics, TradingSignal } from '@/types/trading';
+
+export interface TradingDecision {
+  action: 'buy' | 'sell' | 'close' | 'hold';
+  symbol: string;
+  volume: number;
+  confidence: number;
+  reasoning: string;
+  stopLoss: number;
+  takeProfit: number;
+  riskReward: number;
+  timeframe: string;
+  signals: TradingSignal[];
+}
+
+export interface MarketRegime {
+  trend: 'bullish' | 'bearish' | 'ranging';
+  volatility: 'low' | 'medium' | 'high';
+  sentiment: 'fearful' | 'neutral' | 'greedy';
+  strength: number;
+  newsImpact: 'positive' | 'negative' | 'neutral';
+}
+
+export class TradingBrain {
+  private marketData: MarketDataService;
+  private riskManager: AdvancedRiskManager;
+  private marketIntelligence: MarketIntelligenceService;
+  private signalGenerator: AISignalGenerator;
+  private economicCalendar: EconomicCalendarService;
+  private orderManager: OrderManager;
+  
+  private isActive = false;
+  private tradingLoop: NodeJS.Timeout | null = null;
+  private currentRegime: MarketRegime | null = null;
+  private lastDecision: Date = new Date();
+  
+  // AI Configuration
+  private config = {
+    minConfidence: 85,
+    maxRiskPerTrade: 0.02, // 2%
+    maxDailyDrawdown: 0.05, // 5%
+    adaptivePositionSizing: true,
+    multiTimeframeAnalysis: true,
+    newsFilterEnabled: true,
+    sentimentWeight: 0.3,
+    technicalWeight: 0.5,
+    fundamentalWeight: 0.2,
+    emergencyStopLoss: 0.10, // 10% account emergency stop
+  };
+
+  constructor() {
+    this.marketData = new MarketDataService();
+    this.riskManager = new AdvancedRiskManager();
+    this.marketIntelligence = new MarketIntelligenceService();
+    this.signalGenerator = new AISignalGenerator();
+    this.economicCalendar = new EconomicCalendarService();
+    this.orderManager = new OrderManager();
+  }
+
+  async initialize(): Promise<void> {
+    console.log('🧠 Initializing Trading Brain...');
+    
+    await Promise.all([
+      this.marketData.initialize(),
+      this.riskManager.initialize(),
+      this.marketIntelligence.initialize(),
+      this.signalGenerator.initialize(),
+      this.economicCalendar.initialize(),
+      this.orderManager.initialize()
+    ]);
+    
+    console.log('🚀 Trading Brain initialized - Ready for autonomous trading');
+  }
+
+  async start(): Promise<void> {
+    if (this.isActive) return;
+    
+    console.log('🧠 Starting autonomous trading brain...');
+    this.isActive = true;
+    
+    // Start the main trading loop - runs every 30 seconds
+    this.tradingLoop = setInterval(async () => {
+      await this.executeTradingCycle();
+    }, 30000);
+    
+    // Initial analysis
+    await this.executeTradingCycle();
+  }
+
+  async stop(): Promise<void> {
+    console.log('🛑 Stopping trading brain...');
+    this.isActive = false;
+    
+    if (this.tradingLoop) {
+      clearInterval(this.tradingLoop);
+      this.tradingLoop = null;
+    }
+  }
+
+  private async executeTradingCycle(): Promise<void> {
+    try {
+      console.log('🔄 Executing trading cycle...');
+      
+      // 1. Analyze current market regime
+      const regime = await this.analyzeMarketRegime();
+      this.currentRegime = regime;
+      
+      // 2. Check for emergency stops
+      if (await this.checkEmergencyConditions()) {
+        await this.executeEmergencyStop();
+        return;
+      }
+      
+      // 3. Get available symbols for analysis
+      const symbols = await this.getActiveSymbols();
+      
+      // 4. Analyze each symbol and generate decisions
+      const decisions: TradingDecision[] = [];
+      
+      for (const symbol of symbols) {
+        const decision = await this.analyzeSymbol(symbol, regime);
+        if (decision && decision.confidence >= this.config.minConfidence) {
+          decisions.push(decision);
+        }
+      }
+      
+      // 5. Rank and filter decisions
+      const rankedDecisions = this.rankDecisions(decisions);
+      
+      // 6. Execute top decisions within risk limits
+      await this.executeDecisions(rankedDecisions);
+      
+      // 7. Monitor and adjust existing positions
+      await this.monitorPositions();
+      
+    } catch (error) {
+      console.error('❌ Error in trading cycle:', error);
+    }
+  }
+
+  private async analyzeMarketRegime(): Promise<MarketRegime> {
+    console.log('📊 Analyzing market regime...');
+    
+    const [
+      marketSentiment,
+      newsAnalysis,
+      technicalAnalysis,
+      economicEvents
+    ] = await Promise.all([
+      this.marketIntelligence.getMarketSentiment(),
+      this.marketIntelligence.getNewsAnalysis(),
+      this.signalGenerator.getTechnicalOverview(),
+      this.economicCalendar.getTodaysEvents()
+    ]);
+    
+    // Combine multiple factors to determine regime
+    const regime: MarketRegime = {
+      trend: this.determineTrend(technicalAnalysis),
+      volatility: this.calculateVolatility(technicalAnalysis),
+      sentiment: this.analyzeSentiment(marketSentiment, newsAnalysis),
+      strength: this.calculateRegimeStrength(technicalAnalysis, marketSentiment),
+      newsImpact: this.assessNewsImpact(newsAnalysis, economicEvents)
+    };
+    
+    console.log('🎯 Market regime:', regime);
+    return regime;
+  }
+
+  private async analyzeSymbol(symbol: string, regime: MarketRegime): Promise<TradingDecision | null> {
+    console.log(`🔍 Analyzing ${symbol}...`);
+    
+    try {
+      // Get multi-timeframe analysis
+      const [
+        signals1m,
+        signals5m,
+        signals15m,
+        signals1h,
+        signals4h,
+        signalsD1
+      ] = await Promise.all([
+        this.signalGenerator.generateSignals(symbol, '1m'),
+        this.signalGenerator.generateSignals(symbol, '5m'),
+        this.signalGenerator.generateSignals(symbol, '15m'),
+        this.signalGenerator.generateSignals(symbol, '1h'),
+        this.signalGenerator.generateSignals(symbol, '4h'),
+        this.signalGenerator.generateSignals(symbol, 'D1')
+      ]);
+      
+      // Get news and sentiment for this symbol
+      const symbolNews = await this.marketIntelligence.getSymbolNews(symbol);
+      const symbolSentiment = await this.marketIntelligence.getSymbolSentiment(symbol);
+      
+      // AI-powered decision making
+      const decision = await this.makeIntelligentDecision({
+        symbol,
+        regime,
+        signals: {
+          '1m': signals1m,
+          '5m': signals5m,
+          '15m': signals15m,
+          '1h': signals1h,
+          '4h': signals4h,
+          'D1': signalsD1
+        },
+        news: symbolNews,
+        sentiment: symbolSentiment
+      });
+      
+      return decision;
+      
+    } catch (error) {
+      console.error(`❌ Error analyzing ${symbol}:`, error);
+      return null;
+    }
+  }
+
+  private async makeIntelligentDecision(analysis: any): Promise<TradingDecision | null> {
+    // This is where the AI magic happens - combining all data sources
+    const { symbol, regime, signals, news, sentiment } = analysis;
+    
+    // Calculate confluence across timeframes
+    const confluence = this.calculateTimeframeConfluence(signals);
+    
+    // Weight different factors
+    const technicalScore = confluence.score * this.config.technicalWeight;
+    const sentimentScore = sentiment.score * this.config.sentimentWeight;
+    const fundamentalScore = news.impact * this.config.fundamentalWeight;
+    
+    const totalScore = technicalScore + sentimentScore + fundamentalScore;
+    const confidence = Math.min(totalScore * 100, 100);
+    
+    // Check if confidence meets minimum threshold
+    if (confidence < this.config.minConfidence) {
+      return null;
+    }
+    
+    // Determine action based on confluence
+    let action: 'buy' | 'sell' | 'hold' = 'hold';
+    
+    if (confluence.direction === 'bullish' && regime.trend !== 'bearish') {
+      action = 'buy';
+    } else if (confluence.direction === 'bearish' && regime.trend !== 'bullish') {
+      action = 'sell';
+    }
+    
+    if (action === 'hold') return null;
+    
+    // Calculate optimal position size using Kelly Criterion
+    const volume = await this.riskManager.calculateOptimalPositionSize(
+      symbol,
+      confidence / 100,
+      confluence.riskReward
+    );
+    
+    // Calculate stop loss and take profit
+    const currentPrice = await this.marketData.getCurrentPrice(symbol);
+    const stopLoss = this.calculateAdaptiveStopLoss(currentPrice, action, regime);
+    const takeProfit = this.calculateAdaptiveTakeProfit(currentPrice, action, confluence.riskReward);
+    
+    const decision: TradingDecision = {
+      action,
+      symbol,
+      volume,
+      confidence,
+      reasoning: this.generateReasoning(confluence, regime, sentiment, news),
+      stopLoss,
+      takeProfit,
+      riskReward: confluence.riskReward,
+      timeframe: confluence.primaryTimeframe,
+      signals: Object.values(signals).flat()
+    };
+    
+    console.log(`💡 Decision for ${symbol}:`, decision);
+    return decision;
+  }
+
+  private calculateTimeframeConfluence(signals: any): any {
+    // Analyze confluence across multiple timeframes
+    const timeframes = ['1m', '5m', '15m', '1h', '4h', 'D1'];
+    const weights = { '1m': 0.1, '5m': 0.15, '15m': 0.2, '1h': 0.25, '4h': 0.2, 'D1': 0.1 };
+    
+    let bullishScore = 0;
+    let bearishScore = 0;
+    let totalWeight = 0;
+    let riskRewardSum = 0;
+    let primaryTimeframe = '';
+    let maxSignalStrength = 0;
+    
+    for (const tf of timeframes) {
+      const tfSignals = signals[tf] || [];
+      const weight = weights[tf as keyof typeof weights];
+      
+      for (const signal of tfSignals) {
+        if (signal.type === 'buy') {
+          bullishScore += signal.strength * weight;
+        } else if (signal.type === 'sell') {
+          bearishScore += signal.strength * weight;
+        }
+        
+        totalWeight += weight;
+        riskRewardSum += signal.riskReward || 2.0;
+        
+        if (signal.strength > maxSignalStrength) {
+          maxSignalStrength = signal.strength;
+          primaryTimeframe = tf;
+        }
+      }
+    }
+    
+    const netScore = bullishScore - bearishScore;
+    const direction = netScore > 0 ? 'bullish' : netScore < 0 ? 'bearish' : 'neutral';
+    const score = Math.abs(netScore) / totalWeight;
+    const avgRiskReward = riskRewardSum / Object.values(signals).flat().length || 2.0;
+    
+    return {
+      direction,
+      score,
+      riskReward: avgRiskReward,
+      primaryTimeframe,
+      bullishScore,
+      bearishScore
+    };
+  }
+
+  private async executeDecisions(decisions: TradingDecision[]): Promise<void> {
+    console.log(`🎯 Executing ${decisions.length} trading decisions...`);
+    
+    for (const decision of decisions) {
+      try {
+        // Final risk check
+        const riskCheck = await this.riskManager.validateTrade(decision);
+        if (!riskCheck.approved) {
+          console.log(`⚠️ Trade rejected for ${decision.symbol}: ${riskCheck.reason}`);
+          continue;
+        }
+        
+        // Execute the trade
+        await this.orderManager.placeOrder({
+          symbol: decision.symbol,
+          type: decision.action === 'buy' ? 'market_buy' : 'market_sell',
+          volume: decision.volume,
+          stopLoss: decision.stopLoss,
+          takeProfit: decision.takeProfit,
+          comment: `AI-Brain: ${decision.reasoning.substring(0, 50)}...`
+        });
+        
+        console.log(`✅ Executed ${decision.action} order for ${decision.symbol}`);
+        
+      } catch (error) {
+        console.error(`❌ Failed to execute decision for ${decision.symbol}:`, error);
+      }
+    }
+  }
+
+  private rankDecisions(decisions: TradingDecision[]): TradingDecision[] {
+    return decisions
+      .sort((a, b) => {
+        // Rank by confidence * risk-reward ratio
+        const scoreA = a.confidence * a.riskReward;
+        const scoreB = b.confidence * b.riskReward;
+        return scoreB - scoreA;
+      })
+      .slice(0, 5); // Limit to top 5 opportunities
+  }
+
+  private async monitorPositions(): Promise<void> {
+    const openPositions = await this.orderManager.getOpenPositions();
+    
+    for (const position of openPositions) {
+      try {
+        // Check if we should trail stops or take partial profits
+        await this.managePosition(position);
+      } catch (error) {
+        console.error(`❌ Error managing position ${position.id}:`, error);
+      }
+    }
+  }
+
+  private async managePosition(position: Order): Promise<void> {
+    const currentPrice = await this.marketData.getCurrentPrice(position.symbol);
+    const profit = position.side === 'buy' 
+      ? currentPrice - position.openPrice 
+      : position.openPrice - currentPrice;
+    
+    // Implement intelligent trailing stops
+    if (profit > 0) {
+      const newStopLoss = this.calculateTrailingStop(position, currentPrice, profit);
+      if (newStopLoss !== position.stopLoss) {
+        await this.orderManager.modifyOrder(position.id, { stopLoss: newStopLoss });
+      }
+    }
+    
+    // Check for partial profit taking
+    const profitPercent = (profit / position.openPrice) * 100;
+    if (profitPercent > 1.5) { // Take 50% profit at 1.5% gain
+      await this.orderManager.closePartialPosition(position.id, 0.5);
+    }
+  }
+
+  private async checkEmergencyConditions(): Promise<boolean> {
+    const accountInfo = await this.riskManager.getAccountInfo();
+    const drawdown = (accountInfo.balance - accountInfo.equity) / accountInfo.balance;
+    
+    return drawdown > this.config.emergencyStopLoss;
+  }
+
+  private async executeEmergencyStop(): Promise<void> {
+    console.log('🚨 EMERGENCY STOP TRIGGERED - Closing all positions');
+    await this.orderManager.closeAllPositions();
+    await this.stop();
+  }
+
+  // Helper methods for calculations
+  private determineTrend(analysis: any): 'bullish' | 'bearish' | 'ranging' {
+    if (analysis.trendScore > 0.6) return 'bullish';
+    if (analysis.trendScore < -0.6) return 'bearish';
+    return 'ranging';
+  }
+
+  private calculateVolatility(analysis: any): 'low' | 'medium' | 'high' {
+    if (analysis.volatility < 0.3) return 'low';
+    if (analysis.volatility > 0.7) return 'high';
+    return 'medium';
+  }
+
+  private analyzeSentiment(marketSentiment: any, newsAnalysis: any): 'fearful' | 'neutral' | 'greedy' {
+    const combinedSentiment = (marketSentiment.score + newsAnalysis.sentiment) / 2;
+    if (combinedSentiment < -0.3) return 'fearful';
+    if (combinedSentiment > 0.3) return 'greedy';
+    return 'neutral';
+  }
+
+  private calculateRegimeStrength(technical: any, sentiment: any): number {
+    return Math.min((Math.abs(technical.trendScore) + Math.abs(sentiment.score)) / 2, 1);
+  }
+
+  private assessNewsImpact(news: any, events: any): 'positive' | 'negative' | 'neutral' {
+    const impact = news.impact + events.reduce((sum: number, event: any) => sum + event.impact, 0);
+    if (impact > 0.2) return 'positive';
+    if (impact < -0.2) return 'negative';
+    return 'neutral';
+  }
+
+  private calculateAdaptiveStopLoss(price: number, action: 'buy' | 'sell', regime: MarketRegime): number {
+    const baseStop = 0.02; // 2% base stop
+    const volatilityMultiplier = regime.volatility === 'high' ? 1.5 : regime.volatility === 'low' ? 0.7 : 1.0;
+    const adjustedStop = baseStop * volatilityMultiplier;
+    
+    return action === 'buy' 
+      ? price * (1 - adjustedStop)
+      : price * (1 + adjustedStop);
+  }
+
+  private calculateAdaptiveTakeProfit(price: number, action: 'buy' | 'sell', riskReward: number): number {
+    const stopDistance = Math.abs(price - this.calculateAdaptiveStopLoss(price, action, this.currentRegime!));
+    const takeProfitDistance = stopDistance * riskReward;
+    
+    return action === 'buy'
+      ? price + takeProfitDistance
+      : price - takeProfitDistance;
+  }
+
+  private calculateTrailingStop(position: Order, currentPrice: number, profit: number): number {
+    // Implement smart trailing stop logic
+    const profitPercent = (profit / position.openPrice) * 100;
+    
+    if (profitPercent > 2.0) {
+      // Trail at 50% of profit
+      const trailAmount = profit * 0.5;
+      return position.side === 'buy'
+        ? currentPrice - trailAmount
+        : currentPrice + trailAmount;
+    }
+    
+    return position.stopLoss || 0;
+  }
+
+  private generateReasoning(confluence: any, regime: MarketRegime, sentiment: any, news: any): string {
+    return `${confluence.direction.toUpperCase()} signal with ${confluence.score.toFixed(2)} confluence across timeframes. Market regime: ${regime.trend}/${regime.volatility} volatility. Sentiment: ${sentiment.score > 0 ? 'positive' : 'negative'} (${sentiment.score.toFixed(2)}). News impact: ${news.impact > 0 ? 'supportive' : 'negative'}.`;
+  }
+
+  private async getActiveSymbols(): Promise<string[]> {
+    // Return major forex pairs for now
+    return ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'];
+  }
+
+  // Public methods for external control
+  public getCurrentRegime(): MarketRegime | null {
+    return this.currentRegime;
+  }
+
+  public updateConfig(newConfig: Partial<typeof this.config>): void {
+    this.config = { ...this.config, ...newConfig };
+  }
+
+  public getConfig(): typeof this.config {
+    return { ...this.config };
+  }
+
+  public isRunning(): boolean {
+    return this.isActive;
+  }
+}
