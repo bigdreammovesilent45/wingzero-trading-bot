@@ -59,14 +59,13 @@ const SAWDashboard = () => {
         symbol: "EURUSD",
         position_type: "buy" as const,
         volume: 0.1,
-        open_price: 1.0850,  // Changed from entry_price
+        open_price: 1.0850,
         current_price: 1.0860,
         unrealized_pnl: 10.0,
         stop_loss: 1.0800,
         take_profit: 1.0900,
         opened_at: new Date().toISOString(),
-        user_id: "test-user-123"
-        // Removed status and closed_at as they don't exist in your table
+        user_id: "123e4567-e89b-12d3-a456-426614174000" // Valid UUID format
       };
       
       console.log("Creating position with data:", testPosition);

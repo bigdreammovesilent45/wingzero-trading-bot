@@ -15,7 +15,6 @@ export interface SupabasePosition {
   opened_at: string;
   updated_at: string;
   user_id: string;
-  created_at: string;
 }
 
 export const useSupabasePositions = () => {
@@ -32,7 +31,7 @@ export const useSupabasePositions = () => {
       const { data, error: fetchError } = await supabase
         .from('positions')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (fetchError) throw fetchError;
       
@@ -50,7 +49,7 @@ export const useSupabasePositions = () => {
     }
   };
 
-  const createPosition = async (position: Omit<SupabasePosition, 'id' | 'created_at' | 'updated_at'>) => {
+  const createPosition = async (position: Omit<SupabasePosition, 'id' | 'updated_at'>) => {
     try {
       const { data, error: insertError } = await supabase
         .from('positions')
