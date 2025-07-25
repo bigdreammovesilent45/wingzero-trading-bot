@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TradingEngine } from '@/services/TradingEngine';
 import { Order, RiskMetrics } from '@/types/broker';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,7 @@ export const useTradingEngine = () => {
   const [engine] = useState(() => new TradingEngine());
   const { brokerConnection, isConfigured } = useBrokerAPI();
   const { syncMT5Position, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
+  const hasInitialized = useRef(false);
   const [tradingConfig] = useLocalStorage('wingzero-strategy', {
     maxRiskPerTrade: 2,
     stopLossPips: 20,
@@ -41,10 +42,11 @@ export const useTradingEngine = () => {
     error: null
   });
 
-  // Initialize engine when broker connection is available
+  // Initialize engine when broker connection is available (only once)
   useEffect(() => {
-    if (brokerConnection && isConfigured) {
+    if (brokerConnection && isConfigured && !hasInitialized.current) {
       console.log('Initializing trading engine with broker connection:', brokerConnection.name);
+      hasInitialized.current = true;
       
       engine.setBrokerConnection(brokerConnection)
         .then(() => {
@@ -104,7 +106,7 @@ export const useTradingEngine = () => {
       console.log('Stopping trading engine status updates');
       clearInterval(updateInterval);
     };
-  }, [state.isRunning, state.isConnected]); // Removed engine and syncMT5Position to prevent infinite loop
+  }, [state.isRunning, state.isConnected, syncMT5Position]); // Include syncMT5Position
 
   const startEngine = useCallback(async () => {
     if (!isConfigured) {
