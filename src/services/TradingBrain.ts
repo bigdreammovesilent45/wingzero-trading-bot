@@ -344,7 +344,7 @@ export class TradingBrain {
         // Execute the trade
         await this.orderManager.placeOrder({
           symbol: decision.symbol,
-          type: decision.action === 'buy' ? 'market_buy' : 'market_sell',
+          type: decision.action === 'buy' ? 'market' : 'market',
           volume: decision.volume,
           stopLoss: decision.stopLoss,
           takeProfit: decision.takeProfit,

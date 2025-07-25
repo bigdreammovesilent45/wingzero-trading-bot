@@ -185,9 +185,9 @@ export class AdvancedRiskManager {
 
   // Expected Shortfall (Conditional VaR)
   public calculateExpectedShortfall(positions: any[], confidence: number = 0.95): number {
-    const var = this.calculateVaR(positions, confidence);
+    const varValue = this.calculateVaR(positions, confidence);
     // ES is typically 1.2-1.3 times VaR for normal distribution
-    return var * 1.25;
+    return varValue * 1.25;
   }
 
   // Portfolio heat calculation
