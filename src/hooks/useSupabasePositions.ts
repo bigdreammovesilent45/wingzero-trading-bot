@@ -31,7 +31,7 @@ export const useSupabasePositions = () => {
       const { data, error: fetchError } = await supabase
         .from('positions')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (fetchError) throw fetchError;
       
