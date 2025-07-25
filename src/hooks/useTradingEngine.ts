@@ -4,6 +4,7 @@ import { Order, RiskMetrics } from '@/types/broker';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useBrokerAPI } from './useBrokerAPI';
+import { useWingZeroPositions } from './useWingZeroPositions';
 
 interface TradingEngineState {
   isRunning: boolean;
@@ -19,6 +20,7 @@ export const useTradingEngine = () => {
   const { toast } = useToast();
   const [engine] = useState(() => new TradingEngine());
   const { brokerConnection, isConfigured } = useBrokerAPI();
+  const { syncMT5Position, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
   const [tradingConfig] = useLocalStorage('wingzero-strategy', {
     maxRiskPerTrade: 2,
     stopLossPips: 20,
@@ -68,11 +70,18 @@ export const useTradingEngine = () => {
 
     console.log('Starting trading engine status updates...');
     
-    const updateInterval = setInterval(() => {
+    const updateInterval = setInterval(async () => {
       try {
         const status = engine.getEngineStatus();
         const orders = engine.getCurrentOrders();
         const metrics = engine.getCurrentRiskMetrics();
+        
+        // Sync positions to Supabase for real-time mirroring
+        for (const order of orders) {
+          if (order.status === 'open') {
+            await syncMT5Position(order);
+          }
+        }
         
         setState(prev => ({
           ...prev,
@@ -95,7 +104,7 @@ export const useTradingEngine = () => {
       console.log('Stopping trading engine status updates');
       clearInterval(updateInterval);
     };
-  }, [state.isRunning, state.isConnected, engine]);
+  }, [state.isRunning, state.isConnected, engine, syncMT5Position]);
 
   const startEngine = useCallback(async () => {
     if (!isConfigured) {
@@ -174,6 +183,7 @@ export const useTradingEngine = () => {
   const closePosition = useCallback(async (orderId: string) => {
     try {
       await engine.closePosition(orderId);
+      await closeDbPosition(orderId); // Sync to database
       
       toast({
         title: "Position Closed",
@@ -186,7 +196,7 @@ export const useTradingEngine = () => {
         variant: "destructive"
       });
     }
-  }, [engine, toast]);
+  }, [engine, closeDbPosition, toast]);
 
   const closeAllPositions = useCallback(async () => {
     try {

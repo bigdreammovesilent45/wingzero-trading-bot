@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BotMetrics from "@/components/wingzero/BotMetrics";
 import TradeHistory from "@/components/wingzero/TradeHistory";
 import ControlPanel from "@/components/wingzero/ControlPanel";
+import LivePositions from "@/components/wingzero/LivePositions";
 import { ArrowLeft, Zap } from "lucide-react";
 
 const WingZeroDashboardPage = () => {
@@ -36,12 +37,17 @@ const WingZeroDashboardPage = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="positions" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="positions">Live Positions</TabsTrigger>
             <TabsTrigger value="metrics">Bot Metrics</TabsTrigger>
             <TabsTrigger value="trades">Trade History</TabsTrigger>
             <TabsTrigger value="control">Control Panel</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="positions" className="space-y-6">
+            <LivePositions />
+          </TabsContent>
           
           <TabsContent value="metrics" className="space-y-6">
             <BotMetrics />

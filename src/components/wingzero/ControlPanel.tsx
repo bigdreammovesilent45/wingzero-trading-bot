@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target, Wifi, WifiOff, AlertTriangle } from "lucide-react";
+import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target, Wifi, WifiOff, AlertTriangle, Database } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { useAccountData } from "@/hooks/useAccountData";
+import { useWingZeroPositions } from "@/hooks/useWingZeroPositions";
+import { supabase } from '@/integrations/supabase/client';
 
 interface StrategyConfig {
   // Risk Management
@@ -66,6 +68,10 @@ const ControlPanel = () => {
   
   // MT5 account data
   const { account, isLoading: accountLoading, error: accountError } = useAccountData();
+  
+  // Wing Zero positions for database sync
+  const { syncMT5Position } = useWingZeroPositions();
+  const [isTestingDb, setIsTestingDb] = useState(false);
   
   const [strategyConfig, setStrategyConfig] = useLocalStorage<StrategyConfig>('wingzero-strategy', {
     maxRiskPerTrade: 1.5,
@@ -140,6 +146,81 @@ const ControlPanel = () => {
 
   const updateStrategyConfig = (updates: Partial<StrategyConfig>) => {
     setStrategyConfig(prev => ({ ...prev, ...updates }));
+  };
+
+  const testWingZeroDatabase = async () => {
+    setIsTestingDb(true);
+    
+    try {
+      console.log("Testing Wing Zero database connection...");
+      
+      // Test creating a sample position to check table structure
+      const testPosition = {
+        symbol: "EURUSD",
+        position_type: "buy" as const,
+        volume: 0.1,
+        open_price: 1.085,
+        current_price: 1.086,
+        unrealized_pnl: 10,
+        stop_loss: 1.08,
+        take_profit: 1.09,
+        opened_at: new Date().toISOString(),
+        order_id: `test-${Date.now()}`,
+        ticket: Math.floor(Math.random() * 1000000),
+        commission: 0.5,
+        swap: 0,
+        comment: "WingZero Test Position",
+        status: "open" as const,
+        user_id: null
+      };
+      
+      console.log("Creating test position with data:", testPosition);
+      
+      const { data, error } = await supabase
+        .from('wingzero_positions')
+        .insert(testPosition)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Database error:", error);
+        
+        if (error.code === '42P01') {
+          // Table doesn't exist
+          toast({
+            title: "Table Missing",
+            description: "wingzero_positions table doesn't exist. Please create it in Supabase.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        throw error;
+      }
+      
+      console.log("Test position created successfully:", data);
+      
+      // Clean up test position
+      await supabase
+        .from('wingzero_positions')
+        .delete()
+        .eq('id', data.id);
+      
+      toast({
+        title: "Wing Zero Database Test Successful",
+        description: "Real-time position sync is ready!",
+      });
+      
+    } catch (error: any) {
+      console.error("Database test failed:", error);
+      toast({
+        title: "Database Test Failed",
+        description: error.message || "Failed to connect to Wing Zero database",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTestingDb(false);
+    }
   };
 
   const calculateExpectedWinRate = () => {
@@ -290,6 +371,28 @@ const ControlPanel = () => {
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset to Optimal
+            </Button>
+          </div>
+
+          {/* Database Test Button */}
+          <div className="mt-4">
+            <Button
+              onClick={testWingZeroDatabase}
+              disabled={isTestingDb}
+              variant="outline"
+              className="w-full border-[#00AEEF]/20 hover:border-[#00AEEF]/40 hover:bg-[#00AEEF]/10"
+            >
+              {isTestingDb ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#00AEEF] mr-2"></div>
+                  Testing Wing Zero Database...
+                </>
+              ) : (
+                <>
+                  <Database className="h-4 w-4 mr-2" />
+                  Test Wing Zero Database
+                </>
+              )}
             </Button>
           </div>
 
