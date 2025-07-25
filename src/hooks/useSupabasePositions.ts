@@ -28,15 +28,12 @@ export const useSupabasePositions = () => {
       setIsLoading(true);
       setError(null);
       
-      // First, let's try without ordering to see if basic connection works
       const { data, error: fetchError } = await supabase
         .from('positions')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      
-      console.log("Positions data:", data);
-      console.log("Columns in data:", data && data.length > 0 ? Object.keys(data[0]) : "No data");
       
       setPositions(data || []);
     } catch (err) {
