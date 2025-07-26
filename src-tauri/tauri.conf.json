@@ -1,0 +1,47 @@
+{
+  "productName": "Wing Zero X SAW",
+  "version": "1.0.0",
+  "identifier": "app.wingzero.saw",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:8080",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Wing Zero X SAW",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "maximized": false,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "fullscreen": false,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "Wing Zero",
+    "copyright": "© 2024 Wing Zero. All rights reserved.",
+    "category": "Finance",
+    "shortDescription": "Advanced Trading Platform",
+    "longDescription": "Wing Zero X SAW - Advanced AI-powered trading platform with real-time market analysis and automated trading capabilities."
+  }
+}
