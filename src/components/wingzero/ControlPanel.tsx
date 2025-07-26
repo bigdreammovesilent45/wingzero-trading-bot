@@ -17,38 +17,44 @@ import { useWingZeroPositions } from "@/hooks/useWingZeroPositions";
 import { supabase } from '@/integrations/supabase/client';
 
 interface StrategyConfig {
-  // Risk Management
-  maxRiskPerTrade: number;
-  maxDailyLoss: number;
-  trailingStopEnabled: boolean;
-  trailingStopDistance: number;
+  // Dual Mode Settings
+  dualModeEnabled: boolean;
+  aggressiveAllocation: number; // % of balance for aggressive trading
+  passiveAllocation: number;    // % of balance for passive income
   
-  // Entry/Exit Settings
-  takeProfitPips: number;
-  stopLossPips: number;
-  riskRewardRatio: number;
-  
-  // Signal Filtering
-  confluenceRequired: boolean;
-  minSignalStrength: number;
-  trendFilterEnabled: boolean;
-  momentumFilterEnabled: boolean;
-  
-  // Time Filters
-  avoidLowVolatility: boolean;
-  avoidNews: boolean;
-  tradingSessionFilter: string;
-  
-  // Position Sizing
-  dynamicSizing: boolean;
-  kellyCriterion: boolean;
-  maxPositionSize: number;
-
   // Passive Income Settings
+  passiveMaxRiskPerTrade: number;
+  passiveMaxDailyLoss: number;
+  passiveTakeProfitPips: number;
+  passiveStopLossPips: number;
+  passiveMinSignalStrength: number;
   monthlyTargetPercent: number;
   autoCompounding: boolean;
   emergencyStopLoss: number;
-  maxConcurrentTrades: number;
+  maxPassiveTrades: number;
+  
+  // Aggressive Trading Settings
+  aggressiveMaxRiskPerTrade: number;
+  aggressiveMaxDailyLoss: number;
+  aggressiveTakeProfitPips: number;
+  aggressiveStopLossPips: number;
+  aggressiveMinSignalStrength: number;
+  scalping: boolean;
+  newsTrading: boolean;
+  highFrequencyMode: boolean;
+  maxAggressiveTrades: number;
+  aiEnhancedSignals: boolean;
+  
+  // Shared Settings
+  trailingStopEnabled: boolean;
+  trailingStopDistance: number;
+  riskRewardRatio: number;
+  confluenceRequired: boolean;
+  trendFilterEnabled: boolean;
+  momentumFilterEnabled: boolean;
+  tradingSessionFilter: string;
+  dynamicSizing: boolean;
+  kellyCriterion: boolean;
 }
 
 const ControlPanel = () => {
@@ -57,6 +63,8 @@ const ControlPanel = () => {
   const [autoTrading, setAutoTrading] = useState(true);
   const [riskManagement, setRiskManagement] = useState(true);
   const [passiveIncomeMode, setPassiveIncomeMode] = useState(true);
+  const [aggressiveMode, setAggressiveMode] = useState(true);
+  const [dualMode, setDualMode] = useState(true);
   
   // Trading engine integration
   const {
@@ -80,27 +88,44 @@ const ControlPanel = () => {
   const [isTestingDb, setIsTestingDb] = useState(false);
   
   const [strategyConfig, setStrategyConfig] = useLocalStorage<StrategyConfig>('wingzero-strategy', {
-    maxRiskPerTrade: 1.0,
-    maxDailyLoss: 3,
-    trailingStopEnabled: true,
-    trailingStopDistance: 15,
-    takeProfitPips: 50,
-    stopLossPips: 20,
-    riskRewardRatio: 2.5,
-    confluenceRequired: true,
-    minSignalStrength: 80,
-    trendFilterEnabled: true,
-    momentumFilterEnabled: true,
-    avoidLowVolatility: true,
-    avoidNews: true,
-    tradingSessionFilter: 'london-ny-overlap',
-    dynamicSizing: true,
-    kellyCriterion: true,
-    maxPositionSize: 2.0,
+    // Dual Mode
+    dualModeEnabled: true,
+    aggressiveAllocation: 30, // 30% for aggressive
+    passiveAllocation: 70,    // 70% for passive income
+    
+    // Passive Income (Conservative)
+    passiveMaxRiskPerTrade: 1.0,
+    passiveMaxDailyLoss: 3,
+    passiveTakeProfitPips: 50,
+    passiveStopLossPips: 20,
+    passiveMinSignalStrength: 80,
     monthlyTargetPercent: 8,
     autoCompounding: true,
     emergencyStopLoss: 10,
-    maxConcurrentTrades: 3
+    maxPassiveTrades: 3,
+    
+    // Aggressive Trading (High Performance)
+    aggressiveMaxRiskPerTrade: 3.0,
+    aggressiveMaxDailyLoss: 8,
+    aggressiveTakeProfitPips: 25,
+    aggressiveStopLossPips: 10,
+    aggressiveMinSignalStrength: 65,
+    scalping: true,
+    newsTrading: true,
+    highFrequencyMode: true,
+    maxAggressiveTrades: 8,
+    aiEnhancedSignals: true,
+    
+    // Shared Settings
+    trailingStopEnabled: true,
+    trailingStopDistance: 15,
+    riskRewardRatio: 2.5,
+    confluenceRequired: true,
+    trendFilterEnabled: true,
+    momentumFilterEnabled: true,
+    tradingSessionFilter: 'all',
+    dynamicSizing: true,
+    kellyCriterion: true
   });
 
   const handleStart = async () => {
@@ -116,7 +141,7 @@ const ControlPanel = () => {
     if (!riskManagement) {
       toast({
         title: "Risk Management Required",
-        description: "Risk management must be enabled for passive income trading",
+        description: "Risk management must be enabled for all trading modes",
         variant: "destructive"
       });
       return;
@@ -124,13 +149,17 @@ const ControlPanel = () => {
     
     await startEngine();
     
-    if (passiveIncomeMode) {
-      toast({
-        title: "🚀 Wing Zero Activated",
-        description: `Passive income mode started. Target: ${strategyConfig.monthlyTargetPercent}% monthly return`,
-        duration: 5000
-      });
-    }
+    const modeDescription = dualMode 
+      ? `Dual Mode: ${strategyConfig.aggressiveAllocation}% aggressive, ${strategyConfig.passiveAllocation}% passive income`
+      : aggressiveMode 
+        ? "Aggressive trading mode activated - Maximum performance"
+        : `Passive income mode - Target: ${strategyConfig.monthlyTargetPercent}% monthly`;
+    
+    toast({
+      title: "🚀 Wing Zero Activated",
+      description: modeDescription,
+      duration: 5000
+    });
   };
 
   const handleStop = async () => {
@@ -143,31 +172,48 @@ const ControlPanel = () => {
 
   const handleReset = () => {
     toast({
-      title: "Strategy Reset to Family-Safe Defaults",
-      description: "Conservative settings optimized for consistent passive income",
+      title: "Strategy Reset to Optimal Dual-Mode",
+      description: "Balanced settings for both aggressive trading and passive income",
     });
     setStrategyConfig({
-      maxRiskPerTrade: 1.0,
-      maxDailyLoss: 3,
-      trailingStopEnabled: true,
-      trailingStopDistance: 15,
-      takeProfitPips: 50,
-      stopLossPips: 20,
-      riskRewardRatio: 2.5,
-      confluenceRequired: true,
-      minSignalStrength: 80,
-      trendFilterEnabled: true,
-      momentumFilterEnabled: true,
-      avoidLowVolatility: true,
-      avoidNews: true,
-      tradingSessionFilter: 'london-ny-overlap',
-      dynamicSizing: true,
-      kellyCriterion: true,
-      maxPositionSize: 2.0,
+      // Dual Mode
+      dualModeEnabled: true,
+      aggressiveAllocation: 30,
+      passiveAllocation: 70,
+      
+      // Passive Income (Conservative)
+      passiveMaxRiskPerTrade: 1.0,
+      passiveMaxDailyLoss: 3,
+      passiveTakeProfitPips: 50,
+      passiveStopLossPips: 20,
+      passiveMinSignalStrength: 80,
       monthlyTargetPercent: 8,
       autoCompounding: true,
       emergencyStopLoss: 10,
-      maxConcurrentTrades: 3
+      maxPassiveTrades: 3,
+      
+      // Aggressive Trading (High Performance)
+      aggressiveMaxRiskPerTrade: 3.0,
+      aggressiveMaxDailyLoss: 8,
+      aggressiveTakeProfitPips: 25,
+      aggressiveStopLossPips: 10,
+      aggressiveMinSignalStrength: 65,
+      scalping: true,
+      newsTrading: true,
+      highFrequencyMode: true,
+      maxAggressiveTrades: 8,
+      aiEnhancedSignals: true,
+      
+      // Shared Settings
+      trailingStopEnabled: true,
+      trailingStopDistance: 15,
+      riskRewardRatio: 2.5,
+      confluenceRequired: true,
+      trendFilterEnabled: true,
+      momentumFilterEnabled: true,
+      tradingSessionFilter: 'all',
+      dynamicSizing: true,
+      kellyCriterion: true
     });
   };
 
@@ -248,80 +294,130 @@ const ControlPanel = () => {
     }
   };
 
-  const calculateMonthlyProjection = () => {
-    if (!account) return { projected: 0, daily: 0 };
+  const calculateProjections = () => {
+    if (!account) return { passive: { projected: 0, daily: 0 }, aggressive: { projected: 0, daily: 0 }, total: { projected: 0, daily: 0 } };
     
     const balance = account.balance;
-    const monthlyTarget = (strategyConfig.monthlyTargetPercent / 100) * balance;
-    const dailyTarget = monthlyTarget / 30;
+    const passiveBalance = balance * (strategyConfig.passiveAllocation / 100);
+    const aggressiveBalance = balance * (strategyConfig.aggressiveAllocation / 100);
+    
+    // Passive income projections
+    const passiveMonthly = (strategyConfig.monthlyTargetPercent / 100) * passiveBalance;
+    const passiveDaily = passiveMonthly / 30;
+    
+    // Aggressive trading projections (higher volatility, higher potential)
+    const aggressiveMonthly = (15 / 100) * aggressiveBalance; // 15% monthly target for aggressive
+    const aggressiveDaily = aggressiveMonthly / 30;
     
     return {
-      projected: monthlyTarget,
-      daily: dailyTarget
+      passive: { projected: passiveMonthly, daily: passiveDaily },
+      aggressive: { projected: aggressiveMonthly, daily: aggressiveDaily },
+      total: { projected: passiveMonthly + aggressiveMonthly, daily: passiveDaily + aggressiveDaily }
     };
   };
 
   const calculateExpectedWinRate = () => {
-    let baseRate = 72;
+    // Base rates for different modes
+    let passiveRate = 75; // Conservative base
+    let aggressiveRate = 68; // More volatile but higher volume
     
-    // Conservative adjustments for family wealth preservation
-    if (strategyConfig.confluenceRequired) baseRate += 4;
-    if (strategyConfig.minSignalStrength >= 80) baseRate += 3;
-    if (strategyConfig.trendFilterEnabled && strategyConfig.momentumFilterEnabled) baseRate += 3;
-    if (strategyConfig.avoidLowVolatility && strategyConfig.avoidNews) baseRate += 2;
-    if (strategyConfig.riskRewardRatio >= 2.5) baseRate += 2;
-    if (strategyConfig.trailingStopEnabled) baseRate += 1;
+    // Passive mode adjustments
+    if (strategyConfig.confluenceRequired) passiveRate += 3;
+    if (strategyConfig.passiveMinSignalStrength >= 80) passiveRate += 3;
+    if (strategyConfig.trendFilterEnabled && strategyConfig.momentumFilterEnabled) passiveRate += 2;
+    if (strategyConfig.trailingStopEnabled) passiveRate += 1;
     
-    return Math.min(baseRate, 87);
+    // Aggressive mode adjustments
+    if (strategyConfig.aiEnhancedSignals) aggressiveRate += 5;
+    if (strategyConfig.scalping) aggressiveRate += 2;
+    if (strategyConfig.newsTrading) aggressiveRate += 3;
+    if (strategyConfig.highFrequencyMode) aggressiveRate += 2;
+    if (strategyConfig.confluenceRequired) aggressiveRate += 2;
+    
+    // Combined rate based on allocation
+    const combinedRate = (passiveRate * strategyConfig.passiveAllocation + aggressiveRate * strategyConfig.aggressiveAllocation) / 100;
+    
+    return {
+      passive: Math.min(passiveRate, 88),
+      aggressive: Math.min(aggressiveRate, 82),
+      combined: Math.min(combinedRate, 85)
+    };
   };
 
-  const projections = calculateMonthlyProjection();
+  const projections = calculateProjections();
+  const winRates = calculateExpectedWinRate();
 
   return (
     <div className="space-y-6">
-      {/* Passive Income Status Card */}
-      <Card className="border-[#00AEEF]/30 bg-gradient-to-r from-[#00AEEF]/10 via-[#00AEEF]/5 to-transparent">
+      {/* Dual Mode Status Card */}
+      <Card className="border-[#00AEEF]/30 bg-gradient-to-r from-[#00AEEF]/10 via-red-500/5 to-green-500/5">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-[#00AEEF]/20 rounded-full">
-                <DollarSign className="h-6 w-6 text-[#00AEEF]" />
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#00AEEF]/20 to-red-500/20 rounded-full">
+                <Zap className="h-6 w-6 text-[#00AEEF]" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-[#00AEEF]">Family Wealth Builder Active</h3>
-                <p className="text-sm text-muted-foreground">Conservative settings for generational wealth</p>
+                <h3 className="text-xl font-bold text-[#00AEEF]">
+                  {dualMode ? "Dual-Mode Active" : aggressiveMode ? "Aggressive Mode" : "Passive Mode"}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {dualMode 
+                    ? "AI-enhanced aggressive trading + family wealth building"
+                    : aggressiveMode 
+                      ? "Maximum performance trading with AI enhancement"
+                      : "Conservative family wealth building"
+                  }
+                </p>
               </div>
             </div>
             <div className="text-right space-y-1">
               <div className="text-3xl font-bold text-[#00AEEF]">
-                {calculateExpectedWinRate()}%
+                {dualMode ? winRates.combined.toFixed(1) : aggressiveMode ? winRates.aggressive.toFixed(1) : winRates.passive.toFixed(1)}%
               </div>
               <p className="text-xs text-muted-foreground">Expected Win Rate</p>
               <Badge variant="secondary" className="text-xs">
-                Family-Safe Strategy
+                {dualMode ? "Dual Strategy" : aggressiveMode ? "High Performance" : "Family-Safe"}
               </Badge>
             </div>
           </div>
           
           {account && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#00AEEF]/20">
-              <div className="text-center">
-                <div className="text-lg font-semibold text-[#00AEEF]">
-                  ${projections.daily.toFixed(2)}
+            <div className="mt-6 space-y-4">
+              {dualMode && (
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#00AEEF]/20">
+                  <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                    <div className="text-sm font-medium text-green-700 dark:text-green-300">Passive Income</div>
+                    <div className="text-lg font-bold text-green-600">${projections.passive.daily.toFixed(2)}/day</div>
+                    <div className="text-xs text-muted-foreground">{strategyConfig.passiveAllocation}% allocation</div>
+                  </div>
+                  <div className="text-center p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                    <div className="text-sm font-medium text-red-700 dark:text-red-300">Aggressive Trading</div>
+                    <div className="text-lg font-bold text-red-600">${projections.aggressive.daily.toFixed(2)}/day</div>
+                    <div className="text-xs text-muted-foreground">{strategyConfig.aggressiveAllocation}% allocation</div>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Daily Target</p>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-[#00AEEF]">
-                  ${projections.projected.toFixed(2)}
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-[#00AEEF]">
+                    ${projections.total.daily.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Daily Target</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Monthly Target</p>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-[#00AEEF]">
-                  ${(projections.projected * 12).toFixed(2)}
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-[#00AEEF]">
+                    ${projections.total.projected.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Monthly Target</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Annual Projection</p>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-[#00AEEF]">
+                    ${(projections.total.projected * 12).toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Annual Projection</p>
+                </div>
               </div>
             </div>
           )}
@@ -356,7 +452,7 @@ const ControlPanel = () => {
                     Today: ${account.profit.toFixed(2)}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Progress: {account.balance > 0 ? ((account.profit / projections.daily) * 100).toFixed(1) : 0}% of daily target
+                    Progress: {account.balance > 0 ? ((account.profit / projections.total.daily) * 100).toFixed(1) : 0}% of daily target
                   </div>
                 </div>
               )}
@@ -380,7 +476,7 @@ const ControlPanel = () => {
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Active Trades</div>
-                  <div className="font-semibold">{openPositions.length}/{strategyConfig.maxConcurrentTrades}</div>
+                  <div className="font-semibold">{openPositions.length}/{(strategyConfig.maxPassiveTrades || 3) + (strategyConfig.maxAggressiveTrades || 8)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Daily P&L</div>
@@ -397,8 +493,8 @@ const ControlPanel = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-[#00AEEF]" />
-            Wing Zero Control Center
+            <Settings className="h-5 w-5 text-[#00AEEF]" />
+            Advanced Trading Control Center
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -410,7 +506,7 @@ const ControlPanel = () => {
               className="bg-[#00AEEF] hover:bg-[#00AEEF]/80 text-black font-medium disabled:opacity-50"
             >
               <Play className="h-4 w-4 mr-2" />
-              {isRunning ? "Running" : "Start Income Generation"}
+              {isRunning ? "Running" : "Start Wing Zero"}
             </Button>
             <Button 
               onClick={handleStop}
@@ -427,7 +523,7 @@ const ControlPanel = () => {
               className="border-[#00AEEF]/20 hover:border-[#00AEEF]/40 hover:bg-[#00AEEF]/10"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Family-Safe Reset
+              Reset to Optimal
             </Button>
           </div>
 
@@ -457,20 +553,44 @@ const ControlPanel = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-base font-medium">Passive Income Mode</Label>
-                <p className="text-sm text-muted-foreground">Conservative settings for long-term wealth building</p>
+                <Label className="text-base font-medium">Dual Mode (Recommended)</Label>
+                <p className="text-sm text-muted-foreground">Run both aggressive trading + passive income simultaneously</p>
               </div>
               <Switch
-                checked={passiveIncomeMode}
-                onCheckedChange={setPassiveIncomeMode}
+                checked={dualMode}
+                onCheckedChange={setDualMode}
                 className="data-[state=checked]:bg-[#00AEEF]"
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
+                <Label className="text-base font-medium">Aggressive Trading Mode</Label>
+                <p className="text-sm text-muted-foreground">AI-enhanced high-frequency trading for maximum profits</p>
+              </div>
+              <Switch
+                checked={aggressiveMode}
+                onCheckedChange={setAggressiveMode}
+                className="data-[state=checked]:bg-red-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base font-medium">Passive Income Mode</Label>
+                <p className="text-sm text-muted-foreground">Conservative wealth building for family legacy</p>
+              </div>
+              <Switch
+                checked={passiveIncomeMode}
+                onCheckedChange={setPassiveIncomeMode}
+                className="data-[state=checked]:bg-green-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
                 <Label className="text-base font-medium">Auto Trading</Label>
-                <p className="text-sm text-muted-foreground">Fully automated trade execution</p>
+                <p className="text-sm text-muted-foreground">Fully automated execution - hands-free operation</p>
               </div>
               <Switch
                 checked={autoTrading}
@@ -482,27 +602,30 @@ const ControlPanel = () => {
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-base font-medium">Risk Management (Required)</Label>
-                <p className="text-sm text-muted-foreground">Essential protection for your family's wealth</p>
+                <p className="text-sm text-muted-foreground">Essential protection for all trading modes</p>
               </div>
               <Switch
                 checked={riskManagement}
                 onCheckedChange={setRiskManagement}
                 className="data-[state=checked]:bg-[#00AEEF]"
-                disabled={passiveIncomeMode}
               />
             </div>
           </div>
 
           {/* Strategy Configuration */}
-          <Tabs defaultValue="income" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="income" className="flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                Income
+          <Tabs defaultValue="allocation" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="allocation" className="flex items-center gap-1">
+                <Target className="h-3 w-3" />
+                Allocation
               </TabsTrigger>
-              <TabsTrigger value="risk" className="flex items-center gap-1">
-                <Shield className="h-3 w-3" />
-                Risk
+              <TabsTrigger value="passive" className="flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                Passive
+              </TabsTrigger>
+              <TabsTrigger value="aggressive" className="flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                Aggressive
               </TabsTrigger>
               <TabsTrigger value="signals" className="flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
@@ -514,38 +637,45 @@ const ControlPanel = () => {
               </TabsTrigger>
             </TabsList>
 
-            {/* Income Settings */}
-            <TabsContent value="income" className="space-y-4">
+            {/* Capital Allocation */}
+            <TabsContent value="allocation" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label>Monthly Target: {strategyConfig.monthlyTargetPercent}%</Label>
+                  <Label>Aggressive Trading Allocation: {strategyConfig.aggressiveAllocation}%</Label>
                   <Slider
-                    value={[strategyConfig.monthlyTargetPercent]}
-                    onValueChange={(value) => updateStrategyConfig({ monthlyTargetPercent: value[0] })}
-                    max={15}
-                    min={3}
-                    step={0.5}
+                    value={[strategyConfig.aggressiveAllocation]}
+                    onValueChange={(value) => updateStrategyConfig({ 
+                      aggressiveAllocation: value[0], 
+                      passiveAllocation: 100 - value[0] 
+                    })}
+                    max={70}
+                    min={10}
+                    step={5}
                     className="w-full"
                   />
-                  <p className="text-xs text-muted-foreground">Conservative: 3-8%, Moderate: 8-12%, Aggressive: 12-15%</p>
+                  <p className="text-xs text-muted-foreground">Higher allocation = more aggressive profits, higher risk</p>
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Max Concurrent Trades: {strategyConfig.maxConcurrentTrades}</Label>
+                  <Label>Passive Income Allocation: {strategyConfig.passiveAllocation}%</Label>
                   <Slider
-                    value={[strategyConfig.maxConcurrentTrades]}
-                    onValueChange={(value) => updateStrategyConfig({ maxConcurrentTrades: value[0] })}
-                    max={5}
-                    min={1}
-                    step={1}
+                    value={[strategyConfig.passiveAllocation]}
+                    onValueChange={(value) => updateStrategyConfig({ 
+                      passiveAllocation: value[0], 
+                      aggressiveAllocation: 100 - value[0] 
+                    })}
+                    max={90}
+                    min={30}
+                    step={5}
                     className="w-full"
                   />
+                  <p className="text-xs text-muted-foreground">Stable, consistent returns for wealth preservation</p>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Auto-Compounding</Label>
-                    <p className="text-xs text-muted-foreground">Reinvest profits for exponential growth</p>
+                    <p className="text-xs text-muted-foreground">Reinvest profits automatically</p>
                   </div>
                   <Switch
                     checked={strategyConfig.autoCompounding}
@@ -564,58 +694,196 @@ const ControlPanel = () => {
                     step={1}
                     className="w-full"
                   />
-                  <p className="text-xs text-muted-foreground">Maximum account drawdown before stopping</p>
+                  <p className="text-xs text-muted-foreground">Ultimate protection - stops everything</p>
                 </div>
               </div>
             </TabsContent>
 
-            {/* Risk Management */}
-            <TabsContent value="risk" className="space-y-4">
+            {/* Passive Income Settings */}
+            <TabsContent value="passive" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label>Risk per Trade: {strategyConfig.maxRiskPerTrade}%</Label>
+                  <Label>Monthly Target: {strategyConfig.monthlyTargetPercent}%</Label>
                   <Slider
-                    value={[strategyConfig.maxRiskPerTrade]}
-                    onValueChange={(value) => updateStrategyConfig({ maxRiskPerTrade: value[0] })}
+                    value={[strategyConfig.monthlyTargetPercent]}
+                    onValueChange={(value) => updateStrategyConfig({ monthlyTargetPercent: value[0] })}
+                    max={15}
+                    min={3}
+                    step={0.5}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">Conservative: 3-8%, Moderate: 8-12%, Aggressive: 12-15%</p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Max Passive Trades: {strategyConfig.maxPassiveTrades}</Label>
+                  <Slider
+                    value={[strategyConfig.maxPassiveTrades]}
+                    onValueChange={(value) => updateStrategyConfig({ maxPassiveTrades: value[0] })}
+                    max={8}
+                    min={1}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Passive Risk per Trade: {strategyConfig.passiveMaxRiskPerTrade}%</Label>
+                  <Slider
+                    value={[strategyConfig.passiveMaxRiskPerTrade]}
+                    onValueChange={(value) => updateStrategyConfig({ passiveMaxRiskPerTrade: value[0] })}
                     max={3}
                     min={0.5}
                     step={0.1}
                     className="w-full"
                   />
-                  <p className="text-xs text-muted-foreground">Recommended: 1-2% for family wealth preservation</p>
+                  <p className="text-xs text-muted-foreground">Conservative risk for family wealth</p>
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Max Daily Loss: {strategyConfig.maxDailyLoss}%</Label>
+                  <Label>Passive Signal Strength: {strategyConfig.passiveMinSignalStrength}%</Label>
                   <Slider
-                    value={[strategyConfig.maxDailyLoss]}
-                    onValueChange={(value) => updateStrategyConfig({ maxDailyLoss: value[0] })}
-                    max={10}
+                    value={[strategyConfig.passiveMinSignalStrength]}
+                    onValueChange={(value) => updateStrategyConfig({ passiveMinSignalStrength: value[0] })}
+                    max={95}
+                    min={60}
+                    step={5}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">Higher = more selective, safer trades</p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Aggressive Trading Settings */}
+            <TabsContent value="aggressive" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label>Max Aggressive Trades: {strategyConfig.maxAggressiveTrades}</Label>
+                  <Slider
+                    value={[strategyConfig.maxAggressiveTrades]}
+                    onValueChange={(value) => updateStrategyConfig({ maxAggressiveTrades: value[0] })}
+                    max={15}
+                    min={3}
+                    step={1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">Higher = more opportunities, more activity</p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Aggressive Risk per Trade: {strategyConfig.aggressiveMaxRiskPerTrade}%</Label>
+                  <Slider
+                    value={[strategyConfig.aggressiveMaxRiskPerTrade]}
+                    onValueChange={(value) => updateStrategyConfig({ aggressiveMaxRiskPerTrade: value[0] })}
+                    max={8}
                     min={1}
                     step={0.5}
                     className="w-full"
                   />
+                  <p className="text-xs text-muted-foreground">Higher risk = higher reward potential</p>
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Stop Loss: {strategyConfig.stopLossPips} pips</Label>
+                  <Label>Aggressive Signal Strength: {strategyConfig.aggressiveMinSignalStrength}%</Label>
                   <Slider
-                    value={[strategyConfig.stopLossPips]}
-                    onValueChange={(value) => updateStrategyConfig({ stopLossPips: value[0] })}
+                    value={[strategyConfig.aggressiveMinSignalStrength]}
+                    onValueChange={(value) => updateStrategyConfig({ aggressiveMinSignalStrength: value[0] })}
+                    max={85}
+                    min={50}
+                    step={5}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">Lower = more trades, higher frequency</p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Take Profit: {strategyConfig.aggressiveTakeProfitPips} pips</Label>
+                  <Slider
+                    value={[strategyConfig.aggressiveTakeProfitPips]}
+                    onValueChange={(value) => updateStrategyConfig({ aggressiveTakeProfitPips: value[0] })}
                     max={50}
                     min={10}
                     step={5}
                     className="w-full"
                   />
+                  <p className="text-xs text-muted-foreground">Quick profits for high-frequency trading</p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>AI Enhanced Signals</Label>
+                    <p className="text-xs text-muted-foreground">Smarter than world's best traders</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.aiEnhancedSignals}
+                    onCheckedChange={(checked) => updateStrategyConfig({ aiEnhancedSignals: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Scalping Mode</Label>
+                    <p className="text-xs text-muted-foreground">Quick in-and-out trades</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.scalping}
+                    onCheckedChange={(checked) => updateStrategyConfig({ scalping: checked })}
+                    className="data-[state=checked]:bg-red-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>News Trading</Label>
+                    <p className="text-xs text-muted-foreground">Capitalize on volatility spikes</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.newsTrading}
+                    onCheckedChange={(checked) => updateStrategyConfig({ newsTrading: checked })}
+                    className="data-[state=checked]:bg-yellow-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>High Frequency Mode</Label>
+                    <p className="text-xs text-muted-foreground">Maximum trading speed</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.highFrequencyMode}
+                    onCheckedChange={(checked) => updateStrategyConfig({ highFrequencyMode: checked })}
+                    className="data-[state=checked]:bg-purple-500"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+
+            {/* Signal Filtering */}
+            <TabsContent value="signals" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label>Risk/Reward Ratio: {strategyConfig.riskRewardRatio.toFixed(1)}:1</Label>
+                  <Slider
+                    value={[strategyConfig.riskRewardRatio]}
+                    onValueChange={(value) => updateStrategyConfig({ riskRewardRatio: value[0] })}
+                    max={5}
+                    min={1.5}
+                    step={0.1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">Higher = bigger wins per trade</p>
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Take Profit: {strategyConfig.takeProfitPips} pips</Label>
+                  <Label>Trailing Stop Distance: {strategyConfig.trailingStopDistance} pips</Label>
                   <Slider
-                    value={[strategyConfig.takeProfitPips]}
-                    onValueChange={(value) => updateStrategyConfig({ takeProfitPips: value[0] })}
-                    max={100}
-                    min={20}
+                    value={[strategyConfig.trailingStopDistance]}
+                    onValueChange={(value) => updateStrategyConfig({ trailingStopDistance: value[0] })}
+                    max={30}
+                    min={5}
                     step={5}
                     className="w-full"
                   />
@@ -632,41 +900,11 @@ const ControlPanel = () => {
                     className="data-[state=checked]:bg-[#00AEEF]"
                   />
                 </div>
-              </div>
-            </TabsContent>
-
-            {/* Signal Filtering */}
-            <TabsContent value="signals" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label>Signal Strength: {strategyConfig.minSignalStrength}%</Label>
-                  <Slider
-                    value={[strategyConfig.minSignalStrength]}
-                    onValueChange={(value) => updateStrategyConfig({ minSignalStrength: value[0] })}
-                    max={95}
-                    min={50}
-                    step={5}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">Higher = fewer but more reliable trades</p>
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Risk/Reward Ratio: {strategyConfig.riskRewardRatio.toFixed(1)}:1</Label>
-                  <Slider
-                    value={[strategyConfig.riskRewardRatio]}
-                    onValueChange={(value) => updateStrategyConfig({ riskRewardRatio: value[0] })}
-                    max={5}
-                    min={1.5}
-                    step={0.1}
-                    className="w-full"
-                  />
-                </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Confluence Required</Label>
-                    <p className="text-xs text-muted-foreground">Multiple confirmations</p>
+                    <p className="text-xs text-muted-foreground">Multiple signal confirmations</p>
                   </div>
                   <Switch
                     checked={strategyConfig.confluenceRequired}
@@ -678,11 +916,35 @@ const ControlPanel = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Trend Filter</Label>
-                    <p className="text-xs text-muted-foreground">Trade with the trend</p>
+                    <p className="text-xs text-muted-foreground">Trade with the dominant trend</p>
                   </div>
                   <Switch
                     checked={strategyConfig.trendFilterEnabled}
                     onCheckedChange={(checked) => updateStrategyConfig({ trendFilterEnabled: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Momentum Filter</Label>
+                    <p className="text-xs text-muted-foreground">Enhanced momentum detection</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.momentumFilterEnabled}
+                    onCheckedChange={(checked) => updateStrategyConfig({ momentumFilterEnabled: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Dynamic Position Sizing</Label>
+                    <p className="text-xs text-muted-foreground">Adaptive Kelly Criterion</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.dynamicSizing}
+                    onCheckedChange={(checked) => updateStrategyConfig({ dynamicSizing: checked })}
                     className="data-[state=checked]:bg-[#00AEEF]"
                   />
                 </div>
@@ -702,37 +964,57 @@ const ControlPanel = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Sessions</SelectItem>
-                      <SelectItem value="london">London Only</SelectItem>
-                      <SelectItem value="new-york">New York Only</SelectItem>
-                      <SelectItem value="london-ny-overlap">London-NY Overlap (Best)</SelectItem>
-                      <SelectItem value="tokyo">Tokyo Only</SelectItem>
+                      <SelectItem value="all">24/7 Trading (Aggressive)</SelectItem>
+                      <SelectItem value="london">London Session</SelectItem>
+                      <SelectItem value="new-york">New York Session</SelectItem>
+                      <SelectItem value="london-ny-overlap">London-NY Overlap (High Volume)</SelectItem>
+                      <SelectItem value="tokyo">Tokyo Session</SelectItem>
+                      <SelectItem value="sydney">Sydney Session</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">All sessions = maximum opportunities</p>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Avoid Low Volatility</Label>
-                    <p className="text-xs text-muted-foreground">Skip quiet market periods</p>
+                <div className="space-y-3">
+                  <Label>Daily Loss Limits</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Passive: {strategyConfig.passiveMaxDailyLoss}%</Label>
+                      <Slider
+                        value={[strategyConfig.passiveMaxDailyLoss]}
+                        onValueChange={(value) => updateStrategyConfig({ passiveMaxDailyLoss: value[0] })}
+                        max={10}
+                        min={1}
+                        step={0.5}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Aggressive: {strategyConfig.aggressiveMaxDailyLoss}%</Label>
+                      <Slider
+                        value={[strategyConfig.aggressiveMaxDailyLoss]}
+                        onValueChange={(value) => updateStrategyConfig({ aggressiveMaxDailyLoss: value[0] })}
+                        max={20}
+                        min={3}
+                        step={1}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
-                  <Switch
-                    checked={strategyConfig.avoidLowVolatility}
-                    onCheckedChange={(checked) => updateStrategyConfig({ avoidLowVolatility: checked })}
-                    className="data-[state=checked]:bg-[#00AEEF]"
-                  />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Avoid News Events</Label>
-                    <p className="text-xs text-muted-foreground">Prevent volatility spikes</p>
-                  </div>
-                  <Switch
-                    checked={strategyConfig.avoidNews}
-                    onCheckedChange={(checked) => updateStrategyConfig({ avoidNews: checked })}
-                    className="data-[state=checked]:bg-[#00AEEF]"
-                  />
+                <div className="col-span-2 grid grid-cols-2 gap-6">
+                  <Card className="p-4 bg-green-50 dark:bg-green-950/20">
+                    <h4 className="font-semibold text-green-700 dark:text-green-300 mb-2">Passive Mode Win Rate</h4>
+                    <div className="text-2xl font-bold text-green-600">{winRates.passive}%</div>
+                    <p className="text-xs text-muted-foreground">Conservative & Consistent</p>
+                  </Card>
+                  
+                  <Card className="p-4 bg-red-50 dark:bg-red-950/20">
+                    <h4 className="font-semibold text-red-700 dark:text-red-300 mb-2">Aggressive Mode Win Rate</h4>
+                    <div className="text-2xl font-bold text-red-600">{winRates.aggressive}%</div>
+                    <p className="text-xs text-muted-foreground">High Volume & AI Enhanced</p>
+                  </Card>
                 </div>
               </div>
             </TabsContent>
