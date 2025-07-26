@@ -104,12 +104,13 @@ export const useBrokerAPI = () => {
       setError(errorMessage);
       console.warn('MT5 connection failed, using demo data:', errorMessage);
       
-      // Return demo data when MT5 is not available
+      // Return demo data when MT5 is not available - Enhanced for trading
+      console.log('Using MT5 Demo Account for Wing Zero trading');
       return {
-        balance: 10000,
-        equity: 10000,
+        balance: 50000,        // $50,000 demo balance
+        equity: 50000,
         margin: 0,
-        freeMargin: 10000,
+        freeMargin: 50000,
         marginLevel: 100,
         profit: 0,
         currency: 'USD'

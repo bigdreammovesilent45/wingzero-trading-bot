@@ -1,16 +1,28 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Vault, Zap } from "lucide-react";
+import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
 
 const Index = () => {
+  // Auto-start trading system when app loads
+  const { hasAutoStarted } = useAutoStartTrading();
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-4xl mx-auto px-6 text-center">
         <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Trading Command Center
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Trading Command Center
+            </h1>
+            {hasAutoStarted && (
+              <Badge variant="default" className="bg-green-500 animate-pulse">
+                🚀 Live Trading
+              </Badge>
+            )}
+          </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Professional trading automation suite with S.A.W. middleware and Wing Zero bot control
           </p>

@@ -8,8 +8,11 @@ import ControlPanel from "@/components/wingzero/ControlPanel";
 import LivePositions from "@/components/wingzero/LivePositions";
 import PassiveIncomeTracker from "@/components/wingzero/PassiveIncomeTracker";
 import { ArrowLeft, Zap } from "lucide-react";
+import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
 
 const WingZeroDashboardPage = () => {
+  // Auto-start trading when page loads
+  useAutoStartTrading();
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
