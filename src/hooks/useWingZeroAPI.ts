@@ -277,12 +277,13 @@ export const useWingZeroAPI = () => {
     setIsConnected(false);
   }, [setConfig]);
 
-  // Auto-test connection when config changes
+  // Auto-test connection when config changes (only for mock mode)
   useEffect(() => {
-    if (config && !isConnected) {
+    if (config && !isConnected && useMockData) {
+      console.log('🔧 Auto-testing Wing Zero connection in mock mode...');
       testConnection();
     }
-  }, [config, isConnected, testConnection]);
+  }, [config, isConnected, useMockData, testConnection]);
 
   return {
     // State

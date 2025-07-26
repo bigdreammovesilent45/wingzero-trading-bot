@@ -7,6 +7,7 @@ import TradeHistory from "@/components/wingzero/TradeHistory";
 import ControlPanel from "@/components/wingzero/ControlPanel";
 import LivePositions from "@/components/wingzero/LivePositions";
 import PassiveIncomeTracker from "@/components/wingzero/PassiveIncomeTracker";
+import { ConnectionStatus } from "@/components/wingzero/ConnectionStatus";
 import { ArrowLeft, Zap } from "lucide-react";
 import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
 
@@ -55,7 +56,14 @@ const WingZeroDashboardPage = () => {
           </TabsContent>
           
           <TabsContent value="control" className="space-y-6">
-            <ControlPanel />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <ControlPanel />
+              </div>
+              <div>
+                <ConnectionStatus />
+              </div>
+            </div>
           </TabsContent>
           
           <TabsContent value="positions" className="space-y-6">

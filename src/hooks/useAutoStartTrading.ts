@@ -15,6 +15,9 @@ export const useAutoStartTrading = () => {
       if (isConfigured && isOperational && !isRunning && !hasAutoStarted) {
         console.log('🚀 Auto-starting Wing Zero trading on demo account...');
         
+        // Add a longer delay for initial setup
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
         try {
           await startEngine();
           setHasAutoStarted(true);
@@ -37,8 +40,8 @@ export const useAutoStartTrading = () => {
       }
     };
 
-    // Small delay to ensure all hooks are initialized
-    const timer = setTimeout(autoStartTrading, 2000);
+    // Longer delay to ensure all systems are ready
+    const timer = setTimeout(autoStartTrading, 5000);
     return () => clearTimeout(timer);
   }, [isConfigured, isOperational, isRunning, hasAutoStarted, startEngine, toast]);
 
