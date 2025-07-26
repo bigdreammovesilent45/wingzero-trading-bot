@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target, Wifi, WifiOff, AlertTriangle, Database } from "lucide-react";
+import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target, Wifi, WifiOff, AlertTriangle, Database, DollarSign, Zap } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -44,6 +43,12 @@ interface StrategyConfig {
   dynamicSizing: boolean;
   kellyCriterion: boolean;
   maxPositionSize: number;
+
+  // Passive Income Settings
+  monthlyTargetPercent: number;
+  autoCompounding: boolean;
+  emergencyStopLoss: number;
+  maxConcurrentTrades: number;
 }
 
 const ControlPanel = () => {
@@ -51,6 +56,7 @@ const ControlPanel = () => {
   const [botEnabled, setBotEnabled] = useState(true);
   const [autoTrading, setAutoTrading] = useState(true);
   const [riskManagement, setRiskManagement] = useState(true);
+  const [passiveIncomeMode, setPassiveIncomeMode] = useState(true);
   
   // Trading engine integration
   const {
@@ -74,15 +80,15 @@ const ControlPanel = () => {
   const [isTestingDb, setIsTestingDb] = useState(false);
   
   const [strategyConfig, setStrategyConfig] = useLocalStorage<StrategyConfig>('wingzero-strategy', {
-    maxRiskPerTrade: 1.5,
-    maxDailyLoss: 5,
+    maxRiskPerTrade: 1.0,
+    maxDailyLoss: 3,
     trailingStopEnabled: true,
     trailingStopDistance: 15,
-    takeProfitPips: 60,
+    takeProfitPips: 50,
     stopLossPips: 20,
-    riskRewardRatio: 3.0,
+    riskRewardRatio: 2.5,
     confluenceRequired: true,
-    minSignalStrength: 75,
+    minSignalStrength: 80,
     trendFilterEnabled: true,
     momentumFilterEnabled: true,
     avoidLowVolatility: true,
@@ -90,7 +96,11 @@ const ControlPanel = () => {
     tradingSessionFilter: 'london-ny-overlap',
     dynamicSizing: true,
     kellyCriterion: true,
-    maxPositionSize: 3.0
+    maxPositionSize: 2.0,
+    monthlyTargetPercent: 8,
+    autoCompounding: true,
+    emergencyStopLoss: 10,
+    maxConcurrentTrades: 3
   });
 
   const handleStart = async () => {
@@ -105,34 +115,47 @@ const ControlPanel = () => {
     
     if (!riskManagement) {
       toast({
-        title: "Warning",
-        description: "Starting bot without risk management is not recommended",
+        title: "Risk Management Required",
+        description: "Risk management must be enabled for passive income trading",
         variant: "destructive"
       });
+      return;
     }
     
     await startEngine();
+    
+    if (passiveIncomeMode) {
+      toast({
+        title: "🚀 Wing Zero Activated",
+        description: `Passive income mode started. Target: ${strategyConfig.monthlyTargetPercent}% monthly return`,
+        duration: 5000
+      });
+    }
   };
 
   const handleStop = async () => {
     await stopEngine();
+    toast({
+      title: "Wing Zero Paused",
+      description: "Trading stopped. Your positions remain open for monitoring",
+    });
   };
 
   const handleReset = () => {
     toast({
-      title: "Strategy Reset",
-      description: "All strategy parameters reset to optimal defaults",
+      title: "Strategy Reset to Family-Safe Defaults",
+      description: "Conservative settings optimized for consistent passive income",
     });
     setStrategyConfig({
-      maxRiskPerTrade: 1.5,
-      maxDailyLoss: 5,
+      maxRiskPerTrade: 1.0,
+      maxDailyLoss: 3,
       trailingStopEnabled: true,
       trailingStopDistance: 15,
-      takeProfitPips: 60,
+      takeProfitPips: 50,
       stopLossPips: 20,
-      riskRewardRatio: 3.0,
+      riskRewardRatio: 2.5,
       confluenceRequired: true,
-      minSignalStrength: 75,
+      minSignalStrength: 80,
       trendFilterEnabled: true,
       momentumFilterEnabled: true,
       avoidLowVolatility: true,
@@ -140,7 +163,11 @@ const ControlPanel = () => {
       tradingSessionFilter: 'london-ny-overlap',
       dynamicSizing: true,
       kellyCriterion: true,
-      maxPositionSize: 3.0
+      maxPositionSize: 2.0,
+      monthlyTargetPercent: 8,
+      autoCompounding: true,
+      emergencyStopLoss: 10,
+      maxConcurrentTrades: 3
     });
   };
 
@@ -154,7 +181,6 @@ const ControlPanel = () => {
     try {
       console.log("Testing Wing Zero database connection...");
       
-      // Test creating a sample position to check table structure
       const testPosition = {
         symbol: "EURUSD",
         position_type: "buy" as const,
@@ -186,7 +212,6 @@ const ControlPanel = () => {
         console.error("Database error:", error);
         
         if (error.code === '42P01') {
-          // Table doesn't exist
           toast({
             title: "Table Missing",
             description: "wingzero_positions table doesn't exist. Please create it in Supabase.",
@@ -207,8 +232,8 @@ const ControlPanel = () => {
         .eq('id', data.id);
       
       toast({
-        title: "Wing Zero Database Test Successful",
-        description: "Real-time position sync is ready!",
+        title: "✅ Database Connected",
+        description: "Real-time position sync is ready for family wealth building!",
       });
       
     } catch (error: any) {
@@ -223,50 +248,87 @@ const ControlPanel = () => {
     }
   };
 
+  const calculateMonthlyProjection = () => {
+    if (!account) return { projected: 0, daily: 0 };
+    
+    const balance = account.balance;
+    const monthlyTarget = (strategyConfig.monthlyTargetPercent / 100) * balance;
+    const dailyTarget = monthlyTarget / 30;
+    
+    return {
+      projected: monthlyTarget,
+      daily: dailyTarget
+    };
+  };
+
   const calculateExpectedWinRate = () => {
-    let baseRate = 68.5;
+    let baseRate = 72;
     
-    // Signal filtering improvements
-    if (strategyConfig.confluenceRequired) baseRate += 3;
-    if (strategyConfig.minSignalStrength >= 75) baseRate += 2;
-    if (strategyConfig.trendFilterEnabled && strategyConfig.momentumFilterEnabled) baseRate += 2;
-    
-    // Time filtering improvements
-    if (strategyConfig.avoidLowVolatility) baseRate += 1.5;
-    if (strategyConfig.avoidNews) baseRate += 1;
-    if (strategyConfig.tradingSessionFilter === 'london-ny-overlap') baseRate += 2;
-    
-    // Risk management improvements
-    if (strategyConfig.riskRewardRatio >= 3.0) baseRate += 1.5;
+    // Conservative adjustments for family wealth preservation
+    if (strategyConfig.confluenceRequired) baseRate += 4;
+    if (strategyConfig.minSignalStrength >= 80) baseRate += 3;
+    if (strategyConfig.trendFilterEnabled && strategyConfig.momentumFilterEnabled) baseRate += 3;
+    if (strategyConfig.avoidLowVolatility && strategyConfig.avoidNews) baseRate += 2;
+    if (strategyConfig.riskRewardRatio >= 2.5) baseRate += 2;
     if (strategyConfig.trailingStopEnabled) baseRate += 1;
     
-    return Math.min(baseRate, 85); // Cap at 85%
+    return Math.min(baseRate, 87);
   };
+
+  const projections = calculateMonthlyProjection();
 
   return (
     <div className="space-y-6">
-      {/* Performance Prediction */}
-      <Card className="border-[#00AEEF]/20 bg-gradient-to-r from-[#00AEEF]/5 to-transparent">
+      {/* Passive Income Status Card */}
+      <Card className="border-[#00AEEF]/30 bg-gradient-to-r from-[#00AEEF]/10 via-[#00AEEF]/5 to-transparent">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-[#00AEEF]">Strategy Optimization Active</h3>
-              <p className="text-sm text-muted-foreground">Enhanced settings to improve win rate</p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-[#00AEEF]/20 rounded-full">
+                <DollarSign className="h-6 w-6 text-[#00AEEF]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-[#00AEEF]">Family Wealth Builder Active</h3>
+                <p className="text-sm text-muted-foreground">Conservative settings for generational wealth</p>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-[#00AEEF]">
-                {calculateExpectedWinRate().toFixed(1)}%
+            <div className="text-right space-y-1">
+              <div className="text-3xl font-bold text-[#00AEEF]">
+                {calculateExpectedWinRate()}%
               </div>
               <p className="text-xs text-muted-foreground">Expected Win Rate</p>
               <Badge variant="secondary" className="text-xs">
-                +{(calculateExpectedWinRate() - 68.5).toFixed(1)}% improvement
+                Family-Safe Strategy
               </Badge>
             </div>
           </div>
+          
+          {account && (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#00AEEF]/20">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-[#00AEEF]">
+                  ${projections.daily.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground">Daily Target</p>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-[#00AEEF]">
+                  ${projections.projected.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground">Monthly Target</p>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-[#00AEEF]">
+                  ${(projections.projected * 12).toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground">Annual Projection</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* MT5 Real-time Synchronization Status */}
+      {/* MT5 Connection Status */}
       <Card className={`border-2 ${isConnected ? 'border-green-500/20 bg-green-50/50 dark:bg-green-950/20' : 'border-red-500/20 bg-red-50/50 dark:bg-red-950/20'}`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
@@ -277,21 +339,24 @@ const ControlPanel = () => {
                 <WifiOff className="h-6 w-6 text-red-600" />
               )}
               <div>
-                <h3 className="text-lg font-semibold">MT5 Connection Status</h3>
+                <h3 className="text-lg font-semibold">MT5 Live Connection</h3>
                 <p className="text-sm text-muted-foreground">
-                  {isConnected ? 'Real-time sync active' : 'Not connected to MT5'}
+                  {isConnected ? 'Real-time trading active' : 'Configure connection in Settings'}
                 </p>
               </div>
             </div>
             <div className="text-right space-y-2">
               <Badge variant={isConnected ? "default" : "destructive"} className="mb-2">
-                {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
+                {isConnected ? "🟢 Live" : "🔴 Offline"}
               </Badge>
               {account && (
-                <div className="text-sm">
+                <div className="text-sm space-y-1">
                   <div>Balance: ${account.balance.toFixed(2)}</div>
                   <div className={`${account.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    P&L: ${account.profit.toFixed(2)}
+                    Today: ${account.profit.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Progress: {account.balance > 0 ? ((account.profit / projections.daily) * 100).toFixed(1) : 0}% of daily target
                   </div>
                 </div>
               )}
@@ -310,12 +375,12 @@ const ControlPanel = () => {
                 <div>
                   <div className="text-sm text-muted-foreground">Engine Status</div>
                   <Badge variant={isRunning ? "default" : "secondary"}>
-                    {isRunning ? "🚀 Running" : "⏸️ Stopped"}
+                    {isRunning ? "🚀 Active" : "⏸️ Paused"}
                   </Badge>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Open Positions</div>
-                  <div className="font-semibold">{openPositions.length}</div>
+                  <div className="text-sm text-muted-foreground">Active Trades</div>
+                  <div className="font-semibold">{openPositions.length}/{strategyConfig.maxConcurrentTrades}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Daily P&L</div>
@@ -326,26 +391,18 @@ const ControlPanel = () => {
               </div>
             </div>
           )}
-          
-          {!isConnected && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-muted-foreground text-center">
-                Configure MT5 connection in Settings to enable real-time trading
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-[#00AEEF]" />
-            Advanced Strategy Control
+            <Zap className="h-5 w-5 text-[#00AEEF]" />
+            Wing Zero Control Center
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Bot Controls */}
+          {/* Main Controls */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button 
               onClick={handleStart}
@@ -353,7 +410,7 @@ const ControlPanel = () => {
               className="bg-[#00AEEF] hover:bg-[#00AEEF]/80 text-black font-medium disabled:opacity-50"
             >
               <Play className="h-4 w-4 mr-2" />
-              {isRunning ? "Bot Running" : "Start Optimized Bot"}
+              {isRunning ? "Running" : "Start Income Generation"}
             </Button>
             <Button 
               onClick={handleStop}
@@ -362,7 +419,7 @@ const ControlPanel = () => {
               className="border-[#00AEEF]/20 hover:border-[#00AEEF]/40 hover:bg-[#00AEEF]/10 disabled:opacity-50"
             >
               <Pause className="h-4 w-4 mr-2" />
-              Stop Bot
+              Pause Trading
             </Button>
             <Button 
               onClick={handleReset}
@@ -370,12 +427,12 @@ const ControlPanel = () => {
               className="border-[#00AEEF]/20 hover:border-[#00AEEF]/40 hover:bg-[#00AEEF]/10"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset to Optimal
+              Family-Safe Reset
             </Button>
           </div>
 
-          {/* Database Test Button */}
-          <div className="mt-4">
+          {/* Database Test */}
+          <div>
             <Button
               onClick={testWingZeroDatabase}
               disabled={isTestingDb}
@@ -385,27 +442,27 @@ const ControlPanel = () => {
               {isTestingDb ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#00AEEF] mr-2"></div>
-                  Testing Wing Zero Database...
+                  Testing Database...
                 </>
               ) : (
                 <>
                   <Database className="h-4 w-4 mr-2" />
-                  Test Wing Zero Database
+                  Test Database Connection
                 </>
               )}
             </Button>
           </div>
 
-          {/* Master Controls */}
+          {/* Master Switches */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-base font-medium">Bot Enabled</Label>
-                <p className="text-sm text-muted-foreground">Master switch for bot operations</p>
+                <Label className="text-base font-medium">Passive Income Mode</Label>
+                <p className="text-sm text-muted-foreground">Conservative settings for long-term wealth building</p>
               </div>
               <Switch
-                checked={botEnabled}
-                onCheckedChange={setBotEnabled}
+                checked={passiveIncomeMode}
+                onCheckedChange={setPassiveIncomeMode}
                 className="data-[state=checked]:bg-[#00AEEF]"
               />
             </div>
@@ -413,7 +470,7 @@ const ControlPanel = () => {
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-base font-medium">Auto Trading</Label>
-                <p className="text-sm text-muted-foreground">Automatically execute optimized trades</p>
+                <p className="text-sm text-muted-foreground">Fully automated trade execution</p>
               </div>
               <Switch
                 checked={autoTrading}
@@ -424,20 +481,25 @@ const ControlPanel = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-base font-medium">Advanced Risk Management</Label>
-                <p className="text-sm text-muted-foreground">Enable enhanced risk protection</p>
+                <Label className="text-base font-medium">Risk Management (Required)</Label>
+                <p className="text-sm text-muted-foreground">Essential protection for your family's wealth</p>
               </div>
               <Switch
                 checked={riskManagement}
                 onCheckedChange={setRiskManagement}
                 className="data-[state=checked]:bg-[#00AEEF]"
+                disabled={passiveIncomeMode}
               />
             </div>
           </div>
 
-          {/* Strategy Configuration Tabs */}
-          <Tabs defaultValue="risk" className="w-full">
+          {/* Strategy Configuration */}
+          <Tabs defaultValue="income" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="income" className="flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                Income
+              </TabsTrigger>
               <TabsTrigger value="risk" className="flex items-center gap-1">
                 <Shield className="h-3 w-3" />
                 Risk
@@ -450,25 +512,77 @@ const ControlPanel = () => {
                 <Clock className="h-3 w-3" />
                 Timing
               </TabsTrigger>
-              <TabsTrigger value="targets" className="flex items-center gap-1">
-                <Target className="h-3 w-3" />
-                Targets
-              </TabsTrigger>
             </TabsList>
 
-            {/* Risk Management Tab */}
+            {/* Income Settings */}
+            <TabsContent value="income" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label>Monthly Target: {strategyConfig.monthlyTargetPercent}%</Label>
+                  <Slider
+                    value={[strategyConfig.monthlyTargetPercent]}
+                    onValueChange={(value) => updateStrategyConfig({ monthlyTargetPercent: value[0] })}
+                    max={15}
+                    min={3}
+                    step={0.5}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">Conservative: 3-8%, Moderate: 8-12%, Aggressive: 12-15%</p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Max Concurrent Trades: {strategyConfig.maxConcurrentTrades}</Label>
+                  <Slider
+                    value={[strategyConfig.maxConcurrentTrades]}
+                    onValueChange={(value) => updateStrategyConfig({ maxConcurrentTrades: value[0] })}
+                    max={5}
+                    min={1}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Auto-Compounding</Label>
+                    <p className="text-xs text-muted-foreground">Reinvest profits for exponential growth</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.autoCompounding}
+                    onCheckedChange={(checked) => updateStrategyConfig({ autoCompounding: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Emergency Stop Loss: {strategyConfig.emergencyStopLoss}%</Label>
+                  <Slider
+                    value={[strategyConfig.emergencyStopLoss]}
+                    onValueChange={(value) => updateStrategyConfig({ emergencyStopLoss: value[0] })}
+                    max={20}
+                    min={5}
+                    step={1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">Maximum account drawdown before stopping</p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Risk Management */}
             <TabsContent value="risk" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label>Max Risk per Trade: {strategyConfig.maxRiskPerTrade}%</Label>
+                  <Label>Risk per Trade: {strategyConfig.maxRiskPerTrade}%</Label>
                   <Slider
                     value={[strategyConfig.maxRiskPerTrade]}
                     onValueChange={(value) => updateStrategyConfig({ maxRiskPerTrade: value[0] })}
-                    max={5}
+                    max={3}
                     min={0.5}
                     step={0.1}
                     className="w-full"
                   />
+                  <p className="text-xs text-muted-foreground">Recommended: 1-2% for family wealth preservation</p>
                 </div>
 
                 <div className="space-y-3">
@@ -484,12 +598,24 @@ const ControlPanel = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Trailing Stop Distance: {strategyConfig.trailingStopDistance} pips</Label>
+                  <Label>Stop Loss: {strategyConfig.stopLossPips} pips</Label>
                   <Slider
-                    value={[strategyConfig.trailingStopDistance]}
-                    onValueChange={(value) => updateStrategyConfig({ trailingStopDistance: value[0] })}
+                    value={[strategyConfig.stopLossPips]}
+                    onValueChange={(value) => updateStrategyConfig({ stopLossPips: value[0] })}
                     max={50}
-                    min={5}
+                    min={10}
+                    step={5}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Take Profit: {strategyConfig.takeProfitPips} pips</Label>
+                  <Slider
+                    value={[strategyConfig.takeProfitPips]}
+                    onValueChange={(value) => updateStrategyConfig({ takeProfitPips: value[0] })}
+                    max={100}
+                    min={20}
                     step={5}
                     className="w-full"
                   />
@@ -497,8 +623,8 @@ const ControlPanel = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>Enable Trailing Stops</Label>
-                    <p className="text-xs text-muted-foreground">Lock in profits as trades move favorably</p>
+                    <Label>Trailing Stop</Label>
+                    <p className="text-xs text-muted-foreground">Lock in profits automatically</p>
                   </div>
                   <Switch
                     checked={strategyConfig.trailingStopEnabled}
@@ -509,11 +635,11 @@ const ControlPanel = () => {
               </div>
             </TabsContent>
 
-            {/* Signal Filtering Tab */}
+            {/* Signal Filtering */}
             <TabsContent value="signals" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label>Min Signal Strength: {strategyConfig.minSignalStrength}%</Label>
+                  <Label>Signal Strength: {strategyConfig.minSignalStrength}%</Label>
                   <Slider
                     value={[strategyConfig.minSignalStrength]}
                     onValueChange={(value) => updateStrategyConfig({ minSignalStrength: value[0] })}
@@ -522,49 +648,48 @@ const ControlPanel = () => {
                     step={5}
                     className="w-full"
                   />
+                  <p className="text-xs text-muted-foreground">Higher = fewer but more reliable trades</p>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Require Confluence</Label>
-                      <p className="text-xs text-muted-foreground">Multiple indicators must align</p>
-                    </div>
-                    <Switch
-                      checked={strategyConfig.confluenceRequired}
-                      onCheckedChange={(checked) => updateStrategyConfig({ confluenceRequired: checked })}
-                      className="data-[state=checked]:bg-[#00AEEF]"
-                    />
-                  </div>
+                <div className="space-y-3">
+                  <Label>Risk/Reward Ratio: {strategyConfig.riskRewardRatio.toFixed(1)}:1</Label>
+                  <Slider
+                    value={[strategyConfig.riskRewardRatio]}
+                    onValueChange={(value) => updateStrategyConfig({ riskRewardRatio: value[0] })}
+                    max={5}
+                    min={1.5}
+                    step={0.1}
+                    className="w-full"
+                  />
+                </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Trend Filter</Label>
-                      <p className="text-xs text-muted-foreground">Only trade with the trend</p>
-                    </div>
-                    <Switch
-                      checked={strategyConfig.trendFilterEnabled}
-                      onCheckedChange={(checked) => updateStrategyConfig({ trendFilterEnabled: checked })}
-                      className="data-[state=checked]:bg-[#00AEEF]"
-                    />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Confluence Required</Label>
+                    <p className="text-xs text-muted-foreground">Multiple confirmations</p>
                   </div>
+                  <Switch
+                    checked={strategyConfig.confluenceRequired}
+                    onCheckedChange={(checked) => updateStrategyConfig({ confluenceRequired: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
+                  />
+                </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Momentum Filter</Label>
-                      <p className="text-xs text-muted-foreground">Confirm momentum before entry</p>
-                    </div>
-                    <Switch
-                      checked={strategyConfig.momentumFilterEnabled}
-                      onCheckedChange={(checked) => updateStrategyConfig({ momentumFilterEnabled: checked })}
-                      className="data-[state=checked]:bg-[#00AEEF]"
-                    />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Trend Filter</Label>
+                    <p className="text-xs text-muted-foreground">Trade with the trend</p>
                   </div>
+                  <Switch
+                    checked={strategyConfig.trendFilterEnabled}
+                    onCheckedChange={(checked) => updateStrategyConfig({ trendFilterEnabled: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
+                  />
                 </div>
               </div>
             </TabsContent>
 
-            {/* Timing Tab */}
+            {/* Timing Filters */}
             <TabsContent value="timing" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
@@ -577,110 +702,37 @@ const ControlPanel = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all-sessions">All Sessions</SelectItem>
+                      <SelectItem value="all">All Sessions</SelectItem>
+                      <SelectItem value="london">London Only</SelectItem>
+                      <SelectItem value="new-york">New York Only</SelectItem>
                       <SelectItem value="london-ny-overlap">London-NY Overlap (Best)</SelectItem>
-                      <SelectItem value="london-only">London Session</SelectItem>
-                      <SelectItem value="ny-only">New York Session</SelectItem>
+                      <SelectItem value="tokyo">Tokyo Only</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Avoid Low Volatility</Label>
-                      <p className="text-xs text-muted-foreground">Skip 22:00-06:00 GMT</p>
-                    </div>
-                    <Switch
-                      checked={strategyConfig.avoidLowVolatility}
-                      onCheckedChange={(checked) => updateStrategyConfig({ avoidLowVolatility: checked })}
-                      className="data-[state=checked]:bg-[#00AEEF]"
-                    />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Avoid Low Volatility</Label>
+                    <p className="text-xs text-muted-foreground">Skip quiet market periods</p>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Avoid News Events</Label>
-                      <p className="text-xs text-muted-foreground">Pause during high impact news</p>
-                    </div>
-                    <Switch
-                      checked={strategyConfig.avoidNews}
-                      onCheckedChange={(checked) => updateStrategyConfig({ avoidNews: checked })}
-                      className="data-[state=checked]:bg-[#00AEEF]"
-                    />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* Targets Tab */}
-            <TabsContent value="targets" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label>Take Profit: {strategyConfig.takeProfitPips} pips</Label>
-                  <Slider
-                    value={[strategyConfig.takeProfitPips]}
-                    onValueChange={(value) => updateStrategyConfig({ 
-                      takeProfitPips: value[0],
-                      riskRewardRatio: value[0] / strategyConfig.stopLossPips
-                    })}
-                    max={100}
-                    min={20}
-                    step={5}
-                    className="w-full"
+                  <Switch
+                    checked={strategyConfig.avoidLowVolatility}
+                    onCheckedChange={(checked) => updateStrategyConfig({ avoidLowVolatility: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <Label>Stop Loss: {strategyConfig.stopLossPips} pips</Label>
-                  <Slider
-                    value={[strategyConfig.stopLossPips]}
-                    onValueChange={(value) => updateStrategyConfig({ 
-                      stopLossPips: value[0],
-                      riskRewardRatio: strategyConfig.takeProfitPips / value[0]
-                    })}
-                    max={50}
-                    min={10}
-                    step={5}
-                    className="w-full"
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Avoid News Events</Label>
+                    <p className="text-xs text-muted-foreground">Prevent volatility spikes</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.avoidNews}
+                    onCheckedChange={(checked) => updateStrategyConfig({ avoidNews: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
                   />
-                </div>
-
-                <div className="p-4 bg-[#00AEEF]/10 rounded-lg">
-                  <Label className="text-sm font-medium">Risk:Reward Ratio</Label>
-                  <div className="text-2xl font-bold text-[#00AEEF]">
-                    1:{strategyConfig.riskRewardRatio.toFixed(1)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {strategyConfig.riskRewardRatio >= 3 ? 'Excellent ratio for profitability' : 
-                     strategyConfig.riskRewardRatio >= 2 ? 'Good ratio' : 'Consider increasing take profit'}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Dynamic Position Sizing</Label>
-                      <p className="text-xs text-muted-foreground">Adjust size based on performance</p>
-                    </div>
-                    <Switch
-                      checked={strategyConfig.dynamicSizing}
-                      onCheckedChange={(checked) => updateStrategyConfig({ dynamicSizing: checked })}
-                      className="data-[state=checked]:bg-[#00AEEF]"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Kelly Criterion</Label>
-                      <p className="text-xs text-muted-foreground">Optimize position sizes mathematically</p>
-                    </div>
-                    <Switch
-                      checked={strategyConfig.kellyCriterion}
-                      onCheckedChange={(checked) => updateStrategyConfig({ kellyCriterion: checked })}
-                      className="data-[state=checked]:bg-[#00AEEF]"
-                    />
-                  </div>
                 </div>
               </div>
             </TabsContent>

@@ -6,6 +6,7 @@ import BotMetrics from "@/components/wingzero/BotMetrics";
 import TradeHistory from "@/components/wingzero/TradeHistory";
 import ControlPanel from "@/components/wingzero/ControlPanel";
 import LivePositions from "@/components/wingzero/LivePositions";
+import PassiveIncomeTracker from "@/components/wingzero/PassiveIncomeTracker";
 import { ArrowLeft, Zap } from "lucide-react";
 
 const WingZeroDashboardPage = () => {
@@ -27,7 +28,7 @@ const WingZeroDashboardPage = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-[#00AEEF]">Wing Zero</h1>
-                <p className="text-sm text-muted-foreground">Trading Bot Control</p>
+                <p className="text-sm text-muted-foreground">Passive Income Generator</p>
               </div>
             </div>
           </div>
@@ -37,13 +38,22 @@ const WingZeroDashboardPage = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="positions" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="positions">Live Positions</TabsTrigger>
-            <TabsTrigger value="metrics">Bot Metrics</TabsTrigger>
-            <TabsTrigger value="trades">Trade History</TabsTrigger>
+        <Tabs defaultValue="income" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="income">Passive Income</TabsTrigger>
             <TabsTrigger value="control">Control Panel</TabsTrigger>
+            <TabsTrigger value="positions">Live Positions</TabsTrigger>
+            <TabsTrigger value="metrics">Performance</TabsTrigger>
+            <TabsTrigger value="trades">Trade History</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="income" className="space-y-6">
+            <PassiveIncomeTracker />
+          </TabsContent>
+          
+          <TabsContent value="control" className="space-y-6">
+            <ControlPanel />
+          </TabsContent>
           
           <TabsContent value="positions" className="space-y-6">
             <LivePositions />
@@ -55,10 +65,6 @@ const WingZeroDashboardPage = () => {
           
           <TabsContent value="trades" className="space-y-6">
             <TradeHistory />
-          </TabsContent>
-          
-          <TabsContent value="control" className="space-y-6">
-            <ControlPanel />
           </TabsContent>
         </Tabs>
       </div>
