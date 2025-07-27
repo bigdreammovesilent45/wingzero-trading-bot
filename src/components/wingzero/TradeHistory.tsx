@@ -1,47 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trade } from "@/types/trading";
-import { TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, AlertCircle } from "lucide-react";
+import { useTradingEngine } from "@/hooks/useTradingEngine";
+import { useSupabaseTrades } from "@/hooks/useSupabaseTrades";
 
 const TradeHistory = () => {
-  // Mock data - in real app, this would come from hooks/API
-  const trades: Trade[] = [
-    {
-      id: "1",
-      symbol: "EURUSD",
-      type: "buy",
-      volume: 0.1,
-      openPrice: 1.0850,
-      closePrice: 1.0875,
-      profit: 25.00,
-      openTime: "2025-01-23T14:30:00Z",
-      closeTime: "2025-01-23T15:15:00Z",
-      status: "closed"
-    },
-    {
-      id: "2",
-      symbol: "GBPUSD",
-      type: "sell",
-      volume: 0.05,
-      openPrice: 1.2450,
-      closePrice: 1.2435,
-      profit: 7.50,
-      openTime: "2025-01-23T13:45:00Z",
-      closeTime: "2025-01-23T14:20:00Z",
-      status: "closed"
-    },
-    {
-      id: "3",
-      symbol: "USDJPY",
-      type: "buy",
-      volume: 0.08,
-      openPrice: 149.25,
-      profit: -12.50,
-      openTime: "2025-01-23T16:00:00Z",
-      status: "open"
-    }
-  ];
+  const { openPositions, dailyPnL, totalProfit, isRunning } = useTradingEngine();
+  const { trades, isLoading } = useSupabaseTrades();
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
@@ -58,18 +24,36 @@ const TradeHistory = () => {
     return type === 'buy' ? TrendingUp : TrendingDown;
   };
 
-  const getStatusBadge = (status: Trade['status']) => {
+  const getStatusBadge = (status: string) => {
     const variants = {
       open: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
       closed: 'bg-gray-500/20 text-gray-500 border-gray-500/30'
     };
 
     return (
-      <Badge className={variants[status]}>
+      <Badge className={variants[status as keyof typeof variants] || variants.closed}>
         {status.toUpperCase()}
       </Badge>
     );
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-[#00AEEF]" />
+            Trade History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00AEEF]"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -80,9 +64,48 @@ const TradeHistory = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Trading Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="text-center p-4 bg-[#00AEEF]/10 rounded-lg">
+            <div className="text-2xl font-bold text-[#00AEEF]">{trades.length}</div>
+            <div className="text-sm text-muted-foreground">Total Trades</div>
+          </div>
+          <div className="text-center p-4 bg-green-500/10 rounded-lg">
+            <div className={`text-2xl font-bold ${getProfitColor(dailyPnL)}`}>
+              ${dailyPnL.toFixed(2)}
+            </div>
+            <div className="text-sm text-muted-foreground">Daily P&L</div>
+          </div>
+          <div className="text-center p-4 bg-blue-500/10 rounded-lg">
+            <div className="text-2xl font-bold text-blue-500">{openPositions.length}</div>
+            <div className="text-sm text-muted-foreground">Open Positions</div>
+          </div>
+        </div>
+
+        {/* Trade List */}
         <div className="space-y-4">
+          {!isRunning && (
+            <div className="text-center py-8 bg-yellow-50/50 rounded-lg border border-yellow-200">
+              <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Wing Zero Not Running</h3>
+              <p className="text-yellow-700">
+                Start the trading engine from the Control Panel to begin making trades
+              </p>
+            </div>
+          )}
+
+          {trades.length === 0 && isRunning && (
+            <div className="text-center py-8">
+              <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No trades yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Wing Zero is analyzing the market and will execute trades when opportunities arise
+              </p>
+            </div>
+          )}
+
           {trades.map((trade) => {
-            const TradeIcon = getTradeIcon(trade.type);
+            const TradeIcon = getTradeIcon(trade.trade_type);
             return (
               <div
                 key={trade.id}
@@ -96,13 +119,13 @@ const TradeHistory = () => {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{trade.symbol}</span>
                       <Badge variant="outline" className="text-xs">
-                        {trade.type.toUpperCase()}
+                        {trade.trade_type.toUpperCase()}
                       </Badge>
                       {getStatusBadge(trade.status)}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Vol: {trade.volume} • Open: {trade.openPrice}
-                      {trade.closePrice && ` • Close: ${trade.closePrice}`}
+                      Vol: {trade.volume} • Open: {trade.open_price.toFixed(5)}
+                      {trade.close_price && ` • Close: ${trade.close_price.toFixed(5)}`}
                     </div>
                   </div>
                 </div>
@@ -111,8 +134,8 @@ const TradeHistory = () => {
                     ${trade.profit > 0 ? '+' : ''}{trade.profit.toFixed(2)}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {formatTime(trade.openTime)}
-                    {trade.closeTime && ` - ${formatTime(trade.closeTime)}`}
+                    {formatTime(trade.opened_at)}
+                    {trade.closed_at && ` - ${formatTime(trade.closed_at)}`}
                   </div>
                 </div>
               </div>
