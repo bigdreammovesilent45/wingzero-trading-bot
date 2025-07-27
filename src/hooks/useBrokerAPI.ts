@@ -18,33 +18,47 @@ export const useBrokerAPI = () => {
   const [config] = useLocalStorage<BrokerConfig | null>('broker_config', null);
   const { toast } = useToast();
 
-  // Convert config to BrokerConnection format (always return demo connection)
+  // Convert config to BrokerConnection format
   const getBrokerConnection = useCallback((): BrokerConnection => {
+    const defaultConfig = {
+      apiKey: '',
+      apiSecret: '',
+      baseUrl: 'http://localhost:6542',
+      broker: 'mt5' as const
+    };
+    
+    const activeConfig = config || defaultConfig;
+    
     return {
-      id: 'mt5-demo-connection',
-      name: 'MT5 Demo Account',
+      id: 'mt5-real-connection',
+      name: 'MT5 Real Account',
       type: 'mt5',
       status: 'connected',
-      account: 'demo-50000',
-      server: 'demo.wingzero.ai'
+      account: 'live-mt5',
+      server: activeConfig.baseUrl
     };
-  }, []);
+  }, [config]);
 
   const makeRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
-    if (!config) {
-      throw new Error('Broker configuration not found. Please set up API credentials.');
-    }
+    const defaultConfig = {
+      apiKey: '',
+      apiSecret: '',
+      baseUrl: 'http://localhost:6542',
+      broker: 'mt5' as const
+    };
+    
+    const activeConfig = config || defaultConfig;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
     try {
-      const response = await fetch(`${config.baseUrl}${endpoint}`, {
+      const response = await fetch(`${activeConfig.baseUrl}${endpoint}`, {
         ...options,
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': config.apiKey ? `Bearer ${config.apiKey}` : undefined,
+          'Authorization': activeConfig.apiKey ? `Bearer ${activeConfig.apiKey}` : undefined,
           ...options.headers,
         },
       });
@@ -76,11 +90,15 @@ export const useBrokerAPI = () => {
     setError(null);
     
     try {
-      if (!config) {
-        throw new Error('Broker configuration not found. Please set up broker connection.');
-      }
-
-      console.log('Attempting to fetch account data from:', config.baseUrl);
+      const defaultConfig = {
+        apiKey: '',
+        apiSecret: '',
+        baseUrl: 'http://localhost:6542',
+        broker: 'mt5' as const
+      };
+      
+      const activeConfig = config || defaultConfig;
+      console.log('Attempting to fetch account data from:', activeConfig.baseUrl);
       
       // Try to fetch from MT5 RestApi EA
       const response = await makeRequest('/info');
