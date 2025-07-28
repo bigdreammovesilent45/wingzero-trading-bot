@@ -257,15 +257,27 @@ export class TradingEngine {
   }
 
   getEngineStatus() {
-    return {
+    const status = {
       isRunning: this.isRunning,
       brainEnabled: this.brainEnabled,
       brainActive: this.brainEnabled && this.tradingBrain.isRunning(),
       brokerConnected: !!this.brokerConnection,
+      brokerName: this.brokerConnection?.name || 'No broker',
       openPositions: this.orderManager.getOpenPositionsCount(),
       dailyPnL: this.riskManager.getDailyPnL(),
-      currentRegime: this.brainEnabled ? this.tradingBrain.getCurrentRegime() : null
+      currentRegime: this.brainEnabled ? this.tradingBrain.getCurrentRegime() : null,
+      marketDataConnected: this.marketDataService.isDataConnected()
     };
+    
+    console.log('🔍 Trading Engine Status:', {
+      ...status,
+      brokerConnection: this.brokerConnection ? {
+        name: this.brokerConnection.name,
+        type: this.brokerConnection.type
+      } : null
+    });
+    
+    return status;
   }
 
   // Public methods for Brain control

@@ -13,7 +13,7 @@ type Platform = 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers'
 export const PlatformConnectionStatus = () => {
   const [selectedPlatform] = useLocalStorage<Platform>('wingzero-platform', 'ctrader');
   const [connectionStatus, setConnectionStatus] = useLocalStorage<{[key: string]: boolean}>('wingzero-connections', {});
-  const { isConnected: engineConnected, isOperational } = useTradingEngine();
+  const { isConnected: engineConnected, isOperational, getEngineMetrics } = useTradingEngine();
 
   const handleConfigUpdate = (config: any) => {
     if (config) {
@@ -24,9 +24,15 @@ export const PlatformConnectionStatus = () => {
   };
 
   const handleTestConnection = async () => {
+    // Get detailed engine status for debugging
+    const engineMetrics = getEngineMetrics();
+    console.log('🔍 Testing connection for:', selectedPlatform);
+    console.log('🔍 Engine Metrics:', engineMetrics);
+    console.log('🔍 Engine Connected:', engineConnected);
+    console.log('🔍 Is Operational:', isOperational);
+    
     // Update connection status to reflect actual engine connection
     setConnectionStatus(prev => ({ ...prev, [selectedPlatform]: engineConnected }));
-    console.log(`Testing ${selectedPlatform} connection... Engine connected: ${engineConnected}`);
   };
 
   const getPlatformName = (platform: Platform) => {
