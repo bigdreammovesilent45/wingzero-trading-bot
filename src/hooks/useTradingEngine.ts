@@ -59,7 +59,9 @@ export const useTradingEngine = () => {
           console.error('Failed to connect trading engine to broker:', error);
           setState(prev => ({ ...prev, error: error.message, isConnected: false }));
         });
-    } else if (!isConfigured) {
+    } else if (!isConfigured && !hasInitialized.current) {
+      // Only set error state once, not on every render
+      hasInitialized.current = true;
       setState(prev => ({ 
         ...prev, 
         isConnected: false, 
