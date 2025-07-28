@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, AlertCircle, TrendingUp, Shield, Info } from "lucide-react";
+import { CheckCircle, AlertCircle, TrendingUp, Shield, Info, Smartphone } from "lucide-react";
 
 interface CTraderSetupProps {
   onConfigUpdate: (config: any) => void;
@@ -17,7 +17,7 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
-  const [connectionType, setConnectionType] = useState<'openapi' | 'fix'>('openapi');
+  const [connectionType, setConnectionType] = useState<'openapi' | 'fix' | 'mobile'>('openapi');
   
   const [config, setConfig] = useState({
     // Open API fields
@@ -42,7 +42,9 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
 
       const isValidConfig = connectionType === 'openapi' 
         ? (config.clientId && config.clientSecret)
-        : (config.fixHost && config.fixPassword && config.fixSenderCompID);
+        : connectionType === 'fix' 
+        ? (config.fixHost && config.fixPassword && config.fixSenderCompID)
+        : (config.clientId); // Mobile just needs account ID
 
       if (isValidConfig) {
         setConnectionStatus('connected');
@@ -54,7 +56,7 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
         });
         toast({
           title: "cTrader Connected",
-          description: `Successfully connected to cTrader ${connectionType === 'openapi' ? 'Open API' : 'FIX API'}`,
+          description: `Successfully connected to cTrader ${connectionType === 'openapi' ? 'Open API' : connectionType === 'fix' ? 'FIX API' : 'Mobile Integration'}`,
         });
       } else {
         throw new Error('Missing credentials');
@@ -89,13 +91,13 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
         {/* Connection Type Selection */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Connection Method</Label>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="radio"
                 value="openapi"
                 checked={connectionType === 'openapi'}
-                onChange={(e) => setConnectionType(e.target.value as 'openapi' | 'fix')}
+                onChange={(e) => setConnectionType(e.target.value as 'openapi' | 'fix' | 'mobile')}
                 className="text-primary"
               />
               <span className="text-sm">Open API (Recommended)</span>
@@ -105,10 +107,23 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
                 type="radio"
                 value="fix"
                 checked={connectionType === 'fix'}
-                onChange={(e) => setConnectionType(e.target.value as 'openapi' | 'fix')}
+                onChange={(e) => setConnectionType(e.target.value as 'openapi' | 'fix' | 'mobile')}
                 className="text-primary"
               />
               <span className="text-sm">FIX API (Advanced)</span>
+            </label>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                value="mobile"
+                checked={connectionType === 'mobile'}
+                onChange={(e) => setConnectionType(e.target.value as 'openapi' | 'fix' | 'mobile')}
+                className="text-primary"
+              />
+              <span className="text-sm flex items-center gap-1">
+                <Smartphone className="h-3 w-3" />
+                Mobile Integration
+              </span>
             </label>
           </div>
         </div>
@@ -254,12 +269,81 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
           </>
         )}
 
+        {/* Mobile Integration Configuration */}
+        {connectionType === 'mobile' && (
+          <>
+            <Alert>
+              <Smartphone className="h-4 w-4" />
+              <AlertTitle>Mobile Integration Setup</AlertTitle>
+              <AlertDescription>
+                Configure Wing Zero to work with cTrader mobile app through deep links and mobile APIs.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="mobile-env">Environment</Label>
+                  <Select value={config.environment} onValueChange={(value) => setConfig(prev => ({ ...prev, environment: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select environment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="demo">Demo</SelectItem>
+                      <SelectItem value="live">Live</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="account-id">Account ID</Label>
+                  <Input
+                    id="account-id"
+                    value={config.clientId}
+                    onChange={(e) => setConfig(prev => ({ ...prev, clientId: e.target.value }))}
+                    placeholder="Your cTrader account ID"
+                  />
+                </div>
+              </div>
+
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Mobile Setup Instructions</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <p>1. Install cTrader mobile app on your device</p>
+                  <p>2. Log in to your cTrader account in the mobile app</p>
+                  <p>3. Enable "Allow third-party connections" in mobile app settings</p>
+                  <p>4. Your account ID can be found in the mobile app under Account → Settings</p>
+                  <p>5. Ensure Wing Zero mobile app has permission to communicate with cTrader</p>
+                </AlertDescription>
+              </Alert>
+
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" />
+                  Mobile Features Available:
+                </h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>• Real-time position monitoring</li>
+                  <li>• Trade notifications and alerts</li>
+                  <li>• Market data synchronization</li>
+                  <li>• Basic order management (limited)</li>
+                  <li>• Account balance updates</li>
+                </ul>
+                <p className="text-xs mt-2 text-muted-foreground">
+                  <strong>Note:</strong> Full automated trading requires desktop/web connection. Mobile integration provides monitoring and basic controls.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
         <Button 
           onClick={handleConnect} 
-          disabled={isConnecting || (connectionType === 'openapi' ? (!config.clientId || !config.clientSecret) : (!config.fixHost || !config.fixPassword))}
+          disabled={isConnecting || (connectionType === 'openapi' ? (!config.clientId || !config.clientSecret) : connectionType === 'fix' ? (!config.fixHost || !config.fixPassword) : (!config.clientId))}
           className="w-full"
         >
-          {isConnecting ? "Connecting..." : `Connect to cTrader ${connectionType === 'openapi' ? 'Open API' : 'FIX API'}`}
+          {isConnecting ? "Connecting..." : `Connect to cTrader ${connectionType === 'openapi' ? 'Open API' : connectionType === 'fix' ? 'FIX API' : 'Mobile Integration'}`}
         </Button>
 
         {connectionStatus !== 'disconnected' && (
@@ -295,12 +379,20 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
               <li>OAuth2 redirect URI configuration</li>
               <li>Active cTrader account (demo or live)</li>
             </ul>
-          ) : (
+          ) : connectionType === 'fix' ? (
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Active cTrader account with FIX API enabled</li>
               <li>FIX connection details from account settings</li>
               <li>Price connection for market data</li>
               <li>Trade connection for order execution</li>
+            </ul>
+          ) : (
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>cTrader mobile app installed on device</li>
+              <li>Active cTrader account logged in mobile app</li>
+              <li>Third-party connections enabled in mobile settings</li>
+              <li>Wing Zero mobile app permissions configured</li>
+              <li>Device connectivity for real-time sync</li>
             </ul>
           )}
         </div>
