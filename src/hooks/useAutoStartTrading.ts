@@ -10,17 +10,22 @@ export const useAutoStartTrading = () => {
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
 
   useEffect(() => {
+    // Skip auto-start if already attempted to prevent infinite loops
+    if (hasAutoStarted) return;
+
     const autoStartTrading = async () => {
       // Only auto-start once when conditions are met
-      if (isConfigured && isOperational && !isRunning && !hasAutoStarted) {
+      if (isConfigured && isOperational && !isRunning) {
         console.log('🚀 Auto-starting Wing Zero trading on demo account...');
+        
+        // Mark as attempted immediately to prevent multiple attempts
+        setHasAutoStarted(true);
         
         // Add a longer delay for initial setup
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         try {
           await startEngine();
-          setHasAutoStarted(true);
           
           toast({
             title: "🚀 Wing Zero Started!",
@@ -31,6 +36,8 @@ export const useAutoStartTrading = () => {
           console.log('✅ Wing Zero is now actively trading!');
         } catch (error) {
           console.error('Failed to auto-start trading:', error);
+          // Reset on failure to allow retry
+          setHasAutoStarted(false);
           toast({
             title: "Auto-start Failed",
             description: "Couldn't automatically start trading. Try manual start.",
@@ -43,7 +50,7 @@ export const useAutoStartTrading = () => {
     // Longer delay to ensure all systems are ready
     const timer = setTimeout(autoStartTrading, 5000);
     return () => clearTimeout(timer);
-  }, [isConfigured, isOperational, isRunning, hasAutoStarted, startEngine, toast]);
+  }, [isConfigured, isOperational, isRunning]); // Removed hasAutoStarted, startEngine, toast from deps
 
   return {
     hasAutoStarted,
