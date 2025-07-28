@@ -38,11 +38,21 @@ export const useTradingEngine = () => {
   const isRunningRef = useRef(false);
   const isConnectedRef = useRef(false);
   const [tradingConfig] = useLocalStorage('wingzero-strategy', {
-    maxRiskPerTrade: 2,
+    brainEnabled: true,
+    brainMode: 'balanced',
+    minConfidence: 85,
+    maxRiskPerTrade: 0.02,
+    maxDailyDrawdown: 0.05,
+    adaptivePositionSizing: true,
+    multiTimeframeAnalysis: true,
+    newsFilterEnabled: true,
+    sentimentWeight: 0.3,
+    technicalWeight: 0.5,
+    fundamentalWeight: 0.2,
+    emergencyStopLoss: 0.10,
     stopLossPips: 20,
     takeProfitPips: 60,
     minSignalStrength: 70,
-    minConfidence: 70,
     onePositionPerSymbol: true,
     closeOnStop: false
   });
@@ -161,7 +171,20 @@ export const useTradingEngine = () => {
       await engine.start({
         ...tradingConfig,
         loopInterval: 2000, // 2 second update interval
-        closeOnStop: false
+        closeOnStop: false,
+        brainEnabled: tradingConfig.brainEnabled,
+        brainConfig: {
+          minConfidence: tradingConfig.minConfidence,
+          maxRiskPerTrade: tradingConfig.maxRiskPerTrade,
+          maxDailyDrawdown: tradingConfig.maxDailyDrawdown,
+          adaptivePositionSizing: tradingConfig.adaptivePositionSizing,
+          multiTimeframeAnalysis: tradingConfig.multiTimeframeAnalysis,
+          newsFilterEnabled: tradingConfig.newsFilterEnabled,
+          sentimentWeight: tradingConfig.sentimentWeight,
+          technicalWeight: tradingConfig.technicalWeight,
+          fundamentalWeight: tradingConfig.fundamentalWeight,
+          emergencyStopLoss: tradingConfig.emergencyStopLoss
+        }
       });
 
       setState(prev => ({ ...prev, isRunning: true }));

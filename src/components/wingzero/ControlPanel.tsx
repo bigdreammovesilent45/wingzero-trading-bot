@@ -18,7 +18,21 @@ import { useWingZeroPositions } from "@/hooks/useWingZeroPositions";
 import { supabase } from '@/integrations/supabase/client';
 
 interface StrategyConfig {
-  // Dual Mode Settings
+  // AI Trading Brain Settings
+  brainEnabled: boolean;
+  brainMode: 'conservative' | 'balanced' | 'aggressive';
+  minConfidence: number;
+  maxRiskPerTrade: number;
+  maxDailyDrawdown: number;
+  adaptivePositionSizing: boolean;
+  multiTimeframeAnalysis: boolean;
+  newsFilterEnabled: boolean;
+  sentimentWeight: number;
+  technicalWeight: number;
+  fundamentalWeight: number;
+  emergencyStopLoss: number;
+  
+  // Dual Mode Settings (Legacy - when brain disabled)
   dualModeEnabled: boolean;
   aggressiveAllocation: number; // % of balance for aggressive trading
   passiveAllocation: number;    // % of balance for passive income
@@ -31,7 +45,6 @@ interface StrategyConfig {
   passiveMinSignalStrength: number;
   monthlyTargetPercent: number;
   autoCompounding: boolean;
-  emergencyStopLoss: number;
   maxPassiveTrades: number;
   
   // Aggressive Trading Settings
@@ -89,8 +102,22 @@ const ControlPanel = () => {
   const [isTestingDb, setIsTestingDb] = useState(false);
   
   const [strategyConfig, setStrategyConfig] = useLocalStorage<StrategyConfig>('wingzero-strategy', {
-    // Dual Mode
-    dualModeEnabled: true,
+    // AI Trading Brain (Primary Mode)
+    brainEnabled: true,
+    brainMode: 'balanced',
+    minConfidence: 85,
+    maxRiskPerTrade: 0.02, // 2%
+    maxDailyDrawdown: 0.05, // 5%
+    adaptivePositionSizing: true,
+    multiTimeframeAnalysis: true,
+    newsFilterEnabled: true,
+    sentimentWeight: 0.3,
+    technicalWeight: 0.5,
+    fundamentalWeight: 0.2,
+    emergencyStopLoss: 0.10, // 10%
+    
+    // Dual Mode (Legacy - when brain disabled)
+    dualModeEnabled: false,
     aggressiveAllocation: 30, // 30% for aggressive
     passiveAllocation: 70,    // 70% for passive income
     
@@ -102,7 +129,6 @@ const ControlPanel = () => {
     passiveMinSignalStrength: 80,
     monthlyTargetPercent: 8,
     autoCompounding: true,
-    emergencyStopLoss: 10,
     maxPassiveTrades: 3,
     
     // Aggressive Trading (High Performance)
@@ -133,7 +159,7 @@ const ControlPanel = () => {
     if (!isConnected) {
       toast({
         title: "No Platform Connection",
-        description: "Please configure your trading platform connection first",
+        description: "Please configure your cTrader connection first",
         variant: "destructive"
       });
       return;
@@ -141,26 +167,29 @@ const ControlPanel = () => {
     
     if (!riskManagement) {
       toast({
-        title: "Risk Management Required",
-        description: "Risk management must be enabled for all trading modes",
+        title: "Risk Management Required", 
+        description: "Risk management must be enabled for AI trading",
         variant: "destructive"
       });
       return;
     }
     
-    await startEngine();
-    
-    const modeDescription = dualMode 
-      ? `Dual Mode: ${strategyConfig.aggressiveAllocation}% aggressive, ${strategyConfig.passiveAllocation}% passive income`
-      : aggressiveMode 
-        ? "Aggressive trading mode activated - Maximum performance"
-        : `Passive income mode - Target: ${strategyConfig.monthlyTargetPercent}% monthly`;
-    
-    toast({
-      title: "🚀 Wing Zero Activated",
-      description: modeDescription,
-      duration: 5000
-    });
+    try {
+      await startEngine();
+      
+      const mode = strategyConfig.brainEnabled ? "🧠 AI Trading Brain" : "Traditional Mode";
+      toast({
+        title: `Wing Zero Activated! 🚀`,
+        description: `Your super smart trader is now running in ${mode}`,
+        duration: 5000
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to start Wing Zero",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleStop = async () => {
@@ -177,8 +206,22 @@ const ControlPanel = () => {
       description: "Balanced settings for both aggressive trading and passive income",
     });
     setStrategyConfig({
-      // Dual Mode
-      dualModeEnabled: true,
+      // AI Trading Brain (Primary Mode)
+      brainEnabled: true,
+      brainMode: 'balanced',
+      minConfidence: 85,
+      maxRiskPerTrade: 0.02, // 2%
+      maxDailyDrawdown: 0.05, // 5%
+      adaptivePositionSizing: true,
+      multiTimeframeAnalysis: true,
+      newsFilterEnabled: true,
+      sentimentWeight: 0.3,
+      technicalWeight: 0.5,
+      fundamentalWeight: 0.2,
+      emergencyStopLoss: 0.10, // 10%
+      
+      // Dual Mode (Legacy - when brain disabled)
+      dualModeEnabled: false,
       aggressiveAllocation: 30,
       passiveAllocation: 70,
       
@@ -190,7 +233,6 @@ const ControlPanel = () => {
       passiveMinSignalStrength: 80,
       monthlyTargetPercent: 8,
       autoCompounding: true,
-      emergencyStopLoss: 10,
       maxPassiveTrades: 3,
       
       // Aggressive Trading (High Performance)
@@ -615,8 +657,12 @@ const ControlPanel = () => {
           </div>
 
           {/* Strategy Configuration */}
-          <Tabs defaultValue="allocation" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+          <Tabs defaultValue="brain" className="w-full">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="brain" className="flex items-center gap-1">
+                🧠
+                AI Brain
+              </TabsTrigger>
               <TabsTrigger value="allocation" className="flex items-center gap-1">
                 <Target className="h-3 w-3" />
                 Allocation
@@ -638,6 +684,177 @@ const ControlPanel = () => {
                 Timing
               </TabsTrigger>
             </TabsList>
+
+            {/* AI Trading Brain Settings */}
+            <TabsContent value="brain" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-medium">🧠 AI Trading Brain</Label>
+                    <p className="text-sm text-muted-foreground">Full autonomous AI trading - your super smart trader friend</p>
+                  </div>
+                  <Switch
+                    checked={strategyConfig.brainEnabled}
+                    onCheckedChange={(checked) => updateStrategyConfig({ brainEnabled: checked })}
+                    className="data-[state=checked]:bg-[#00AEEF]"
+                  />
+                </div>
+
+                {strategyConfig.brainEnabled && (
+                  <>
+                    <div className="space-y-3">
+                      <Label>Brain Mode</Label>
+                      <Select
+                        value={strategyConfig.brainMode}
+                        onValueChange={(value) => updateStrategyConfig({ brainMode: value as 'conservative' | 'balanced' | 'aggressive' })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="conservative">🛡️ Conservative - Family Safe</SelectItem>
+                          <SelectItem value="balanced">⚖️ Balanced - Smart Growth</SelectItem>
+                          <SelectItem value="aggressive">🚀 Aggressive - Maximum Performance</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Brain adapts risk and strategy automatically</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Minimum Confidence: {strategyConfig.minConfidence}%</Label>
+                      <Slider
+                        value={[strategyConfig.minConfidence]}
+                        onValueChange={(value) => updateStrategyConfig({ minConfidence: value[0] })}
+                        max={95}
+                        min={70}
+                        step={5}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Higher = AI only trades when extremely confident</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Max Risk Per Trade: {(strategyConfig.maxRiskPerTrade * 100).toFixed(1)}%</Label>
+                      <Slider
+                        value={[strategyConfig.maxRiskPerTrade * 100]}
+                        onValueChange={(value) => updateStrategyConfig({ maxRiskPerTrade: value[0] / 100 })}
+                        max={5}
+                        min={0.5}
+                        step={0.1}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">AI automatically calculates optimal position sizes</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Max Daily Drawdown: {(strategyConfig.maxDailyDrawdown * 100).toFixed(1)}%</Label>
+                      <Slider
+                        value={[strategyConfig.maxDailyDrawdown * 100]}
+                        onValueChange={(value) => updateStrategyConfig({ maxDailyDrawdown: value[0] / 100 })}
+                        max={10}
+                        min={2}
+                        step={0.5}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Emergency stop if losses exceed this limit</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Signal Weights</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Technical Analysis: {(strategyConfig.technicalWeight * 100).toFixed(0)}%</span>
+                          <Slider
+                            value={[strategyConfig.technicalWeight * 100]}
+                            onValueChange={(value) => updateStrategyConfig({ technicalWeight: value[0] / 100 })}
+                            max={70}
+                            min={20}
+                            step={5}
+                            className="w-32"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Market Sentiment: {(strategyConfig.sentimentWeight * 100).toFixed(0)}%</span>
+                          <Slider
+                            value={[strategyConfig.sentimentWeight * 100]}
+                            onValueChange={(value) => updateStrategyConfig({ sentimentWeight: value[0] / 100 })}
+                            max={50}
+                            min={10}
+                            step={5}
+                            className="w-32"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Fundamental News: {(strategyConfig.fundamentalWeight * 100).toFixed(0)}%</span>
+                          <Slider
+                            value={[strategyConfig.fundamentalWeight * 100]}
+                            onValueChange={(value) => updateStrategyConfig({ fundamentalWeight: value[0] / 100 })}
+                            max={40}
+                            min={10}
+                            step={5}
+                            className="w-32"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">AI combines multiple data sources for decisions</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Adaptive Position Sizing</Label>
+                        <p className="text-xs text-muted-foreground">AI uses Kelly Criterion for optimal sizing</p>
+                      </div>
+                      <Switch
+                        checked={strategyConfig.adaptivePositionSizing}
+                        onCheckedChange={(checked) => updateStrategyConfig({ adaptivePositionSizing: checked })}
+                        className="data-[state=checked]:bg-[#00AEEF]"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Multi-Timeframe Analysis</Label>
+                        <p className="text-xs text-muted-foreground">AI analyzes multiple timeframes simultaneously</p>
+                      </div>
+                      <Switch
+                        checked={strategyConfig.multiTimeframeAnalysis}
+                        onCheckedChange={(checked) => updateStrategyConfig({ multiTimeframeAnalysis: checked })}
+                        className="data-[state=checked]:bg-[#00AEEF]"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>News Filter</Label>
+                        <p className="text-xs text-muted-foreground">AI avoids trading during high-impact news</p>
+                      </div>
+                      <Switch
+                        checked={strategyConfig.newsFilterEnabled}
+                        onCheckedChange={(checked) => updateStrategyConfig({ newsFilterEnabled: checked })}
+                        className="data-[state=checked]:bg-[#00AEEF]"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {!strategyConfig.brainEnabled && (
+                <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                  <div className="text-6xl mb-4">🧠</div>
+                  <h3 className="text-xl font-semibold mb-2">Enable Wing Zero AI Brain</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Let Wing Zero's super smart AI trader handle everything for you. 
+                    Like having the world's best trader working 24/7 for your family.
+                  </p>
+                  <Button 
+                    onClick={() => updateStrategyConfig({ brainEnabled: true })}
+                    className="bg-[#00AEEF] hover:bg-[#00AEEF]/80 text-black font-medium"
+                  >
+                    Enable AI Brain
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
 
             {/* Capital Allocation */}
             <TabsContent value="allocation" className="space-y-4">

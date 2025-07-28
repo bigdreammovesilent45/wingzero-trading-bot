@@ -3,6 +3,7 @@ import { MarketDataService } from './MarketDataService';
 import { RiskManager } from './RiskManager';
 import { OrderManager } from './OrderManager';
 import { StrategyManager } from './StrategyManager';
+import { TradingBrain } from './TradingBrain';
 
 export class TradingEngine {
   private brokerConnection: BrokerConnection | null = null;
@@ -10,14 +11,17 @@ export class TradingEngine {
   private riskManager: RiskManager;
   private orderManager: OrderManager;
   private strategyManager: StrategyManager;
+  private tradingBrain: TradingBrain;
   private isRunning = false;
   private tradingConfig: any;
+  private brainEnabled = false;
 
   constructor() {
     this.marketDataService = new MarketDataService();
     this.riskManager = new RiskManager();
     this.orderManager = new OrderManager();
     this.strategyManager = new StrategyManager();
+    this.tradingBrain = new TradingBrain();
   }
 
   async start(config: any): Promise<void> {
@@ -26,6 +30,7 @@ export class TradingEngine {
     }
 
     this.tradingConfig = config;
+    this.brainEnabled = config.brainEnabled || false;
     
     // Initialize all services
     await this.marketDataService.start();
@@ -33,14 +38,30 @@ export class TradingEngine {
     await this.orderManager.initialize();
     await this.strategyManager.loadStrategies(config);
 
+    // Initialize and start the AI Trading Brain if enabled
+    if (this.brainEnabled) {
+      console.log('🧠 Starting Wing Zero Trading Brain - Full Autonomous Mode');
+      await this.tradingBrain.initialize();
+      await this.tradingBrain.start();
+    }
+
     this.isRunning = true;
-    this.startTradingLoop();
     
-    console.log('Trading engine started successfully');
+    // Only start traditional trading loop if brain is disabled
+    if (!this.brainEnabled) {
+      this.startTradingLoop();
+    }
+    
+    console.log(`Trading engine started - ${this.brainEnabled ? 'AI Brain Mode' : 'Traditional Mode'}`);
   }
 
   async stop(): Promise<void> {
     this.isRunning = false;
+    
+    // Stop the AI Trading Brain if it's running
+    if (this.brainEnabled && this.tradingBrain.isRunning()) {
+      await this.tradingBrain.stop();
+    }
     
     // Close all open positions if configured to do so
     if (this.tradingConfig?.closeOnStop) {
@@ -236,9 +257,38 @@ export class TradingEngine {
   getEngineStatus() {
     return {
       isRunning: this.isRunning,
+      brainEnabled: this.brainEnabled,
+      brainActive: this.brainEnabled && this.tradingBrain.isRunning(),
       brokerConnected: !!this.brokerConnection,
       openPositions: this.orderManager.getOpenPositionsCount(),
-      dailyPnL: this.riskManager.getDailyPnL()
+      dailyPnL: this.riskManager.getDailyPnL(),
+      currentRegime: this.brainEnabled ? this.tradingBrain.getCurrentRegime() : null
     };
+  }
+
+  // Public methods for Brain control
+  public async enableBrain(): Promise<void> {
+    if (!this.brainEnabled) {
+      this.brainEnabled = true;
+      await this.tradingBrain.initialize();
+      await this.tradingBrain.start();
+      console.log('🧠 Wing Zero Trading Brain activated');
+    }
+  }
+
+  public async disableBrain(): Promise<void> {
+    if (this.brainEnabled && this.tradingBrain.isRunning()) {
+      await this.tradingBrain.stop();
+      this.brainEnabled = false;
+      console.log('🧠 Wing Zero Trading Brain deactivated');
+    }
+  }
+
+  public getBrainConfig(): any {
+    return this.tradingBrain.getConfig();
+  }
+
+  public updateBrainConfig(config: any): void {
+    this.tradingBrain.updateConfig(config);
   }
 }
