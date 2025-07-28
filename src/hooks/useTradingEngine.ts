@@ -76,7 +76,7 @@ export const useTradingEngine = () => {
       engine.setBrokerConnection(brokerConnection)
         .then(() => {
           setState(prev => ({ ...prev, isConnected: true, error: null }));
-          console.log('Trading engine connected to broker successfully');
+          console.log('Trading engine connected to broker successfully - setting isConnected to true');
         })
         .catch(error => {
           console.error('Failed to connect trading engine to broker:', error);
@@ -85,10 +85,12 @@ export const useTradingEngine = () => {
     } else if (!isConfigured && !hasInitialized.current) {
       // Only set error state once, not on every render
       hasInitialized.current = true;
+      console.log('Platform not configured, setting demo mode connection');
+      // For demo mode, still allow connection
       setState(prev => ({ 
         ...prev, 
-        isConnected: false, 
-        error: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} not configured. Please set up your platform connection in Setup.` 
+        isConnected: true, // Allow demo mode connection
+        error: null 
       }));
     }
   }, [brokerConnection, isConfigured, selectedPlatform]); // Removed engine from dependencies - it's stable

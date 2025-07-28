@@ -156,10 +156,12 @@ const ControlPanel = () => {
   });
 
   const handleStart = async () => {
-    if (!isConnected) {
+    console.log('handleStart called - isConnected:', isConnected, 'isOperational:', isOperational);
+    
+    if (!isConnected && !isOperational) {
       toast({
         title: "No Platform Connection",
-        description: "Please configure your cTrader connection first",
+        description: "Please configure your cTrader connection first or enable demo mode",
         variant: "destructive"
       });
       return;
