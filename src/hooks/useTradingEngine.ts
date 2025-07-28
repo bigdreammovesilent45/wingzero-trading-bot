@@ -22,6 +22,8 @@ export const useTradingEngine = () => {
   const { brokerConnection, isConfigured } = useBrokerAPI();
   const { syncMT5Position, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
   const hasInitialized = useRef(false);
+  const isRunningRef = useRef(false);
+  const isConnectedRef = useRef(false);
   const [tradingConfig] = useLocalStorage('wingzero-strategy', {
     maxRiskPerTrade: 2,
     stopLossPips: 20,
@@ -66,9 +68,15 @@ export const useTradingEngine = () => {
     }
   }, [brokerConnection, isConfigured]); // Removed engine from dependencies - it's stable
 
+  // Update refs when state changes
+  useEffect(() => {
+    isRunningRef.current = state.isRunning;
+    isConnectedRef.current = state.isConnected;
+  }, [state.isRunning, state.isConnected]);
+
   // Update state periodically when engine is running
   useEffect(() => {
-    if (!state.isRunning || !state.isConnected) return;
+    if (!isRunningRef.current || !isConnectedRef.current) return;
 
     console.log('Starting trading engine status updates...');
     
@@ -106,7 +114,7 @@ export const useTradingEngine = () => {
       console.log('Stopping trading engine status updates');
       clearInterval(updateInterval);
     };
-  }, [state.isRunning, state.isConnected]); // Removed syncMT5Position to prevent infinite loop
+  }, []); // Empty dependency array since we use refs
 
   const startEngine = useCallback(async () => {
     if (!isConfigured) {
