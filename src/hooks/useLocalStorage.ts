@@ -6,16 +6,24 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       const item = window.localStorage.getItem(key);
       if (!item) return initialValue;
       
-      // Try to parse as JSON first
+      // Handle special case for string values that might not be JSON
+      if (typeof initialValue === 'string' && !item.startsWith('{') && !item.startsWith('[') && !item.startsWith('"')) {
+        // If the stored value looks like a plain string, return it directly
+        return item as T;
+      }
+      
+      // Try to parse as JSON
       try {
         return JSON.parse(item);
       } catch {
-        // If JSON parsing fails, try to return the raw value if it's a string
-        // This handles cases where values were stored as plain strings
+        // If JSON parsing fails and we expect a string, return the raw value
         if (typeof initialValue === 'string') {
           return item as T;
         }
-        throw new Error('Invalid JSON and type mismatch');
+        // For non-string types, fall back to initial value and clear the corrupted data
+        console.warn(`Clearing corrupted localStorage key "${key}":`, item);
+        window.localStorage.removeItem(key);
+        return initialValue;
       }
     } catch (error) {
       console.error(`Error reading localStorage key "${key}":`, error);

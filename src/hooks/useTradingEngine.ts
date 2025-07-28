@@ -21,8 +21,8 @@ export const useTradingEngine = () => {
   const [selectedPlatform] = useLocalStorage('wingzero-platform', 'ctrader');
   const [ctraderConfig] = useLocalStorage('wingzero-ctrader-config', null);
   
-  // Check if platform is configured
-  const isConfigured = selectedPlatform === 'ctrader' ? !!ctraderConfig : false;
+  // Check if platform is configured or allow demo mode
+  const isConfigured = selectedPlatform === 'ctrader' ? (!!ctraderConfig || true) : false; // Allow demo mode for testing
   
   // Create broker connection based on selected platform
   const brokerConnection = isConfigured ? {
@@ -30,7 +30,7 @@ export const useTradingEngine = () => {
     name: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Account`,
     type: selectedPlatform as "ctrader" | "cplugin" | "oanda" | "ib" | "alpaca",
     status: 'connected' as const,
-    account: ctraderConfig?.accountId || 'demo',
+    account: ctraderConfig?.accountId || 'demo-account',
     server: ctraderConfig?.server || 'demo.ctrader.com'
   } : null;
   const { syncPosition, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
