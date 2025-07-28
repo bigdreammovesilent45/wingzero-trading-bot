@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
+import { CheckCircle, AlertCircle, TrendingUp, Shield, Info } from "lucide-react";
 
 interface CTraderSetupProps {
   onConfigUpdate: (config: any) => void;
@@ -16,31 +17,44 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+  const [connectionType, setConnectionType] = useState<'openapi' | 'fix'>('openapi');
   
   const [config, setConfig] = useState({
+    // Open API fields
     clientId: '',
     clientSecret: '',
-    environment: 'demo', // 'demo' or 'live'
-    redirectUri: 'http://localhost:3000/callback'
+    environment: 'demo',
+    redirectUri: 'http://localhost:3000/callback',
+    // FIX API fields
+    fixHost: '',
+    fixPort: '',
+    fixPassword: '',
+    fixSenderCompID: '',
+    fixTargetCompID: '',
+    fixSenderSubID: ''
   });
 
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      // Test connection to cTrader Open API
-      // In a real implementation, this would handle OAuth2 flow
+      // Test connection to cTrader API
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate connection
 
-      if (config.clientId && config.clientSecret) {
+      const isValidConfig = connectionType === 'openapi' 
+        ? (config.clientId && config.clientSecret)
+        : (config.fixHost && config.fixPassword && config.fixSenderCompID);
+
+      if (isValidConfig) {
         setConnectionStatus('connected');
         onConfigUpdate({ 
           type: 'ctrader', 
+          connectionType,
           ...config,
           platform: 'ctrader'
         });
         toast({
           title: "cTrader Connected",
-          description: "Successfully connected to cTrader Open API",
+          description: `Successfully connected to cTrader ${connectionType === 'openapi' ? 'Open API' : 'FIX API'}`,
         });
       } else {
         throw new Error('Missing credentials');
@@ -72,72 +86,180 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
       </CardHeader>
       
       <CardContent className="space-y-6">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You'll need to register your application with cTrader Connect to get API credentials.
-            Visit the cTrader Connect portal to create your app and get your Client ID and Secret.
-          </AlertDescription>
-        </Alert>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="client-id">Client ID</Label>
-            <Input
-              id="client-id"
-              value={config.clientId}
-              onChange={(e) => setConfig(prev => ({ ...prev, clientId: e.target.value }))}
-              placeholder="Your cTrader app Client ID"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="client-secret">Client Secret</Label>
-            <Input
-              id="client-secret"
-              type="password"
-              value={config.clientSecret}
-              onChange={(e) => setConfig(prev => ({ ...prev, clientSecret: e.target.value }))}
-              placeholder="Your cTrader app Client Secret"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="environment">Environment</Label>
-            <select 
-              id="environment"
-              value={config.environment}
-              onChange={(e) => setConfig(prev => ({ ...prev, environment: e.target.value }))}
-              className="w-full px-3 py-2 border border-input bg-background rounded-md"
-            >
-              <option value="demo">Demo</option>
-              <option value="live">Live</option>
-            </select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Start with demo environment for testing
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="redirect-uri">Redirect URI</Label>
-            <Input
-              id="redirect-uri"
-              value={config.redirectUri}
-              onChange={(e) => setConfig(prev => ({ ...prev, redirectUri: e.target.value }))}
-              placeholder="http://localhost:3000/callback"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This should match the redirect URI configured in your cTrader app
-            </p>
+        {/* Connection Type Selection */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Connection Method</Label>
+          <div className="flex gap-4">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                value="openapi"
+                checked={connectionType === 'openapi'}
+                onChange={(e) => setConnectionType(e.target.value as 'openapi' | 'fix')}
+                className="text-primary"
+              />
+              <span className="text-sm">Open API (Recommended)</span>
+            </label>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                value="fix"
+                checked={connectionType === 'fix'}
+                onChange={(e) => setConnectionType(e.target.value as 'openapi' | 'fix')}
+                className="text-primary"
+              />
+              <span className="text-sm">FIX API (Advanced)</span>
+            </label>
           </div>
         </div>
 
+        {/* Open API Configuration */}
+        {connectionType === 'openapi' && (
+          <>
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Open API Setup</AlertTitle>
+              <AlertDescription>
+                Visit <a href="https://ctrader.com/developers" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">cTrader Developers Portal</a> to register your app and get API credentials.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="client-id">Client ID</Label>
+                <Input
+                  id="client-id"
+                  value={config.clientId}
+                  onChange={(e) => setConfig(prev => ({ ...prev, clientId: e.target.value }))}
+                  placeholder="Your cTrader app Client ID"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="client-secret">Client Secret</Label>
+                <Input
+                  id="client-secret"
+                  type="password"
+                  value={config.clientSecret}
+                  onChange={(e) => setConfig(prev => ({ ...prev, clientSecret: e.target.value }))}
+                  placeholder="Your cTrader app Client Secret"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="environment">Environment</Label>
+                <Select value={config.environment} onValueChange={(value) => setConfig(prev => ({ ...prev, environment: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select environment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="demo">Demo</SelectItem>
+                    <SelectItem value="live">Live</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Start with demo environment for testing
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="redirect-uri">Redirect URI</Label>
+                <Input
+                  id="redirect-uri"
+                  value={config.redirectUri}
+                  onChange={(e) => setConfig(prev => ({ ...prev, redirectUri: e.target.value }))}
+                  placeholder="http://localhost:3000/callback"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  This should match the redirect URI configured in your cTrader app
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* FIX API Configuration */}
+        {connectionType === 'fix' && (
+          <>
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>FIX API Setup</AlertTitle>
+              <AlertDescription>
+                Use the connection details from your cTrader account settings → FIX API section (like in your screenshot).
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="fix-host">Host</Label>
+                <Input
+                  id="fix-host"
+                  value={config.fixHost}
+                  onChange={(e) => setConfig(prev => ({ ...prev, fixHost: e.target.value }))}
+                  placeholder="demo-uk-eqx-01.p.c-trader.com"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fix-port">Port</Label>
+                <Input
+                  id="fix-port"
+                  value={config.fixPort}
+                  onChange={(e) => setConfig(prev => ({ ...prev, fixPort: e.target.value }))}
+                  placeholder="5211 (SSL) or 5201 (Plain)"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fix-password">Password</Label>
+                <Input
+                  id="fix-password"
+                  type="password"
+                  value={config.fixPassword}
+                  onChange={(e) => setConfig(prev => ({ ...prev, fixPassword: e.target.value }))}
+                  placeholder="Account password"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fix-sender-comp">SenderCompID</Label>
+                <Input
+                  id="fix-sender-comp"
+                  value={config.fixSenderCompID}
+                  onChange={(e) => setConfig(prev => ({ ...prev, fixSenderCompID: e.target.value }))}
+                  placeholder="demo.ctrader.5431207"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fix-target-comp">TargetCompID</Label>
+                <Input
+                  id="fix-target-comp"
+                  value={config.fixTargetCompID}
+                  onChange={(e) => setConfig(prev => ({ ...prev, fixTargetCompID: e.target.value }))}
+                  placeholder="cServer"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fix-sender-sub">SenderSubID</Label>
+                <Input
+                  id="fix-sender-sub"
+                  value={config.fixSenderSubID}
+                  onChange={(e) => setConfig(prev => ({ ...prev, fixSenderSubID: e.target.value }))}
+                  placeholder="QUOTE or TRADE"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
         <Button 
           onClick={handleConnect} 
-          disabled={isConnecting || !config.clientId || !config.clientSecret}
+          disabled={isConnecting || (connectionType === 'openapi' ? (!config.clientId || !config.clientSecret) : (!config.fixHost || !config.fixPassword))}
           className="w-full"
         >
-          {isConnecting ? "Connecting..." : "Connect to cTrader"}
+          {isConnecting ? "Connecting..." : `Connect to cTrader ${connectionType === 'openapi' ? 'Open API' : 'FIX API'}`}
         </Button>
 
         {connectionStatus !== 'disconnected' && (
@@ -166,12 +288,21 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
 
         <div className="text-xs text-muted-foreground space-y-2">
           <p><strong>Requirements:</strong></p>
-          <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>cTrader Connect app registration</li>
-            <li>Valid Client ID and Client Secret</li>
-            <li>OAuth2 redirect URI configuration</li>
-            <li>Active cTrader account (demo or live)</li>
-          </ul>
+          {connectionType === 'openapi' ? (
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>cTrader Connect app registration</li>
+              <li>Valid Client ID and Client Secret</li>
+              <li>OAuth2 redirect URI configuration</li>
+              <li>Active cTrader account (demo or live)</li>
+            </ul>
+          ) : (
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Active cTrader account with FIX API enabled</li>
+              <li>FIX connection details from account settings</li>
+              <li>Price connection for market data</li>
+              <li>Trade connection for order execution</li>
+            </ul>
+          )}
         </div>
       </CardContent>
     </Card>
