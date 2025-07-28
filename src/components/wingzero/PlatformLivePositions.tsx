@@ -3,16 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp, TrendingDown, X, BarChart3, DollarSign } from "lucide-react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useWingZeroPositions } from "@/hooks/useWingZeroPositions";
 import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { formatDistanceToNow } from "date-fns";
 
-const LivePositions = () => {
+type Platform = 'ctrader' | 'mt5' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance';
+
+export const PlatformLivePositions = () => {
+  const [selectedPlatform] = useLocalStorage<Platform>('wingzero-platform', 'ctrader');
   const { positions, isLoading, getTotalPnL, getOpenPositions } = useWingZeroPositions();
   const { closePosition } = useTradingEngine();
   
   const openPositions = getOpenPositions();
   const totalPnL = getTotalPnL();
+
+  const getPlatformName = (platform: Platform) => {
+    const names = {
+      ctrader: 'cTrader',
+      mt5: 'MetaTrader 5',
+      ninjatrader: 'NinjaTrader',
+      tradingview: 'TradingView',
+      interactivebrokers: 'Interactive Brokers',
+      binance: 'Binance'
+    };
+    return names[platform];
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -42,7 +58,7 @@ const LivePositions = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-[#00AEEF]" />
-            Live MT5 Positions
+            Live {getPlatformName(selectedPlatform)} Positions
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -88,9 +104,9 @@ const LivePositions = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Sync Status</p>
+                <p className="text-sm text-muted-foreground">Platform</p>
                 <Badge variant="default" className="bg-[#00AEEF] text-black">
-                  🔄 Real-time
+                  {getPlatformName(selectedPlatform)}
                 </Badge>
               </div>
               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -104,7 +120,7 @@ const LivePositions = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-[#00AEEF]" />
-            Live MT5 Positions ({openPositions.length})
+            Live {getPlatformName(selectedPlatform)} Positions ({openPositions.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -183,5 +199,3 @@ const LivePositions = () => {
     </div>
   );
 };
-
-export default LivePositions;

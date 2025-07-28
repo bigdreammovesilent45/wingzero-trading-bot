@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target, Wifi, WifiOff, AlertTriangle, Database, DollarSign, Zap } from "lucide-react";
-import { PlatformSelector } from "./PlatformSelector";
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -81,7 +81,7 @@ const ControlPanel = () => {
     isOperational
   } = useTradingEngine();
   
-  // MT5 account data
+  // Platform account data
   const { account, isLoading: accountLoading, error: accountError } = useAccountData();
   
   // Wing Zero positions for database sync
@@ -132,8 +132,8 @@ const ControlPanel = () => {
   const handleStart = async () => {
     if (!isConnected) {
       toast({
-        title: "No MT5 Connection",
-        description: "Please configure MT5 connection in Settings first",
+        title: "No Platform Connection",
+        description: "Please configure your trading platform connection first",
         variant: "destructive"
       });
       return;
@@ -425,7 +425,7 @@ const ControlPanel = () => {
         </CardContent>
       </Card>
 
-      {/* MT5 Connection Status */}
+      {/* Platform Connection Status */}
       <Card className={`border-2 ${isConnected ? 'border-green-500/20 bg-green-50/50 dark:bg-green-950/20' : 'border-red-500/20 bg-red-50/50 dark:bg-red-950/20'}`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
@@ -436,9 +436,9 @@ const ControlPanel = () => {
                 <WifiOff className="h-6 w-6 text-red-600" />
               )}
               <div>
-                <h3 className="text-lg font-semibold">MT5 Live Connection</h3>
+                <h3 className="text-lg font-semibold">Platform Live Connection</h3>
                 <p className="text-sm text-muted-foreground">
-                  {isConnected ? 'Real-time trading active' : 'Configure connection in Settings'}
+                  {isConnected ? 'Real-time trading active' : 'Configure platform connection in Setup'}
                 </p>
               </div>
             </div>
@@ -491,21 +491,6 @@ const ControlPanel = () => {
         </CardContent>
       </Card>
 
-      {/* Platform Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-[#00AEEF]" />
-            Trading Platform Setup
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PlatformSelector onConfigUpdate={(config) => {
-            console.log('Platform config updated:', config);
-            // Handle platform configuration here
-          }} />
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

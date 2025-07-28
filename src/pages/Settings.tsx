@@ -12,7 +12,7 @@ import { ArrowLeft, Settings, Bell, Shield, User, DollarSign, Link as LinkIcon, 
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { BrokerConnection } from "@/types/broker";
-import { WingZeroSetup } from "@/components/wingzero/WingZeroSetup";
+
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AccountSettings } from "@/components/settings/AccountSettings";
@@ -208,7 +208,21 @@ const SettingsPage = () => {
           
           {/* Broker Setup Tab */}
           <TabsContent value="broker" className="space-y-6">
-            <WingZeroSetup />
+            <Card>
+              <CardHeader>
+                <CardTitle>Trading Platform Connection</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Configure your trading platform connection in the Wing Zero dashboard under Platform Setup.
+                </p>
+                <Link to="/wingzero">
+                  <Button className="mt-4">
+                    Go to Platform Setup
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="notifications" className="space-y-6">

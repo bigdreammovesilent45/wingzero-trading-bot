@@ -21,9 +21,9 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
     {
       id: 'ctrader' as const,
       name: 'cTrader',
-      description: 'Professional trading platform with Open API and FIX connectivity',
+      description: 'Professional trading platform with Open API and FIX connectivity (Recommended)',
       icon: TrendingUp,
-      features: ['Open API', 'FIX Protocol', 'OAuth2 Security', 'Live & Demo', 'ECN Execution'],
+      features: ['Open API', 'FIX Protocol', 'OAuth2 Security', 'Live & Demo', 'ECN Execution', 'Low Latency'],
       status: connectionStatus.ctrader ? 'connected' : 'recommended'
     },
     {
@@ -70,6 +70,8 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
 
   const handlePlatformSelect = (platform: Platform) => {
     setSelectedPlatform(platform);
+    // Store the selected platform globally
+    localStorage.setItem('wingzero-platform', platform);
   };
 
   const handleConfigUpdate = (config: any) => {
