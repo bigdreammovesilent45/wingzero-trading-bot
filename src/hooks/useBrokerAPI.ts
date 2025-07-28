@@ -9,7 +9,7 @@ interface BrokerConfig {
   apiKey: string;
   apiSecret: string;
   baseUrl: string;
-  broker: 'interactive_brokers' | 'alpaca' | 'forex_com' | 'mt5';
+  broker: 'interactive_brokers' | 'alpaca' | 'forex_com' | 'ctrader';
 }
 
 export const useBrokerAPI = () => {
@@ -24,17 +24,17 @@ export const useBrokerAPI = () => {
       apiKey: '',
       apiSecret: '',
       baseUrl: 'http://localhost:6542',
-      broker: 'mt5' as const
+      broker: 'ctrader' as const
     };
     
     const activeConfig = config || defaultConfig;
     
     return {
-      id: 'mt5-real-connection',
-      name: 'MT5 Real Account',
-      type: 'mt5',
+      id: 'ctrader-real-connection',
+      name: 'cTrader Real Account',
+      type: 'ctrader',
       status: 'connected',
-      account: 'live-mt5',
+      account: 'live-ctrader',
       server: activeConfig.baseUrl
     };
   }, [config]);
@@ -44,7 +44,7 @@ export const useBrokerAPI = () => {
       apiKey: '',
       apiSecret: '',
       baseUrl: 'http://localhost:6542',
-      broker: 'mt5' as const
+      broker: 'ctrader' as const
     };
     
     const activeConfig = config || defaultConfig;
@@ -78,7 +78,7 @@ export const useBrokerAPI = () => {
           throw new Error('Connection timeout - MT5 RestApi EA may not be running');
         }
         if (err.message.includes('Failed to fetch')) {
-          throw new Error('Cannot connect to MT5 RestApi EA. Please ensure:\n1. MT5 terminal is open\n2. RestApi EA is installed and running\n3. Server URL is correct (default: http://localhost:6542)');
+          throw new Error('Cannot connect to cTrader. Please ensure:\n1. cTrader platform is running\n2. API credentials are configured\n3. Server URL is correct');
         }
       }
       throw err;
@@ -94,13 +94,13 @@ export const useBrokerAPI = () => {
         apiKey: '',
         apiSecret: '',
         baseUrl: 'http://localhost:6542',
-        broker: 'mt5' as const
+        broker: 'ctrader' as const
       };
       
       const activeConfig = config || defaultConfig;
       console.log('Attempting to fetch account data from:', activeConfig.baseUrl);
       
-      // Try to fetch from MT5 RestApi EA
+      // Try to fetch from cTrader API
       const response = await makeRequest('/info');
       
       const account: Account = {
@@ -116,12 +116,12 @@ export const useBrokerAPI = () => {
       console.log('Account data fetched successfully:', account);
       return account;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch MT5 account data';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch cTrader account data';
       setError(errorMessage);
-      console.warn('MT5 connection failed, using demo data:', errorMessage);
+      console.warn('cTrader connection failed, using demo data:', errorMessage);
       
-      // Return demo data when MT5 is not available - Enhanced for trading
-      console.log('Using MT5 Demo Account for Wing Zero trading');
+      // Return demo data when cTrader is not available - Enhanced for trading
+      console.log('Using cTrader Demo Account for Wing Zero trading');
       return {
         balance: 50000,        // $50,000 demo balance
         equity: 50000,
@@ -180,12 +180,12 @@ export const useBrokerAPI = () => {
     
     try {
       if (!config) {
-        // Auto-configure for local MT5 if no config exists
-        console.log('🔧 Auto-configuring MT5 connection for localhost:6542');
+        // Auto-configure for cTrader demo if no config exists
+        console.log('🔧 Auto-configuring cTrader demo connection');
         
         toast({
           title: "🚀 Using Demo Mode",
-          description: "MT5 not configured - Wing Zero running with $50,000 demo balance",
+          description: "cTrader not configured - Wing Zero running with $50,000 demo balance",
         });
         
         return true; // Return success for demo mode
@@ -198,19 +198,19 @@ export const useBrokerAPI = () => {
       console.log('Connection test response:', response);
       
       toast({
-        title: "✅ MT5 Connected",
-        description: "MT5 RestApi EA is responding correctly",
+        title: "✅ cTrader Connected",
+        description: "cTrader API is responding correctly",
       });
       
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Connection test failed';
-      console.warn('MT5 connection failed, using demo mode:', errorMessage);
+      console.warn('cTrader connection failed, using demo mode:', errorMessage);
       
       // Don't show error for demo mode - show success instead
       toast({
         title: "🚀 Demo Mode Active",
-        description: "MT5 not available - Wing Zero running with $50,000 demo balance",
+        description: "cTrader not available - Wing Zero running with $50,000 demo balance",
       });
       
       return true; // Return success for demo mode

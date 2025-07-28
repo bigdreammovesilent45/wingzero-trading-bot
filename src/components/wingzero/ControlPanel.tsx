@@ -85,7 +85,7 @@ const ControlPanel = () => {
   const { account, isLoading: accountLoading, error: accountError } = useAccountData();
   
   // Wing Zero positions for database sync
-  const { syncMT5Position } = useWingZeroPositions();
+  const { syncPosition } = useWingZeroPositions();
   const [isTestingDb, setIsTestingDb] = useState(false);
   
   const [strategyConfig, setStrategyConfig] = useLocalStorage<StrategyConfig>('wingzero-strategy', {

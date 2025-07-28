@@ -5,10 +5,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CTraderSetup } from "./CTraderSetup";
-import { MT5Setup } from "./MT5Setup";
 import { PlatformSetup } from "./PlatformSetup";
 
-type Platform = 'ctrader' | 'mt5' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance';
+type Platform = 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance';
 
 export const PlatformConnectionStatus = () => {
   const [selectedPlatform] = useLocalStorage<Platform>('wingzero-platform', 'ctrader');
@@ -30,7 +29,6 @@ export const PlatformConnectionStatus = () => {
   const getPlatformName = (platform: Platform) => {
     const names = {
       ctrader: 'cTrader',
-      mt5: 'MetaTrader 5',
       ninjatrader: 'NinjaTrader',
       tradingview: 'TradingView',
       interactivebrokers: 'Interactive Brokers',
@@ -45,8 +43,6 @@ export const PlatformConnectionStatus = () => {
     switch (selectedPlatform) {
       case 'ctrader':
         return <CTraderSetup onConfigUpdate={handleConfigUpdate} />;
-      case 'mt5':
-        return <MT5Setup onConfigUpdate={handleConfigUpdate} />;
       default:
         return <PlatformSetup platform={selectedPlatform} onConfigUpdate={handleConfigUpdate} />;
     }

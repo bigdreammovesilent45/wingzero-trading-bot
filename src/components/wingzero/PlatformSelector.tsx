@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Smartphone, TrendingUp, BarChart3 } from "lucide-react";
-import { MT5Setup } from "./MT5Setup";
 import { CTraderSetup } from "./CTraderSetup";
 import { PlatformSetup } from "./PlatformSetup";
 
@@ -11,7 +10,7 @@ interface PlatformSelectorProps {
   onConfigUpdate: (config: any) => void;
 }
 
-type Platform = 'mt5' | 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance' | null;
+type Platform = 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance' | null;
 
 export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>(null);
@@ -25,14 +24,6 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
       icon: TrendingUp,
       features: ['Open API', 'FIX Protocol', 'OAuth2 Security', 'Live & Demo', 'ECN Execution', 'Low Latency'],
       status: connectionStatus.ctrader ? 'connected' : 'recommended'
-    },
-    {
-      id: 'mt5' as const,
-      name: 'MetaTrader 5',
-      description: 'Popular retail platform with REST API and Expert Advisor support',
-      icon: Monitor,
-      features: ['REST API', 'Expert Advisors', 'Multiple Timeframes', 'Custom Indicators'],
-      status: connectionStatus.mt5 ? 'connected' : 'available'
     },
     {
       id: 'ninjatrader' as const,
@@ -71,7 +62,7 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
   const handlePlatformSelect = (platform: Platform) => {
     setSelectedPlatform(platform);
     // Store the selected platform globally
-    localStorage.setItem('wingzero-platform', platform);
+    localStorage.setItem('wingzero-platform', platform || '');
   };
 
   const handleConfigUpdate = (config: any) => {
@@ -88,17 +79,6 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
     setSelectedPlatform(null);
   };
 
-  if (selectedPlatform === 'mt5') {
-    return (
-      <div className="space-y-4">
-        <Button variant="outline" onClick={handleBackToSelection}>
-          ← Back to Platform Selection
-        </Button>
-        <MT5Setup onConfigUpdate={handleConfigUpdate} />
-      </div>
-    );
-  }
-
   if (selectedPlatform === 'ctrader') {
     return (
       <div className="space-y-4">
@@ -110,7 +90,7 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
     );
   }
 
-  if (selectedPlatform && !['mt5', 'ctrader'].includes(selectedPlatform)) {
+  if (selectedPlatform && selectedPlatform !== 'ctrader') {
     return (
       <div className="space-y-4">
         <Button variant="outline" onClick={handleBackToSelection}>

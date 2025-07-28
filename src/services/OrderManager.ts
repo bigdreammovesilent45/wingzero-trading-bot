@@ -85,8 +85,6 @@ export class OrderManager {
       // In real implementation, this would send to broker API
       if (this.connection?.type === 'oanda') {
         await this.executeOandaOrder(order);
-      } else if (this.connection?.type === 'mt4' || this.connection?.type === 'mt5') {
-        await this.executeMetaTraderOrder(order);
       } else {
         await this.executeMockOrder(order);
       }
@@ -108,13 +106,6 @@ export class OrderManager {
     await this.sleep(100);
   }
 
-  private async executeMetaTraderOrder(order: Order): Promise<void> {
-    // MetaTrader API order execution
-    console.log('Executing MetaTrader order:', order.id);
-    
-    // Mock execution for demo
-    await this.sleep(100);
-  }
 
   private async executeMockOrder(order: Order): Promise<void> {
     console.log('Executing mock order:', order.id);
@@ -168,8 +159,6 @@ export class OrderManager {
   private async executeBrokerClose(order: Order): Promise<void> {
     if (this.connection?.type === 'oanda') {
       await this.closeOandaPosition(order);
-    } else if (this.connection?.type === 'mt4' || this.connection?.type === 'mt5') {
-      await this.closeMetaTraderPosition(order);
     } else {
       await this.closeMockPosition(order);
     }
@@ -180,10 +169,6 @@ export class OrderManager {
     await this.sleep(100);
   }
 
-  private async closeMetaTraderPosition(order: Order): Promise<void> {
-    console.log('Closing MetaTrader position:', order.id);
-    await this.sleep(100);
-  }
 
   private async closeMockPosition(order: Order): Promise<void> {
     console.log('Closing mock position:', order.id);

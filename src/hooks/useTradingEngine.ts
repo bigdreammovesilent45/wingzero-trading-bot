@@ -28,12 +28,12 @@ export const useTradingEngine = () => {
   const brokerConnection = isConfigured ? {
     id: `${selectedPlatform}-connection`,
     name: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Account`,
-    type: selectedPlatform as "ctrader" | "cplugin" | "mt4" | "mt5" | "oanda" | "ib" | "alpaca",
+    type: selectedPlatform as "ctrader" | "cplugin" | "oanda" | "ib" | "alpaca",
     status: 'connected' as const,
     account: ctraderConfig?.accountId || 'demo',
     server: ctraderConfig?.server || 'demo.ctrader.com'
   } : null;
-  const { syncMT5Position, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
+  const { syncPosition, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
   const hasInitialized = useRef(false);
   const isRunningRef = useRef(false);
   const isConnectedRef = useRef(false);
@@ -104,7 +104,7 @@ export const useTradingEngine = () => {
         // Sync positions to Supabase for real-time mirroring
         for (const order of orders) {
           if (order.status === 'open') {
-            await syncMT5Position(order);
+            await syncPosition(order);
           }
         }
         

@@ -35,18 +35,6 @@ const SettingsPage = () => {
       environment: 'practice', // practice or live
       server: 'https://api-fxpractice.oanda.com'
     },
-    mt4: {
-      serverAddress: '',
-      login: '',
-      password: '',
-      account: ''
-    },
-    mt5: {
-      serverAddress: '',
-      login: '',
-      password: '',
-      account: ''
-    },
     alpaca: {
       apiKey: '',
       secretKey: '',
@@ -54,7 +42,7 @@ const SettingsPage = () => {
     }
   });
 
-  const [selectedBroker, setSelectedBroker] = useState<'cplugin' | 'oanda' | 'mt4' | 'mt5' | 'alpaca'>('cplugin');
+  const [selectedBroker, setSelectedBroker] = useState<'cplugin' | 'oanda' | 'alpaca'>('cplugin');
   const [testingConnection, setTestingConnection] = useState(false);
 
   const handleTestConnection = async () => {
@@ -72,7 +60,7 @@ const SettingsPage = () => {
           apiKey: cpluginConfig.clientId || '',
           apiSecret: cpluginConfig.clientSecret || '',
           baseUrl: cpluginConfig.serverUrl || 'https://admin.cplugin.net',
-          broker: 'mt5' as const
+          broker: 'ctrader' as const
         };
         
         // Save to localStorage for useBrokerAPI hook
@@ -89,27 +77,6 @@ const SettingsPage = () => {
         if (!testResponse.ok) {
           throw new Error('Failed to connect to CPlugin WebAPI. Please check your credentials.');
         }
-      } else if (selectedBroker === 'mt5') {
-        const mt5Config = config as any;
-        const apiUrl = mt5Config.serverAddress || 'http://localhost:6542';
-        
-        // Test the MT5 REST API
-        const response = await fetch(`${apiUrl}/info`);
-        if (!response.ok) {
-          throw new Error('Failed to connect to MT5 REST API. Make sure RestApi EA is running.');
-        }
-        
-        // Store the broker config for useBrokerAPI
-        const brokerConfig = {
-          apiKey: mt5Config.login || '',
-          apiSecret: mt5Config.password || '',
-          baseUrl: apiUrl,
-          broker: 'mt5' as const
-        };
-        
-        // Save to localStorage for useBrokerAPI hook
-        localStorage.setItem('broker_config', JSON.stringify(brokerConfig));
-      }
       
       const connectionId = `${selectedBroker}_${Date.now()}`;
       
@@ -125,10 +92,6 @@ const SettingsPage = () => {
         const oandaConfig = config as any;
         account = oandaConfig.accountId || 'demo';
         server = oandaConfig.server;
-      } else if (selectedBroker === 'mt4' || selectedBroker === 'mt5') {
-        const mtConfig = config as any;
-        account = mtConfig.account || mtConfig.login || 'demo';
-        server = mtConfig.serverAddress;
       } else if (selectedBroker === 'alpaca') {
         const alpacaConfig = config as any;
         account = 'alpaca-account';
@@ -274,8 +237,6 @@ const SettingsPage = () => {
                         <SelectContent>
                           <SelectItem value="cplugin">CPlugin WebAPI (Recommended)</SelectItem>
                           <SelectItem value="oanda">OANDA</SelectItem>
-                          <SelectItem value="mt4">MetaTrader 4</SelectItem>
-                          <SelectItem value="mt5">MetaTrader 5</SelectItem>
                           <SelectItem value="alpaca">Alpaca Markets</SelectItem>
                         </SelectContent>
                       </Select>
@@ -391,120 +352,6 @@ const SettingsPage = () => {
                       </div>
                     )}
 
-                    {/* MetaTrader 4 Configuration */}
-                    {selectedBroker === 'mt4' && (
-                      <div className="space-y-4 p-4 border rounded-lg">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          💹 MetaTrader 4 Configuration
-                        </h3>
-                        <div className="bg-yellow-50 dark:bg-yellow-950 p-3 rounded-lg mb-4">
-                          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                            ⚠️ <strong>Bridge Required:</strong> You need to install an MT4 Bridge Server first.
-                            <br />
-                            📖 <a href="/MT4_BRIDGE_SETUP.md" target="_blank" className="underline">Read the setup guide</a>
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label>Bridge Server URL *</Label>
-                            <Input
-                              value={brokerConfigs.mt4.serverAddress || 'http://localhost:8080'}
-                              onChange={(e) => updateBrokerConfig('mt4', 'serverAddress', e.target.value)}
-                              placeholder="http://localhost:8080"
-                            />
-                            <p className="text-xs text-muted-foreground">Default: http://localhost:8080</p>
-                          </div>
-                          <div>
-                            <Label>MT4 Account Number *</Label>
-                            <Input
-                              value={brokerConfigs.mt4.account}
-                              onChange={(e) => updateBrokerConfig('mt4', 'account', e.target.value)}
-                              placeholder="Your account number"
-                            />
-                            <p className="text-xs text-muted-foreground">From your MT4 terminal</p>
-                          </div>
-                          <div>
-                            <Label>MT4 Server *</Label>
-                            <Input
-                              value={brokerConfigs.mt4.login || 'MetaQuotes-Demo'}
-                              onChange={(e) => updateBrokerConfig('mt4', 'login', e.target.value)}
-                              placeholder="MetaQuotes-Demo"
-                            />
-                            <p className="text-xs text-muted-foreground">Your MT4 server name</p>
-                          </div>
-                          <div>
-                            <Label>Password (Optional)</Label>
-                            <Input
-                              type="password"
-                              value={brokerConfigs.mt4.password}
-                              onChange={(e) => updateBrokerConfig('mt4', 'password', e.target.value)}
-                              placeholder="Bridge authentication"
-                            />
-                            <p className="text-xs text-muted-foreground">Only if bridge requires auth</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* MetaTrader 5 Configuration */}
-                    {selectedBroker === 'mt5' && (
-                      <div className="space-y-4 p-4 border rounded-lg">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          🚀 MetaTrader 5 REST API Configuration
-                        </h3>
-                        <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg mb-4">
-                          <p className="text-sm text-green-800 dark:text-green-200">
-                            ✅ <strong>RestApi EA Detected:</strong> Using direct REST API connection to MT5.
-                            <br />
-                            🔗 Default endpoint: http://localhost:6542
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label>REST API URL *</Label>
-                            <Input
-                              value={brokerConfigs.mt5.serverAddress || 'http://localhost:6542'}
-                              onChange={(e) => updateBrokerConfig('mt5', 'serverAddress', e.target.value)}
-                              placeholder="http://localhost:6542"
-                            />
-                            <p className="text-xs text-muted-foreground">Your MT5 RestApi EA endpoint</p>
-                          </div>
-                          <div>
-                            <Label>API Key (Optional)</Label>
-                            <Input
-                              value={brokerConfigs.mt5.login}
-                              onChange={(e) => updateBrokerConfig('mt5', 'login', e.target.value)}
-                              placeholder="API key if required"
-                            />
-                            <p className="text-xs text-muted-foreground">Only if RestApi EA requires authentication</p>
-                          </div>
-                          <div>
-                            <Label>API Secret (Optional)</Label>
-                            <Input
-                              type="password"
-                              value={brokerConfigs.mt5.password}
-                              onChange={(e) => updateBrokerConfig('mt5', 'password', e.target.value)}
-                              placeholder="API secret if required"
-                            />
-                            <p className="text-xs text-muted-foreground">Only if RestApi EA requires authentication</p>
-                          </div>
-                          <div>
-                            <Label>Account Number</Label>
-                            <Input
-                              value={brokerConfigs.mt5.account}
-                              onChange={(e) => updateBrokerConfig('mt5', 'account', e.target.value)}
-                              placeholder="MT5 account number"
-                            />
-                            <p className="text-xs text-muted-foreground">Your MT5 account number</p>
-                          </div>
-                        </div>
-                        <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
-                          <p className="text-sm text-blue-800 dark:text-blue-200">
-                            💡 <strong>Quick Test:</strong> Open <a href="http://localhost:6542" target="_blank" className="underline">http://localhost:6542</a> to verify RestApi EA is running.
-                          </p>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Alpaca Configuration */}
                     {selectedBroker === 'alpaca' && (

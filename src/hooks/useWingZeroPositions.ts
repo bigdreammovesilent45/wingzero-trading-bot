@@ -54,7 +54,7 @@ export const useWingZeroPositions = () => {
     }
   }, []);
 
-  const syncMT5Position = useCallback(async (order: Order): Promise<WingZeroPosition | null> => {
+  const syncPosition = useCallback(async (order: Order): Promise<WingZeroPosition | null> => {
     try {
       const positionData: Omit<WingZeroPosition, 'id' | 'updated_at'> = {
         symbol: order.symbol,
@@ -111,7 +111,7 @@ export const useWingZeroPositions = () => {
         return data;
       }
     } catch (error) {
-      console.error('Failed to sync MT5 position:', error);
+      console.error('Failed to sync position:', error);
       toast({
         title: "Sync Error",
         description: "Failed to sync position with database",
@@ -195,7 +195,7 @@ export const useWingZeroPositions = () => {
     isLoading,
     error,
     fetchPositions,
-    syncMT5Position,
+    syncPosition,
     updatePositionPrice,
     closePosition,
     getOpenPositions,

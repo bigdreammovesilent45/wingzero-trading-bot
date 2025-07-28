@@ -37,8 +37,6 @@ export class MarketDataService {
       
       if (this.connection?.type === 'oanda') {
         await this.connectToOanda();
-      } else if (this.connection?.type === 'mt4' || this.connection?.type === 'mt5') {
-        await this.connectToMetaTrader();
       } else if (this.connection?.type === 'ctrader') {
         await this.connectToCTrader();
       } else {
@@ -65,13 +63,6 @@ export class MarketDataService {
     this.startMockDataFeed();
   }
 
-  private async connectToMetaTrader(): Promise<void> {
-    // MetaTrader integration would use MT4/MT5 API or bridge
-    console.log('Connecting to MetaTrader data feed...');
-    
-    // For demo purposes, we'll start mock data
-    this.startMockDataFeed();
-  }
 
   private async connectToCTrader(): Promise<void> {
     // cTrader integration would use cTrader Open API
