@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Monitor, Smartphone, TrendingUp, BarChart3 } from "lucide-react";
 import { MT5Setup } from "./MT5Setup";
 import { CTraderSetup } from "./CTraderSetup";
+import { PlatformSetup } from "./PlatformSetup";
 
 interface PlatformSelectorProps {
   onConfigUpdate: (config: any) => void;
 }
 
-type Platform = 'mt5' | 'ctrader' | null;
+type Platform = 'mt5' | 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance' | null;
 
 export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>(null);
@@ -18,20 +19,52 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
 
   const platforms = [
     {
+      id: 'ctrader' as const,
+      name: 'cTrader',
+      description: 'Professional trading platform with Open API and FIX connectivity',
+      icon: TrendingUp,
+      features: ['Open API', 'FIX Protocol', 'OAuth2 Security', 'Live & Demo', 'ECN Execution'],
+      status: connectionStatus.ctrader ? 'connected' : 'recommended'
+    },
+    {
       id: 'mt5' as const,
       name: 'MetaTrader 5',
-      description: 'Connect via MT5 RestAPI EA (Desktop) or Mobile Bridge',
+      description: 'Popular retail platform with REST API and Expert Advisor support',
       icon: Monitor,
-      features: ['Desktop & Mobile', 'Expert Advisors', 'Multiple Timeframes', 'Custom Indicators'],
+      features: ['REST API', 'Expert Advisors', 'Multiple Timeframes', 'Custom Indicators'],
       status: connectionStatus.mt5 ? 'connected' : 'available'
     },
     {
-      id: 'ctrader' as const,
-      name: 'cTrader',
-      description: 'Connect via cTrader Open API with OAuth2 authentication',
+      id: 'ninjatrader' as const,
+      name: 'NinjaTrader',
+      description: 'Advanced futures and forex platform with NTDirect API',
+      icon: BarChart3,
+      features: ['NTDirect API', 'Advanced Charting', 'Strategy Builder', 'Market Replay'],
+      status: connectionStatus.ninjatrader ? 'connected' : 'available'
+    },
+    {
+      id: 'tradingview' as const,
+      name: 'TradingView',
+      description: 'Web-based charting with broker integrations via REST API',
       icon: TrendingUp,
-      features: ['Open API', 'OAuth2 Security', 'Live & Demo', 'Real-time Data'],
-      status: connectionStatus.ctrader ? 'connected' : 'recommended'
+      features: ['REST API', 'Paper Trading', 'Pine Script', 'Social Trading'],
+      status: connectionStatus.tradingview ? 'connected' : 'available'
+    },
+    {
+      id: 'interactivebrokers' as const,
+      name: 'Interactive Brokers',
+      description: 'Professional brokerage with TWS API for institutional trading',
+      icon: Smartphone,
+      features: ['TWS API', 'Global Markets', 'Low Commissions', 'Portfolio Margin'],
+      status: connectionStatus.interactivebrokers ? 'connected' : 'available'
+    },
+    {
+      id: 'binance' as const,
+      name: 'Binance',
+      description: 'Leading crypto exchange with comprehensive REST and WebSocket APIs',
+      icon: Monitor,
+      features: ['REST API', 'WebSocket', 'Spot & Futures', 'High Liquidity'],
+      status: connectionStatus.binance ? 'connected' : 'available'
     }
   ];
 
@@ -71,6 +104,17 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
           ← Back to Platform Selection
         </Button>
         <CTraderSetup onConfigUpdate={handleConfigUpdate} />
+      </div>
+    );
+  }
+
+  if (selectedPlatform && !['mt5', 'ctrader'].includes(selectedPlatform)) {
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={handleBackToSelection}>
+          ← Back to Platform Selection
+        </Button>
+        <PlatformSetup platform={selectedPlatform} onConfigUpdate={handleConfigUpdate} />
       </div>
     );
   }
