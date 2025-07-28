@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { CTraderSetup } from "./CTraderSetup";
 import { PlatformSetup } from "./PlatformSetup";
 
@@ -12,6 +13,7 @@ type Platform = 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers'
 export const PlatformConnectionStatus = () => {
   const [selectedPlatform] = useLocalStorage<Platform>('wingzero-platform', 'ctrader');
   const [connectionStatus, setConnectionStatus] = useLocalStorage<{[key: string]: boolean}>('wingzero-connections', {});
+  const { isConnected: engineConnected, isOperational } = useTradingEngine();
 
   const handleConfigUpdate = (config: any) => {
     if (config) {
@@ -22,8 +24,9 @@ export const PlatformConnectionStatus = () => {
   };
 
   const handleTestConnection = async () => {
-    // Test connection logic based on platform
-    console.log(`Testing ${selectedPlatform} connection...`);
+    // Update connection status to reflect actual engine connection
+    setConnectionStatus(prev => ({ ...prev, [selectedPlatform]: engineConnected }));
+    console.log(`Testing ${selectedPlatform} connection... Engine connected: ${engineConnected}`);
   };
 
   const getPlatformName = (platform: Platform) => {
@@ -37,7 +40,8 @@ export const PlatformConnectionStatus = () => {
     return names[platform];
   };
 
-  const isConnected = connectionStatus[selectedPlatform] || false;
+  // Use actual trading engine connection status, fallback to stored status
+  const isConnected = engineConnected || connectionStatus[selectedPlatform] || false;
 
   const renderSetupComponent = () => {
     switch (selectedPlatform) {
