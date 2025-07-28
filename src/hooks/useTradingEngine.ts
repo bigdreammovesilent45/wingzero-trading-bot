@@ -3,7 +3,6 @@ import { TradingEngine } from '@/services/TradingEngine';
 import { Order, RiskMetrics } from '@/types/broker';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useBrokerAPI } from './useBrokerAPI';
 import { useWingZeroPositions } from './useWingZeroPositions';
 
 interface TradingEngineState {
@@ -19,7 +18,21 @@ interface TradingEngineState {
 export const useTradingEngine = () => {
   const { toast } = useToast();
   const [engine] = useState(() => new TradingEngine());
-  const { brokerConnection, isConfigured } = useBrokerAPI();
+  const [selectedPlatform] = useLocalStorage('wingzero-platform', 'ctrader');
+  const [ctraderConfig] = useLocalStorage('wingzero-ctrader-config', null);
+  
+  // Check if platform is configured
+  const isConfigured = selectedPlatform === 'ctrader' ? !!ctraderConfig : false;
+  
+  // Create broker connection based on selected platform
+  const brokerConnection = isConfigured ? {
+    id: `${selectedPlatform}-connection`,
+    name: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Account`,
+    type: selectedPlatform as "ctrader" | "cplugin" | "mt4" | "mt5" | "oanda" | "ib" | "alpaca",
+    status: 'connected' as const,
+    account: ctraderConfig?.accountId || 'demo',
+    server: ctraderConfig?.server || 'demo.ctrader.com'
+  } : null;
   const { syncMT5Position, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
   const hasInitialized = useRef(false);
   const isRunningRef = useRef(false);
@@ -65,10 +78,10 @@ export const useTradingEngine = () => {
       setState(prev => ({ 
         ...prev, 
         isConnected: false, 
-        error: 'Broker not configured. Please set up MT5 connection in Settings.' 
+        error: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} not configured. Please set up your platform connection in Setup.` 
       }));
     }
-  }, [brokerConnection, isConfigured]); // Removed engine from dependencies - it's stable
+  }, [brokerConnection, isConfigured, selectedPlatform]); // Removed engine from dependencies - it's stable
 
   // Update refs when state changes
   useEffect(() => {
@@ -120,10 +133,10 @@ export const useTradingEngine = () => {
 
   const startEngine = useCallback(async () => {
     if (!isConfigured) {
-      const errorMsg = "No broker connection configured. Please set up MT5 connection in Settings.";
+      const errorMsg = `No ${selectedPlatform} connection configured. Please set up your platform connection in Setup.`;
       setState(prev => ({ ...prev, error: errorMsg }));
       toast({
-        title: "No Broker Connection",
+        title: "No Platform Connection",
         description: errorMsg,
         variant: "destructive"
       });
@@ -131,7 +144,7 @@ export const useTradingEngine = () => {
     }
 
     if (!brokerConnection) {
-      const errorMsg = "Broker connection not available. Please check Settings.";
+      const errorMsg = `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} connection not available. Please check Setup.`;
       setState(prev => ({ ...prev, error: errorMsg }));
       toast({
         title: "Connection Error",
@@ -155,7 +168,7 @@ export const useTradingEngine = () => {
       
       toast({
         title: "Wing Zero Started",
-        description: "Trading engine is now active with MT5 synchronization",
+        description: `Trading engine is now active with ${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} synchronization`,
       });
       
       console.log('Wing Zero trading engine started successfully');
