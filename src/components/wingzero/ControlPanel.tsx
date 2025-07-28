@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Play, Pause, RotateCcw, TrendingUp, Shield, Clock, Target, Wifi, WifiOff, AlertTriangle, Database, DollarSign, Zap } from "lucide-react";
+import { PlatformSelector } from "./PlatformSelector";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -487,6 +488,22 @@ const ControlPanel = () => {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Platform Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-[#00AEEF]" />
+            Trading Platform Setup
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PlatformSelector onConfigUpdate={(config) => {
+            console.log('Platform config updated:', config);
+            // Handle platform configuration here
+          }} />
         </CardContent>
       </Card>
 
