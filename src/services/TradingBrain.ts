@@ -490,4 +490,13 @@ export class TradingBrain {
   public isRunning(): boolean {
     return this.isActive;
   }
+
+  // Add setBrokerConnection method to properly configure all services
+  async setBrokerConnection(connection: any): Promise<void> {
+    await Promise.all([
+      this.marketData.setBrokerConnection(connection),
+      this.orderManager.setBrokerConnection(connection)
+    ]);
+    console.log('🧠 TradingBrain broker connection configured');
+  }
 }

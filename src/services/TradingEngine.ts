@@ -236,6 +236,8 @@ export class TradingEngine {
     this.brokerConnection = connection;
     await this.orderManager.setBrokerConnection(connection);
     await this.marketDataService.setBrokerConnection(connection);
+    // Also set broker connection for TradingBrain's services
+    await this.tradingBrain.setBrokerConnection(connection);
   }
 
   getCurrentOrders(): Order[] {
