@@ -90,7 +90,7 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
     );
   }
 
-  if (selectedPlatform && selectedPlatform !== 'ctrader') {
+  if (selectedPlatform) {
     return (
       <div className="space-y-4">
         <Button variant="outline" onClick={handleBackToSelection}>

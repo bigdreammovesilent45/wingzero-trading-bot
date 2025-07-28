@@ -77,42 +77,43 @@ const SettingsPage = () => {
         if (!testResponse.ok) {
           throw new Error('Failed to connect to CPlugin WebAPI. Please check your credentials.');
         }
-      
-      const connectionId = `${selectedBroker}_${Date.now()}`;
-      
-      // Type-safe way to get account and server info
-      let account = 'demo';
-      let server = '';
-      
-      if (selectedBroker === 'cplugin') {
-        const cpluginConfig = config as any;
-        account = 'cplugin-mt5';
-        server = cpluginConfig.serverUrl || 'https://admin.cplugin.net';
-      } else if (selectedBroker === 'oanda') {
-        const oandaConfig = config as any;
-        account = oandaConfig.accountId || 'demo';
-        server = oandaConfig.server;
-      } else if (selectedBroker === 'alpaca') {
-        const alpacaConfig = config as any;
-        account = 'alpaca-account';
-        server = alpacaConfig.baseUrl;
+        
+        const connectionId = `${selectedBroker}_${Date.now()}`;
+        
+        // Type-safe way to get account and server info
+        let account = 'demo';
+        let server = '';
+        
+        if (selectedBroker === 'cplugin') {
+          const cpluginConfig = config as any;
+          account = 'cplugin-mt5';
+          server = cpluginConfig.serverUrl || 'https://admin.cplugin.net';
+        } else if (selectedBroker === 'oanda') {
+          const oandaConfig = config as any;
+          account = oandaConfig.accountId || 'demo';
+          server = oandaConfig.server;
+        } else if (selectedBroker === 'alpaca') {
+          const alpacaConfig = config as any;
+          account = 'alpaca-account';
+          server = alpacaConfig.baseUrl;
+        }
+        
+        const newConnection: BrokerConnection = {
+          id: connectionId,
+          name: selectedBroker.toUpperCase(),
+          type: selectedBroker,
+          status: 'connected',
+          account,
+          server
+        };
+        
+        setBrokerConnection(newConnection);
+        
+        toast({
+          title: "🎉 Connection Successful!",
+          description: `Ready for live trading with ${selectedBroker.toUpperCase()}!`,
+        });
       }
-      
-      const newConnection: BrokerConnection = {
-        id: connectionId,
-        name: selectedBroker.toUpperCase(),
-        type: selectedBroker,
-        status: 'connected',
-        account,
-        server
-      };
-      
-      setBrokerConnection(newConnection);
-      
-      toast({
-        title: "🎉 Connection Successful!",
-        description: `Ready for live trading with ${selectedBroker.toUpperCase()}!`,
-      });
     } catch (error: any) {
       toast({
         title: "Connection Failed",
