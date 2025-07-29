@@ -16,6 +16,7 @@ import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { useAccountData } from "@/hooks/useAccountData";
 import { useWingZeroPositions } from "@/hooks/useWingZeroPositions";
 import { supabase } from '@/integrations/supabase/client';
+import { CloudEngineControls } from "./CloudEngineControls";
 
 interface StrategyConfig {
   // AI Trading Brain Settings
@@ -1247,6 +1248,9 @@ const ControlPanel = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Cloud Engine Controls */}
+      <CloudEngineControls />
     </div>
   );
 };

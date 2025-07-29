@@ -1,5 +1,8 @@
 project_id = "rmvgldjhangoxjzgbbyd"
 
+[functions.wingzero-cloud-engine]
+verify_jwt = false
+
 [functions.secure-wingzero-api]
 verify_jwt = true
 
