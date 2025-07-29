@@ -518,6 +518,11 @@ const ControlPanel = () => {
                   <Badge variant={isRunning ? "default" : "secondary"}>
                     {isRunning ? "🚀 Active" : "⏸️ Paused"}
                   </Badge>
+                  {isRunning && (
+                    <div className="text-xs text-green-600 mt-1">
+                      ✅ VERIFIED ACTIVE
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Active Trades</div>

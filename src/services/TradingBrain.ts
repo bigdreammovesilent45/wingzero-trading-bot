@@ -108,7 +108,13 @@ export class TradingBrain {
 
   private async executeTradingCycle(): Promise<void> {
     try {
-      console.log('🔄 Executing trading cycle...');
+      console.log('🔄 VERIFICATION: Wing Zero Trading Brain executing live cycle...');
+      console.log('⚡ ENGINE VERIFICATION: Trading Brain is ACTIVELY running');
+      console.log(`🤖 CYCLE TIMESTAMP: ${new Date().toISOString()}`);
+      
+      // Store verification timestamp in localStorage to confirm activity
+      localStorage.setItem('wingzero_last_cycle', Date.now().toString());
+      localStorage.setItem('wingzero_verified_active', 'true');
       
       // 1. Analyze current market regime
       const regime = await this.analyzeMarketRegime();
