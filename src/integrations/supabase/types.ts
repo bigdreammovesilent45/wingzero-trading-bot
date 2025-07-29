@@ -326,6 +326,39 @@ export type Database = {
         }
         Relationships: []
       }
+      wingzero_diagnostics: {
+        Row: {
+          auto_fixes_applied: Json | null
+          component: string
+          created_at: string | null
+          health_status: string | null
+          id: string
+          issues_detected: Json | null
+          metrics: Json
+          user_id: string
+        }
+        Insert: {
+          auto_fixes_applied?: Json | null
+          component: string
+          created_at?: string | null
+          health_status?: string | null
+          id?: string
+          issues_detected?: Json | null
+          metrics: Json
+          user_id: string
+        }
+        Update: {
+          auto_fixes_applied?: Json | null
+          component?: string
+          created_at?: string | null
+          health_status?: string | null
+          id?: string
+          issues_detected?: Json | null
+          metrics?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       wingzero_engine_status: {
         Row: {
           created_at: string
@@ -385,6 +418,159 @@ export type Database = {
           engine_status?: string
           heartbeat_time?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_learning_data: {
+        Row: {
+          action_taken: Json
+          confidence_impact: number | null
+          created_at: string | null
+          id: string
+          input_data: Json
+          learning_type: string
+          lesson_learned: string | null
+          outcome: Json
+          user_id: string
+        }
+        Insert: {
+          action_taken: Json
+          confidence_impact?: number | null
+          created_at?: string | null
+          id?: string
+          input_data: Json
+          learning_type: string
+          lesson_learned?: string | null
+          outcome: Json
+          user_id: string
+        }
+        Update: {
+          action_taken?: Json
+          confidence_impact?: number | null
+          created_at?: string | null
+          id?: string
+          input_data?: Json
+          learning_type?: string
+          lesson_learned?: string | null
+          outcome?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_market_intelligence: {
+        Row: {
+          analysis: Json
+          content: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          impact_score: number | null
+          intelligence_type: string
+          sentiment: string | null
+          source_url: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis: Json
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          impact_score?: number | null
+          intelligence_type: string
+          sentiment?: string | null
+          source_url?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis?: Json
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          impact_score?: number | null
+          intelligence_type?: string
+          sentiment?: string | null
+          source_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_optimizations: {
+        Row: {
+          actual_improvement: number | null
+          applied_at: string | null
+          created_at: string | null
+          expected_improvement: number | null
+          id: string
+          new_config: Json | null
+          old_config: Json | null
+          optimization_type: string
+          status: string | null
+          trigger_reason: string
+          user_id: string
+        }
+        Insert: {
+          actual_improvement?: number | null
+          applied_at?: string | null
+          created_at?: string | null
+          expected_improvement?: number | null
+          id?: string
+          new_config?: Json | null
+          old_config?: Json | null
+          optimization_type: string
+          status?: string | null
+          trigger_reason: string
+          user_id: string
+        }
+        Update: {
+          actual_improvement?: number | null
+          applied_at?: string | null
+          created_at?: string | null
+          expected_improvement?: number | null
+          id?: string
+          new_config?: Json | null
+          old_config?: Json | null
+          optimization_type?: string
+          status?: string | null
+          trigger_reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_performance_analytics: {
+        Row: {
+          analysis_type: string
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          insights: Json
+          metrics: Json
+          time_period: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_type: string
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          insights: Json
+          metrics: Json
+          time_period: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_type?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          insights?: Json
+          metrics?: Json
+          time_period?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -455,6 +641,48 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           volume?: number
+        }
+        Relationships: []
+      }
+      wingzero_strategies: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          parameters: Json
+          parent_strategy_id: string | null
+          performance_metrics: Json | null
+          status: string | null
+          strategy_name: string
+          strategy_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          parameters: Json
+          parent_strategy_id?: string | null
+          performance_metrics?: Json | null
+          status?: string | null
+          strategy_name: string
+          strategy_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          parameters?: Json
+          parent_strategy_id?: string | null
+          performance_metrics?: Json | null
+          status?: string | null
+          strategy_name?: string
+          strategy_type?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
