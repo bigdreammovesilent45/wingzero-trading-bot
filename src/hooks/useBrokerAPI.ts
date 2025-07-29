@@ -9,7 +9,7 @@ interface BrokerConfig {
   apiKey: string;
   apiSecret: string;
   baseUrl: string;
-  broker: 'interactive_brokers' | 'alpaca' | 'forex_com' | 'ctrader';
+  broker: 'interactive_brokers' | 'alpaca' | 'forex_com' | 'ctrader' | 'oanda';
 }
 
 export const useBrokerAPI = () => {
@@ -28,6 +28,18 @@ export const useBrokerAPI = () => {
     };
     
     const activeConfig = config || defaultConfig;
+    
+    // Determine connection details based on broker type
+    if (activeConfig.broker === 'oanda') {
+      return {
+        id: 'oanda-real-connection',
+        name: 'OANDA Account',
+        type: 'oanda',
+        status: 'connected',
+        account: activeConfig.apiSecret, // Account ID stored in apiSecret for OANDA
+        server: activeConfig.baseUrl
+      };
+    }
     
     return {
       id: 'ctrader-real-connection',
@@ -53,14 +65,22 @@ export const useBrokerAPI = () => {
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
     try {
+      let headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...options.headers as Record<string, string>,
+      };
+
+      // Set authorization based on broker type
+      if (activeConfig.broker === 'oanda') {
+        headers['Authorization'] = `Bearer ${activeConfig.apiKey}`;
+      } else if (activeConfig.apiKey) {
+        headers['Authorization'] = `Bearer ${activeConfig.apiKey}`;
+      }
+
       const response = await fetch(`${activeConfig.baseUrl}${endpoint}`, {
         ...options,
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': activeConfig.apiKey ? `Bearer ${activeConfig.apiKey}` : undefined,
-          ...options.headers,
-        },
+        headers,
       });
 
       clearTimeout(timeoutId);
@@ -75,10 +95,12 @@ export const useBrokerAPI = () => {
       
       if (err instanceof Error) {
         if (err.name === 'AbortError') {
-          throw new Error('Connection timeout - MT5 RestApi EA may not be running');
+          const brokerName = activeConfig.broker === 'oanda' ? 'OANDA' : 'cTrader';
+          throw new Error(`Connection timeout - ${brokerName} API may not be responding`);
         }
         if (err.message.includes('Failed to fetch')) {
-          throw new Error('Cannot connect to cTrader. Please ensure:\n1. cTrader platform is running\n2. API credentials are configured\n3. Server URL is correct');
+          const brokerName = activeConfig.broker === 'oanda' ? 'OANDA' : 'cTrader';
+          throw new Error(`Cannot connect to ${brokerName}. Please ensure:\n1. API credentials are correct\n2. Internet connection is stable\n3. Server URL is correct`);
         }
       }
       throw err;
@@ -100,28 +122,48 @@ export const useBrokerAPI = () => {
       const activeConfig = config || defaultConfig;
       console.log('Attempting to fetch account data from:', activeConfig.baseUrl);
       
-      // Try to fetch from cTrader API
-      const response = await makeRequest('/info');
-      
-      const account: Account = {
-        balance: response.balance || 10000,
-        equity: response.equity || 10000,
-        margin: response.margin || 0,
-        freeMargin: response.freeMargin || 10000,
-        marginLevel: response.marginLevel || 100,
-        profit: response.profit || 0,
-        currency: response.currency || 'USD'
-      };
+      let response;
+      let account: Account;
+
+      if (activeConfig.broker === 'oanda') {
+        // OANDA API call
+        response = await makeRequest(`/v3/accounts/${activeConfig.apiSecret}`);
+        const accountData = response.account;
+        
+        account = {
+          balance: parseFloat(accountData.balance),
+          equity: parseFloat(accountData.NAV),
+          margin: parseFloat(accountData.marginUsed || '0'),
+          freeMargin: parseFloat(accountData.marginAvailable || accountData.balance),
+          marginLevel: parseFloat(accountData.marginCloseoutPercent || '100'),
+          profit: parseFloat(accountData.unrealizedPL || '0'),
+          currency: accountData.currency
+        };
+      } else {
+        // cTrader API call
+        response = await makeRequest('/info');
+        
+        account = {
+          balance: response.balance || 10000,
+          equity: response.equity || 10000,
+          margin: response.margin || 0,
+          freeMargin: response.freeMargin || 10000,
+          marginLevel: response.marginLevel || 100,
+          profit: response.profit || 0,
+          currency: response.currency || 'USD'
+        };
+      }
       
       console.log('Account data fetched successfully:', account);
       return account;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch cTrader account data';
+      const brokerName = config?.broker === 'oanda' ? 'OANDA' : 'cTrader';
+      const errorMessage = err instanceof Error ? err.message : `Failed to fetch ${brokerName} account data`;
       setError(errorMessage);
-      console.warn('cTrader connection failed, using demo data:', errorMessage);
+      console.warn(`${brokerName} connection failed, using demo data:`, errorMessage);
       
-      // Return demo data when cTrader is not available - Enhanced for trading
-      console.log('Using cTrader Demo Account for Wing Zero trading');
+      // Return demo data when broker is not available
+      console.log(`Using ${brokerName} Demo Account for Wing Zero trading`);
       return {
         balance: 50000,        // $50,000 demo balance
         equity: 50000,
@@ -180,12 +222,12 @@ export const useBrokerAPI = () => {
     
     try {
       if (!config) {
-        // Auto-configure for cTrader demo if no config exists
-        console.log('🔧 Auto-configuring cTrader demo connection');
+        // Auto-configure for demo if no config exists
+        console.log('🔧 Auto-configuring demo connection');
         
         toast({
           title: "🚀 Using Demo Mode",
-          description: "cTrader not configured - Wing Zero running with $50,000 demo balance",
+          description: "No broker configured - Wing Zero running with $50,000 demo balance",
         });
         
         return true; // Return success for demo mode
@@ -193,24 +235,37 @@ export const useBrokerAPI = () => {
 
       console.log('Testing connection to:', config.baseUrl);
       
-      // Test the actual connection with timeout
-      const response = await makeRequest('/info');
-      console.log('Connection test response:', response);
-      
-      toast({
-        title: "✅ cTrader Connected",
-        description: "cTrader API is responding correctly",
-      });
+      let response;
+      if (config.broker === 'oanda') {
+        // Test OANDA connection
+        response = await makeRequest(`/v3/accounts/${config.apiSecret}`);
+        console.log('OANDA connection test response:', response);
+        
+        toast({
+          title: "✅ OANDA Connected",
+          description: "OANDA API is responding correctly",
+        });
+      } else {
+        // Test cTrader connection
+        response = await makeRequest('/info');
+        console.log('cTrader connection test response:', response);
+        
+        toast({
+          title: "✅ cTrader Connected",
+          description: "cTrader API is responding correctly",
+        });
+      }
       
       return true;
     } catch (err) {
+      const brokerName = config?.broker === 'oanda' ? 'OANDA' : 'cTrader';
       const errorMessage = err instanceof Error ? err.message : 'Connection test failed';
-      console.warn('cTrader connection failed, using demo mode:', errorMessage);
+      console.warn(`${brokerName} connection failed, using demo mode:`, errorMessage);
       
       // Don't show error for demo mode - show success instead
       toast({
         title: "🚀 Demo Mode Active",
-        description: "cTrader not available - Wing Zero running with $50,000 demo balance",
+        description: `${brokerName} not available - Wing Zero running with $50,000 demo balance`,
       });
       
       return true; // Return success for demo mode

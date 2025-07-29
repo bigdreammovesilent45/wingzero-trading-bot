@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Smartphone, TrendingUp, BarChart3 } from "lucide-react";
 import { CTraderSetup } from "./CTraderSetup";
+import { OandaSetup } from "./OandaSetup";
 import { PlatformSetup } from "./PlatformSetup";
 
 interface PlatformSelectorProps {
   onConfigUpdate: (config: any) => void;
 }
 
-type Platform = 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance' | null;
+type Platform = 'ctrader' | 'oanda' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance' | null;
 
 export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>(null);
@@ -18,12 +19,20 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
 
   const platforms = [
     {
+      id: 'oanda' as const,
+      name: 'OANDA',
+      description: 'Leading forex broker with comprehensive REST API (Recommended)',
+      icon: TrendingUp,
+      features: ['REST API', 'Forex & CFDs', 'Real-time pricing', 'Risk management', 'FCA/CFTC Regulated'],
+      status: connectionStatus.oanda ? 'connected' : 'recommended'
+    },
+    {
       id: 'ctrader' as const,
       name: 'cTrader',
-      description: 'Professional trading platform with Open API and FIX connectivity (Recommended)',
+      description: 'Professional trading platform with Open API and FIX connectivity',
       icon: TrendingUp,
       features: ['Open API', 'FIX Protocol', 'OAuth2 Security', 'Live & Demo', 'ECN Execution', 'Low Latency'],
-      status: connectionStatus.ctrader ? 'connected' : 'recommended'
+      status: connectionStatus.ctrader ? 'connected' : 'available'
     },
     {
       id: 'ninjatrader' as const,
@@ -86,6 +95,17 @@ export function PlatformSelector({ onConfigUpdate }: PlatformSelectorProps) {
           ← Back to Platform Selection
         </Button>
         <CTraderSetup onConfigUpdate={handleConfigUpdate} />
+      </div>
+    );
+  }
+
+  if (selectedPlatform === 'oanda') {
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={handleBackToSelection}>
+          ← Back to Platform Selection
+        </Button>
+        <OandaSetup onConfigUpdate={handleConfigUpdate} />
       </div>
     );
   }
