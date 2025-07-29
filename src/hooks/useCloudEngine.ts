@@ -45,6 +45,14 @@ export const useCloudEngine = () => {
           lastCycle: data.last_cycle,
           engineMode: data.engine_mode
         });
+      } else {
+        // No status record exists, engine is not running
+        setStatus({
+          isRunning: false,
+          lastHeartbeat: null,
+          lastCycle: null,
+          engineMode: 'client'
+        });
       }
     } catch (error) {
       console.error('Error checking cloud engine status:', error);
