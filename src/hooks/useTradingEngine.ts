@@ -293,6 +293,6 @@ export const useTradingEngine = () => {
     winRate: state.riskMetrics?.winRate || 0,
     profitFactor: state.riskMetrics?.profitFactor || 0,
     currentExposure: state.riskMetrics?.totalExposure || 0,
-    isOperational: state.isConnected && !state.error && isConfigured
+    isOperational: state.isConnected && !state.error
   };
 };

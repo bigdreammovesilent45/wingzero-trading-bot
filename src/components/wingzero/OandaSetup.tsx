@@ -60,6 +60,15 @@ export function OandaSetup({ onConfigUpdate }: OandaSetupProps) {
         };
         localStorage.setItem('broker_config', JSON.stringify(brokerConfig));
         
+        // Store OANDA config for trading engine
+        const oandaConfig = {
+          apiKey: config.apiKey,
+          accountId: config.accountId,
+          server: config.server,
+          environment: config.environment
+        };
+        localStorage.setItem('oanda-config', JSON.stringify(oandaConfig));
+        
         onConfigUpdate({ 
           type: 'oanda', 
           ...config,
@@ -214,6 +223,7 @@ export function OandaSetup({ onConfigUpdate }: OandaSetupProps) {
                   setConnectionStatus('disconnected');
                   onConfigUpdate(null);
                   localStorage.removeItem('broker_config');
+                  localStorage.removeItem('oanda-config');
                 }}
               >
                 Disconnect
