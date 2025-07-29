@@ -26,6 +26,13 @@ export const useTradingEngine = () => {
   const isConfigured = selectedPlatform === 'ctrader' ? (!!ctraderConfig || true) : 
                       selectedPlatform === 'oanda' ? !!oandaConfig : 
                       false;
+
+  console.log('Platform config check:', {
+    selectedPlatform,
+    ctraderConfig: !!ctraderConfig,
+    oandaConfig: !!oandaConfig,
+    isConfigured
+  });
   
   // Create broker connection based on selected platform
   const brokerConnection = isConfigured ? {
@@ -151,6 +158,8 @@ export const useTradingEngine = () => {
   }, []); // Empty dependency array since we use refs
 
   const startEngine = useCallback(async () => {
+    console.log('handleStart called - isConnected:', state.isConnected, 'isOperational:', state.isConnected && !state.error, 'error:', state.error);
+    
     if (!isConfigured) {
       const errorMsg = `No ${selectedPlatform} connection configured. Please set up your platform connection in Setup.`;
       setState(prev => ({ ...prev, error: errorMsg }));
