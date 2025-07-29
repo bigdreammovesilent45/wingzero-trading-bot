@@ -64,7 +64,14 @@ serve(async (req) => {
         });
 
         const aiResponse = await response.json();
-        const analysis = JSON.parse(aiResponse.choices[0].message.content);
+        let content = aiResponse.choices[0].message.content;
+        
+        // Clean up markdown code blocks if present
+        if (content.includes('```json')) {
+          content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        }
+        
+        const analysis = JSON.parse(content);
 
         // Store analysis in database
         await supabaseClient.from('wingzero_market_intelligence').insert({
@@ -118,7 +125,14 @@ serve(async (req) => {
         });
 
         const aiResponse = await response.json();
-        const strategy = JSON.parse(aiResponse.choices[0].message.content);
+        let content = aiResponse.choices[0].message.content;
+        
+        // Clean up markdown code blocks if present
+        if (content.includes('```json')) {
+          content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        }
+        
+        const strategy = JSON.parse(content);
 
         // Store strategy in database
         await supabaseClient.from('wingzero_strategies').insert({
@@ -169,7 +183,14 @@ serve(async (req) => {
         });
 
         const aiResponse = await response.json();
-        const optimization = JSON.parse(aiResponse.choices[0].message.content);
+        let content = aiResponse.choices[0].message.content;
+        
+        // Clean up markdown code blocks if present
+        if (content.includes('```json')) {
+          content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        }
+        
+        const optimization = JSON.parse(content);
 
         // Store optimization in database
         await supabaseClient.from('wingzero_optimizations').insert({
