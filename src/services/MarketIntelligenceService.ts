@@ -38,8 +38,8 @@ export class MarketIntelligenceService {
 
   async initialize(): Promise<void> {
     console.log('🧠 Market Intelligence Service initialized');
-    // Note: In production, get API key from Supabase secrets
-    this.perplexityApiKey = 'your-perplexity-api-key'; // Replace with actual key
+    // Use edge function for secure API access
+    this.perplexityApiKey = 'edge-function'; // Using edge function
   }
 
   async getMarketSentiment(): Promise<MarketSentiment> {
@@ -173,94 +173,76 @@ export class MarketIntelligenceService {
   }
 
   private async fetchLatestNews(): Promise<NewsArticle[]> {
-    if (!this.perplexityApiKey) {
-      return this.getMockNews();
-    }
-
     try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.perplexityApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a financial news analyst. Provide current financial news with sentiment analysis.'
-            },
-            {
-              role: 'user',
-              content: 'Get the latest financial market news from the past 24 hours. For each news item, provide: title, summary, sentiment score (-1 to 1), impact score (0 to 1), and affected symbols. Format as JSON array.'
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 2000,
-        }),
+      // Use edge function for secure news fetching
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { data, error } = await supabase.functions.invoke('market-intelligence', {
+        body: { 
+          action: 'get_financial_news',
+          params: {
+            timeframe: '24h',
+            format: 'forex_analysis'
+          }
+        }
       });
 
-      const data = await response.json();
-      return this.parseNewsResponse(data.choices[0].message.content);
+      if (error) throw error;
+      
+      return this.parseNewsResponse(data?.news || []);
 
     } catch (error) {
-      console.error('Error fetching news from Perplexity:', error);
+      console.error('Error fetching news via edge function:', error);
       return this.getMockNews();
     }
   }
 
   private async fetchSymbolNews(symbol: string): Promise<NewsArticle[]> {
-    if (!this.perplexityApiKey) {
-      return this.getMockSymbolNews(symbol);
-    }
-
     try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.perplexityApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a financial news analyst specializing in forex markets.'
-            },
-            {
-              role: 'user',
-              content: `Get news related to ${symbol} currency pair from the past 24 hours. Analyze sentiment and potential impact on the currency. Format as JSON array with title, summary, sentiment (-1 to 1), and impact (0 to 1).`
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 1500,
-        }),
+      // Use edge function for secure symbol news fetching
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { data, error } = await supabase.functions.invoke('market-intelligence', {
+        body: { 
+          action: 'get_symbol_news',
+          params: {
+            symbol,
+            timeframe: '24h'
+          }
+        }
       });
 
-      const data = await response.json();
-      return this.parseNewsResponse(data.choices[0].message.content);
+      if (error) throw error;
+      
+      return this.parseNewsResponse(data?.news || []);
 
     } catch (error) {
-      console.error(`Error fetching news for ${symbol}:`, error);
+      console.error(`Error fetching news for ${symbol} via edge function:`, error);
       return this.getMockSymbolNews(symbol);
     }
   }
 
-  private parseNewsResponse(content: string): NewsArticle[] {
+  private parseNewsResponse(newsData: any): NewsArticle[] {
     try {
-      // Try to parse JSON response
-      const newsData = JSON.parse(content);
-      return Array.isArray(newsData) ? newsData.map(item => ({
-        title: item.title || 'News Update',
-        summary: item.summary || item.content || '',
-        sentiment: item.sentiment || 0,
-        impact: item.impact || 0.5,
-        source: item.source || 'Financial News',
-        timestamp: new Date(),
-        symbols: item.symbols || []
-      })) : [];
+      // Handle both string and object responses
+      let parsedData = newsData;
+      if (typeof newsData === 'string') {
+        parsedData = JSON.parse(newsData);
+      }
+      
+      if (Array.isArray(parsedData)) {
+        return parsedData.map(item => ({
+          title: item.title || 'News Update',
+          summary: item.summary || item.content || '',
+          sentiment: typeof item.sentiment === 'number' ? item.sentiment : 0,
+          impact: typeof item.impact === 'number' ? item.impact : 0.5,
+          source: item.source || 'Financial News',
+          timestamp: new Date(item.timestamp || Date.now()),
+          symbols: Array.isArray(item.symbols) ? item.symbols : []
+        }));
+      }
+      
+      return this.getMockNews();
     } catch (error) {
       console.error('Error parsing news response:', error);
       return this.getMockNews();
