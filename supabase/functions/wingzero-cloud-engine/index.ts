@@ -25,17 +25,21 @@ class CloudTradingEngine {
     this.isRunning = true
 
     // Store engine status in database
-    await this.supabase
+    const { error: upsertError } = await this.supabase
       .from('wingzero_engine_status')
       .upsert({
         user_id: this.userId,
         is_running: true,
         last_heartbeat: new Date().toISOString(),
-        engine_mode: 'cloud'
+        engine_mode: 'cloud_active'
       })
 
+    if (upsertError) {
+      console.error('Failed to update engine status:', upsertError)
+    }
+
     // Start persistent trading loop using background task
-    EdgeRuntime.waitUntil(this.runTradingLoop())
+    this.runTradingLoop()
     
     return { success: true, message: 'Cloud engine started' }
   }
@@ -50,14 +54,18 @@ class CloudTradingEngine {
     }
 
     // Update engine status in database
-    await this.supabase
+    const { error: upsertError } = await this.supabase
       .from('wingzero_engine_status')
       .upsert({
         user_id: this.userId,
         is_running: false,
         last_heartbeat: new Date().toISOString(),
-        engine_mode: 'stopped'
+        engine_mode: 'client'
       })
+
+    if (upsertError) {
+      console.error('Failed to update engine status:', upsertError)
+    }
 
     return { success: true, message: 'Cloud engine stopped' }
   }
@@ -72,7 +80,7 @@ class CloudTradingEngine {
           .from('wingzero_configs')
           .select('*')
           .eq('user_id', this.userId)
-          .single()
+          .maybeSingle()
 
         if (!config) {
           console.log('No trading config found for user:', this.userId)
@@ -85,7 +93,7 @@ class CloudTradingEngine {
           .from('wingzero_credentials')
           .select('*')
           .eq('user_id', this.userId)
-          .single()
+          .maybeSingle()
 
         if (!credentials) {
           console.log('No broker credentials found for user:', this.userId)
@@ -197,7 +205,7 @@ serve(async (req) => {
           .from('wingzero_engine_status')
           .select('*')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         return new Response(
           JSON.stringify({ status }),

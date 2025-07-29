@@ -79,7 +79,11 @@ export const useCloudEngine = () => {
       }
 
       if (data?.success) {
-        await checkStatus();
+        // Wait a moment for the database to update, then check status
+        setTimeout(() => {
+          checkStatus();
+        }, 1000);
+        
         toast({
           title: "☁️ Cloud Engine Started",
           description: "Wing Zero is now running 24/7 in the cloud!",
@@ -118,7 +122,11 @@ export const useCloudEngine = () => {
       }
 
       if (data?.success) {
-        await checkStatus();
+        // Wait a moment for the database to update, then check status
+        setTimeout(() => {
+          checkStatus();
+        }, 1000);
+        
         toast({
           title: "☁️ Cloud Engine Stopped",
           description: "Wing Zero cloud engine has been stopped",
