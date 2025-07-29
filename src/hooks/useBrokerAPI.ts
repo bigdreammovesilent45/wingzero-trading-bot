@@ -126,8 +126,19 @@ export const useBrokerAPI = () => {
       let account: Account;
 
       if (activeConfig.broker === 'oanda') {
-        // OANDA API call
-        response = await makeRequest(`/v3/accounts/${activeConfig.apiSecret}`);
+        // OANDA API call - direct to OANDA API
+        const oandaResponse = await fetch(`${activeConfig.baseUrl}/v3/accounts/${activeConfig.apiSecret}`, {
+          headers: {
+            'Authorization': `Bearer ${activeConfig.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!oandaResponse.ok) {
+          throw new Error(`OANDA API error: ${oandaResponse.status} - ${oandaResponse.statusText}`);
+        }
+        
+        response = await oandaResponse.json();
         const accountData = response.account;
         
         account = {
@@ -237,8 +248,19 @@ export const useBrokerAPI = () => {
       
       let response;
       if (config.broker === 'oanda') {
-        // Test OANDA connection
-        response = await makeRequest(`/v3/accounts/${config.apiSecret}`);
+        // Test OANDA connection - direct API call
+        const oandaResponse = await fetch(`${config.baseUrl}/v3/accounts/${config.apiSecret}`, {
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!oandaResponse.ok) {
+          throw new Error(`OANDA API error: ${oandaResponse.status} - ${oandaResponse.statusText}`);
+        }
+        
+        response = await oandaResponse.json();
         console.log('OANDA connection test response:', response);
         
         toast({
