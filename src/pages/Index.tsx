@@ -2,17 +2,40 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Vault, Zap } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Vault, Zap, User, LogOut } from "lucide-react";
 import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   // Auto-start trading system when app loads
   const { hasAutoStarted } = useAutoStartTrading();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-4xl mx-auto px-6 text-center">
         <div className="mb-8">
+          {user && (
+            <div className="flex justify-center mb-6">
+              <Card className="w-full max-w-md">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      Welcome back
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={signOut}>
+                      <LogOut className="w-4 h-4" />
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           <div className="flex items-center justify-center gap-3 mb-4">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Trading Command Center

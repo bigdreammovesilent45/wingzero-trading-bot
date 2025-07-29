@@ -16,6 +16,8 @@ import { BrokerConnection } from "@/types/broker";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AccountSettings } from "@/components/settings/AccountSettings";
+import { UserProfile } from "@/components/auth/UserProfile";
+import { SecurityMonitor } from "@/components/security/SecurityMonitor";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -162,13 +164,19 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="broker" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="profile">👤 Profile</TabsTrigger>
             <TabsTrigger value="broker">🔗 Live Trading</TabsTrigger>
             <TabsTrigger value="notifications">🔔 Notifications</TabsTrigger>
             <TabsTrigger value="security">🛡️ Security</TabsTrigger>
-            <TabsTrigger value="account">👤 Account</TabsTrigger>
+            <TabsTrigger value="account">💰 Account</TabsTrigger>
+            <TabsTrigger value="monitoring">📊 Monitoring</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="profile" className="space-y-6">
+            <UserProfile />
+          </TabsContent>
           
           {/* Broker Setup Tab */}
           <TabsContent value="broker" className="space-y-6">
@@ -453,47 +461,9 @@ const SettingsPage = () => {
             </Card>
           </TabsContent>
 
-          {/* Other tabs placeholder */}
-          <TabsContent value="notifications" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notification Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Notification settings coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
           
-          <TabsContent value="security" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Security Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Security settings coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="account" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Account Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Account settings coming soon...</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="monitoring" className="space-y-6">
+            <SecurityMonitor />
           </TabsContent>
         </Tabs>
       </div>
