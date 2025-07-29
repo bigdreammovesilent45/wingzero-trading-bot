@@ -7,7 +7,7 @@ export interface WingZeroPosition {
   id?: string;
   user_id?: string | null;
   symbol: string;
-  position_type: 'buy' | 'sell';
+  position_type: string;
   volume: number;
   open_price: number;
   current_price: number;
@@ -23,7 +23,7 @@ export interface WingZeroPosition {
   swap: number;
   comment?: string;
   strategy?: string;
-  status: 'pending' | 'open' | 'closed' | 'cancelled';
+  status: string;
 }
 
 export const useWingZeroPositions = () => {

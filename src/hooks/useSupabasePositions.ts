@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface SupabasePosition {
   id: string;
   symbol: string;
-  position_type: 'buy' | 'sell';
+  position_type: string;
   volume: number;
   open_price: number;
   current_price: number;

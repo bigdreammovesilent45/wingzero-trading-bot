@@ -6,12 +6,12 @@ import { useToast } from '@/hooks/use-toast';
 export interface SupabaseTrade {
   id: string;
   symbol: string;
-  trade_type: 'buy' | 'sell';
+  trade_type: string;
   volume: number;
   open_price: number;
   close_price?: number;
   profit: number;
-  status: 'open' | 'closed';
+  status: string;
   opened_at: string;
   closed_at?: string;
   created_at: string;

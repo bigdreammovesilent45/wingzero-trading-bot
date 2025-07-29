@@ -38,7 +38,7 @@ export const PlatformLivePositions = () => {
     }).format(amount);
   };
 
-  const getPositionIcon = (type: 'buy' | 'sell') => {
+  const getPositionIcon = (type: string) => {
     return type === 'buy' ? (
       <TrendingUp className="h-4 w-4 text-green-500" />
     ) : (
