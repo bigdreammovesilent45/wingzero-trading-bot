@@ -86,7 +86,7 @@ export function OandaSetup({ onConfigUpdate }: OandaSetupProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto px-4 sm:px-0">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
