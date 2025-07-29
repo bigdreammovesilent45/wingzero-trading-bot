@@ -82,10 +82,13 @@ export class TradingBrain {
     if (this.isActive) return;
     
     console.log('🧠 Starting autonomous trading brain...');
+    console.log('🔥 WING ZERO BRAIN IS LIVE - FULLY AUTONOMOUS TRADING ACTIVATED');
+    console.log('💎 Market Analysis: ACTIVE | Signal Generation: ACTIVE | Risk Management: ACTIVE');
     this.isActive = true;
     
     // Start the main trading loop - runs every 30 seconds
     this.tradingLoop = setInterval(async () => {
+      console.log('🤖 Wing Zero Brain executing trading cycle...');
       await this.executeTradingCycle();
     }, 30000);
     

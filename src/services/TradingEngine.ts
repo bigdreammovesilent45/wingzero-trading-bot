@@ -41,6 +41,7 @@ export class TradingEngine {
     // Initialize and start the AI Trading Brain if enabled
     if (this.brainEnabled) {
       console.log('🧠 Starting Wing Zero Trading Brain - Full Autonomous Mode');
+      console.log('🔥 WING ZERO ENGINE IS ACTIVELY RUNNING - AI BRAIN ENGAGED');
       await this.tradingBrain.initialize();
       await this.tradingBrain.start();
     }
