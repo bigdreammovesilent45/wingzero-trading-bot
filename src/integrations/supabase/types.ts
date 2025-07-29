@@ -221,6 +221,174 @@ export type Database = {
         }
         Relationships: []
       }
+      wingzero_activity_log: {
+        Row: {
+          activity_type: string
+          data: Json | null
+          id: string
+          message: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          data?: Json | null
+          id?: string
+          message: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_configs: {
+        Row: {
+          brain_enabled: boolean
+          brain_mode: string
+          config_data: Json
+          config_name: string
+          created_at: string
+          id: string
+          max_daily_drawdown: number
+          max_risk_per_trade: number
+          min_confidence: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brain_enabled?: boolean
+          brain_mode?: string
+          config_data?: Json
+          config_name?: string
+          created_at?: string
+          id?: string
+          max_daily_drawdown?: number
+          max_risk_per_trade?: number
+          min_confidence?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brain_enabled?: boolean
+          brain_mode?: string
+          config_data?: Json
+          config_name?: string
+          created_at?: string
+          id?: string
+          max_daily_drawdown?: number
+          max_risk_per_trade?: number
+          min_confidence?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_credentials: {
+        Row: {
+          broker_type: string
+          created_at: string
+          encrypted_account_id: string
+          encrypted_api_key: string
+          environment: string
+          id: string
+          server_url: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          broker_type: string
+          created_at?: string
+          encrypted_account_id: string
+          encrypted_api_key: string
+          environment?: string
+          id?: string
+          server_url: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          broker_type?: string
+          created_at?: string
+          encrypted_account_id?: string
+          encrypted_api_key?: string
+          environment?: string
+          id?: string
+          server_url?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_engine_status: {
+        Row: {
+          created_at: string
+          engine_mode: string
+          id: string
+          is_running: boolean
+          last_cycle: string | null
+          last_heartbeat: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          engine_mode?: string
+          id?: string
+          is_running?: boolean
+          last_cycle?: string | null
+          last_heartbeat?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          engine_mode?: string
+          id?: string
+          is_running?: boolean
+          last_cycle?: string | null
+          last_heartbeat?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_heartbeats: {
+        Row: {
+          active_positions: number | null
+          daily_pnl: number | null
+          data: Json | null
+          engine_status: string
+          heartbeat_time: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          active_positions?: number | null
+          daily_pnl?: number | null
+          data?: Json | null
+          engine_status: string
+          heartbeat_time?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          active_positions?: number | null
+          daily_pnl?: number | null
+          data?: Json | null
+          engine_status?: string
+          heartbeat_time?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wingzero_positions: {
         Row: {
           comment: string | null
