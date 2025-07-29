@@ -20,9 +20,12 @@ export const useTradingEngine = () => {
   const [engine] = useState(() => new TradingEngine());
   const [selectedPlatform] = useLocalStorage('wingzero-platform', 'ctrader');
   const [ctraderConfig] = useLocalStorage('wingzero-ctrader-config', null);
+  const [oandaConfig] = useLocalStorage('oanda-config', null);
   
   // Check if platform is configured or allow demo mode
-  const isConfigured = selectedPlatform === 'ctrader' ? (!!ctraderConfig || true) : false; // Allow demo mode for testing
+  const isConfigured = selectedPlatform === 'ctrader' ? (!!ctraderConfig || true) : 
+                      selectedPlatform === 'oanda' ? !!oandaConfig : 
+                      false;
   
   // Create broker connection based on selected platform
   const brokerConnection = isConfigured ? {
@@ -30,8 +33,12 @@ export const useTradingEngine = () => {
     name: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Account`,
     type: selectedPlatform as "ctrader" | "cplugin" | "oanda" | "ib" | "alpaca",
     status: 'connected' as const,
-    account: ctraderConfig?.accountId || 'demo-account',
-    server: ctraderConfig?.server || 'demo.ctrader.com'
+    account: selectedPlatform === 'oanda' ? oandaConfig?.accountId || 'demo-account' : 
+             selectedPlatform === 'ctrader' ? ctraderConfig?.accountId || 'demo-account' : 
+             'demo-account',
+    server: selectedPlatform === 'oanda' ? oandaConfig?.server || 'api-fxpractice.oanda.com' :
+            selectedPlatform === 'ctrader' ? ctraderConfig?.server || 'demo.ctrader.com' :
+            'demo-server'
   } : null;
   const { syncPosition, updatePositionPrice, closePosition: closeDbPosition } = useWingZeroPositions();
   const hasInitialized = useRef(false);

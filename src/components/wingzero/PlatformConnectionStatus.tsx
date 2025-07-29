@@ -6,9 +6,10 @@ import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { CTraderSetup } from "./CTraderSetup";
+import { OandaSetup } from "./OandaSetup";
 import { PlatformSetup } from "./PlatformSetup";
 
-type Platform = 'ctrader' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance';
+type Platform = 'ctrader' | 'oanda' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance';
 
 export const PlatformConnectionStatus = () => {
   const [selectedPlatform] = useLocalStorage<Platform>('wingzero-platform', 'ctrader');
@@ -32,6 +33,7 @@ export const PlatformConnectionStatus = () => {
   const getPlatformName = (platform: Platform) => {
     const names = {
       ctrader: 'cTrader',
+      oanda: 'OANDA',
       ninjatrader: 'NinjaTrader',
       tradingview: 'TradingView',
       interactivebrokers: 'Interactive Brokers',
@@ -47,6 +49,8 @@ export const PlatformConnectionStatus = () => {
     switch (selectedPlatform) {
       case 'ctrader':
         return <CTraderSetup onConfigUpdate={handleConfigUpdate} />;
+      case 'oanda':
+        return <OandaSetup onConfigUpdate={handleConfigUpdate} />;
       default:
         return <PlatformSetup platform={selectedPlatform} onConfigUpdate={handleConfigUpdate} />;
     }
@@ -74,7 +78,7 @@ export const PlatformConnectionStatus = () => {
                 <XCircle className="h-5 w-5 text-red-500" />
               )}
               <span className="font-medium">{getPlatformName(selectedPlatform)}</span>
-              {selectedPlatform === 'ctrader' && (
+              {(selectedPlatform === 'ctrader' || selectedPlatform === 'oanda') && (
                 <Badge variant="default">Recommended</Badge>
               )}
             </div>
