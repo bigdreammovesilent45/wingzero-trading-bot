@@ -66,10 +66,14 @@ serve(async (req) => {
         const aiResponse = await response.json();
         let content = aiResponse.choices[0].message.content;
         
-        // Clean up markdown code blocks if present
-        if (content.includes('```json')) {
-          content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        // Clean up markdown code blocks and extract JSON
+        content = content.trim();
+        if (content.includes('```')) {
+          // Remove any markdown code block markers
+          content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
         }
+        // Remove any leading/trailing whitespace and newlines
+        content = content.trim();
         
         const analysis = JSON.parse(content);
 
@@ -127,10 +131,14 @@ serve(async (req) => {
         const aiResponse = await response.json();
         let content = aiResponse.choices[0].message.content;
         
-        // Clean up markdown code blocks if present
-        if (content.includes('```json')) {
-          content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        // Clean up markdown code blocks and extract JSON
+        content = content.trim();
+        if (content.includes('```')) {
+          // Remove any markdown code block markers
+          content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
         }
+        // Remove any leading/trailing whitespace and newlines
+        content = content.trim();
         
         const strategy = JSON.parse(content);
 
@@ -185,10 +193,14 @@ serve(async (req) => {
         const aiResponse = await response.json();
         let content = aiResponse.choices[0].message.content;
         
-        // Clean up markdown code blocks if present
-        if (content.includes('```json')) {
-          content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        // Clean up markdown code blocks and extract JSON
+        content = content.trim();
+        if (content.includes('```')) {
+          // Remove any markdown code block markers
+          content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
         }
+        // Remove any leading/trailing whitespace and newlines
+        content = content.trim();
         
         const optimization = JSON.parse(content);
 
