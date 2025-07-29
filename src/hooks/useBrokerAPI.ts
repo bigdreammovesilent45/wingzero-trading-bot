@@ -176,10 +176,10 @@ export const useBrokerAPI = () => {
       // Return demo data when broker is not available
       console.log(`Using ${brokerName} Demo Account for Wing Zero trading`);
       return {
-        balance: 50000,        // $50,000 demo balance
-        equity: 50000,
+        balance: 100000,        // $100,000 OANDA practice balance
+        equity: 100000,
         margin: 0,
-        freeMargin: 50000,
+        freeMargin: 100000,
         marginLevel: 100,
         profit: 0,
         currency: 'USD'

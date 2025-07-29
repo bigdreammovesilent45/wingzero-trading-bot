@@ -17,13 +17,13 @@ export const useAccountData = () => {
   useEffect(() => {
     const fetchAccountData = async () => {
       if (!isConfigured) {
-        setError('Broker API not configured. Please set up MT5 connection in Settings.');
+        setError('OANDA API not configured. Please set up OANDA connection in Settings.');
         setIsLoading(false);
         return;
       }
 
       try {
-        console.log('Fetching account data from MT5...');
+        console.log('Fetching account data from OANDA...');
         setIsLoading(true);
         const accountData = await getAccountData();
         setAccount(accountData);

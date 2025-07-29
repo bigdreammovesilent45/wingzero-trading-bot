@@ -29,7 +29,7 @@ export const useAutoStartTrading = () => {
           
           toast({
             title: "🚀 Wing Zero Started!",
-            description: "Now trading on MT5 demo account with $50,000 balance",
+            description: "Now trading autonomously with OANDA",
             duration: 5000,
           });
           
