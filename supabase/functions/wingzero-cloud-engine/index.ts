@@ -126,27 +126,109 @@ class CloudTradingEngine {
   }
 
   private async executeTradingCycle(config: any, credentials: any) {
-    // 1. Fetch market data
-    // 2. Generate signals using AI brain
-    // 3. Execute trades via OANDA API
-    // 4. Update positions in database
-    // 5. Manage risk
+    try {
+      console.log('📊 Analyzing markets for user:', this.userId)
+      
+      // 1. Market Analysis - Check if markets are open and get current data
+      const marketOpen = this.isMarketOpen()
+      if (!marketOpen) {
+        console.log('Markets are closed, skipping cycle')
+        return
+      }
 
-    console.log('📊 Analyzing markets for user:', this.userId)
+      // 2. Generate signals using AI brain (if enabled)
+      if (config.brain_enabled) {
+        console.log('🧠 AI Brain analysis enabled')
+        
+        // Call AI brain analysis function
+        const { data: signalData, error: signalError } = await this.supabase.functions.invoke('ai-brain-analysis', {
+          body: {
+            action: 'generate_signal',
+            user_id: this.userId,
+            config: config.config_data
+          }
+        })
+        
+        if (signalError) {
+          console.error('AI Brain analysis failed:', signalError)
+        } else if (signalData?.signal) {
+          console.log('📈 Signal generated:', signalData.signal)
+          
+          // 3. Execute trade based on signal (demo mode for now)
+          await this.executeTradeSignal(signalData.signal, credentials)
+        }
+      }
+
+      // 4. Update activity log
+      const timestamp = new Date().toISOString()
+      await this.supabase
+        .from('wingzero_activity_log')
+        .insert({
+          user_id: this.userId,
+          activity_type: 'trading_cycle',
+          message: `Cloud engine executed ${config.brain_enabled ? 'AI-powered' : 'standard'} trading cycle`,
+          timestamp: timestamp,
+          data: { 
+            config_id: config.id,
+            market_open: marketOpen,
+            brain_enabled: config.brain_enabled
+          }
+        })
+
+    } catch (error) {
+      console.error('Error in trading cycle:', error)
+      
+      // Log error
+      await this.supabase
+        .from('wingzero_activity_log')
+        .insert({
+          user_id: this.userId,
+          activity_type: 'error',
+          message: `Cloud engine error: ${error.message}`,
+          timestamp: new Date().toISOString(),
+          data: { error: error.message }
+        })
+    }
+  }
+
+  private isMarketOpen(): boolean {
+    const now = new Date()
+    const utcDay = now.getUTCDay()
+    const utcHours = now.getUTCHours()
     
-    // This would contain the actual trading logic
-    // For now, just log the activity
-    const timestamp = new Date().toISOString()
+    // Forex markets are closed on weekends
+    if (utcDay === 0 || utcDay === 6) {
+      return false
+    }
     
+    // Markets are generally active 24/5, but let's be conservative
+    // and only trade during major session hours
+    return utcHours >= 1 && utcHours <= 22
+  }
+
+  private async executeTradeSignal(signal: any, credentials: any) {
+    console.log('💰 Executing trade signal in demo mode:', signal)
+    
+    // For demo mode, just log the trade execution
+    // In production, this would make actual API calls to OANDA
     await this.supabase
-      .from('wingzero_activity_log')
+      .from('wingzero_positions')
       .insert({
         user_id: this.userId,
-        activity_type: 'trading_cycle',
-        message: 'Cloud engine executed trading cycle',
-        timestamp: timestamp,
-        data: { config_id: config.id }
+        symbol: signal.symbol || 'EUR_USD',
+        type: signal.action || 'buy',
+        volume: signal.volume || 1000,
+        entry_price: signal.price || 1.0850,
+        stop_loss: signal.stop_loss,
+        take_profit: signal.take_profit,
+        status: 'open',
+        broker: 'oanda_demo',
+        platform_order_id: `demo_${Date.now()}`,
+        confidence: signal.confidence || 85,
+        created_at: new Date().toISOString()
       })
+    
+    console.log('✅ Demo trade recorded successfully')
   }
 
   private sleep(ms: number): Promise<void> {

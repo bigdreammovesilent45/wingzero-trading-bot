@@ -6,7 +6,7 @@ import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { useSupabaseTrades } from "@/hooks/useSupabaseTrades";
 
 const TradeHistory = () => {
-  const { openPositions, dailyPnL, totalProfit, isRunning } = useTradingEngine();
+  const { openPositions, dailyPnL, totalProfit, isRunning, cloudStatus } = useTradingEngine();
   const { trades, isLoading } = useSupabaseTrades();
 
   const formatTime = (timestamp: string) => {
@@ -84,13 +84,28 @@ const TradeHistory = () => {
 
         {/* Trade List */}
         <div className="space-y-4">
-          {!isRunning && (
+          {!isRunning && !cloudStatus.isRunning && (
             <div className="text-center py-8 bg-yellow-50/50 rounded-lg border border-yellow-200">
               <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-yellow-800 mb-2">Wing Zero Not Running</h3>
               <p className="text-yellow-700">
                 Start the trading engine from the Control Panel to begin making trades
               </p>
+            </div>
+          )}
+          
+          {cloudStatus.isRunning && !isRunning && (
+            <div className="text-center py-8 bg-blue-50/50 rounded-lg border border-blue-200">
+              <TrendingUp className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">Cloud Engine Active 24/7</h3>
+              <p className="text-blue-700">
+                Wing Zero is running in the cloud and will trade even when you're offline
+              </p>
+              {cloudStatus.lastHeartbeat && (
+                <p className="text-xs text-blue-600 mt-2">
+                  Last activity: {new Date(cloudStatus.lastHeartbeat).toLocaleString()}
+                </p>
+              )}
             </div>
           )}
 

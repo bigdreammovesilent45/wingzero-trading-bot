@@ -4,6 +4,7 @@ import { Order, RiskMetrics } from '@/types/broker';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useWingZeroPositions } from './useWingZeroPositions';
+import { useCloudEngine } from './useCloudEngine';
 
 interface TradingEngineState {
   isRunning: boolean;
@@ -21,6 +22,8 @@ export const useTradingEngine = () => {
   const [selectedPlatform] = useLocalStorage('wingzero-platform', 'ctrader');
   const [ctraderConfig] = useLocalStorage('wingzero-ctrader-config', null);
   const [oandaConfig] = useLocalStorage('oanda-config', null);
+  const [isEngineRunning, setIsEngineRunning] = useLocalStorage('wingzero-engine-running', false);
+  const { status: cloudStatus, startCloudEngine, stopCloudEngine, syncConfigToCloud, syncCredentialsToCloud } = useCloudEngine();
   
   // Check if platform is configured or allow demo mode
   const isConfigured = selectedPlatform === 'ctrader' ? (!!ctraderConfig || true) : 
@@ -72,7 +75,7 @@ export const useTradingEngine = () => {
   });
   
   const [state, setState] = useState<TradingEngineState>({
-    isRunning: false,
+    isRunning: isEngineRunning || cloudStatus.isRunning, // Check both local and cloud state
     isConnected: false,
     openPositions: [],
     riskMetrics: null,
@@ -109,11 +112,17 @@ export const useTradingEngine = () => {
     }
   }, [brokerConnection, isConfigured, selectedPlatform]); // Removed engine from dependencies - it's stable
 
-  // Update refs when state changes
+  // Update refs when state changes and sync cloud status
   useEffect(() => {
-    isRunningRef.current = state.isRunning;
+    isRunningRef.current = state.isRunning || cloudStatus.isRunning;
     isConnectedRef.current = state.isConnected;
-  }, [state.isRunning, state.isConnected]);
+    
+    // Update state if cloud engine status changes
+    setState(prev => ({
+      ...prev,
+      isRunning: prev.isRunning || cloudStatus.isRunning // Engine is running if either local or cloud is running
+    }));
+  }, [state.isRunning, state.isConnected, cloudStatus.isRunning]);
 
   // Update state periodically when engine is running
   useEffect(() => {
@@ -186,6 +195,14 @@ export const useTradingEngine = () => {
       console.log('Starting Wing Zero trading engine...');
       setState(prev => ({ ...prev, error: null }));
       
+      // Sync config and credentials to cloud first
+      await syncConfigToCloud(tradingConfig);
+      await syncCredentialsToCloud();
+      
+      // Start cloud engine for 24/7 operation
+      await startCloudEngine();
+      
+      // Also start local engine
       await engine.start({
         ...tradingConfig,
         loopInterval: 2000, // 2 second update interval
@@ -206,10 +223,11 @@ export const useTradingEngine = () => {
       });
 
       setState(prev => ({ ...prev, isRunning: true }));
+      setIsEngineRunning(true); // Persist running state
       
       toast({
         title: "Wing Zero Started",
-        description: `Trading engine is now active with ${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} synchronization`,
+        description: `Trading engine is now active 24/7 in the cloud with ${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} synchronization`,
       });
       
       console.log('Wing Zero trading engine started successfully');
@@ -222,17 +240,22 @@ export const useTradingEngine = () => {
         variant: "destructive"
       });
     }
-  }, [brokerConnection, isConfigured, engine, tradingConfig, toast]);
+  }, [brokerConnection, isConfigured, engine, tradingConfig, toast, syncConfigToCloud, syncCredentialsToCloud, startCloudEngine, setIsEngineRunning]);
 
   const stopEngine = useCallback(async () => {
     try {
       console.log('Stopping Wing Zero trading engine...');
+      
+      // Stop both local and cloud engines
       await engine.stop();
+      await stopCloudEngine();
+      
       setState(prev => ({ ...prev, isRunning: false }));
+      setIsEngineRunning(false); // Clear persistent state
       
       toast({
         title: "Wing Zero Stopped",
-        description: "Trading engine has been halted",
+        description: "Trading engine has been halted (local and cloud)",
       });
       
       console.log('Wing Zero trading engine stopped successfully');
@@ -244,7 +267,7 @@ export const useTradingEngine = () => {
         variant: "destructive"
       });
     }
-  }, [engine, toast]);
+  }, [engine, toast, stopCloudEngine, setIsEngineRunning]);
 
   const closePosition = useCallback(async (orderId: string) => {
     try {
@@ -286,8 +309,9 @@ export const useTradingEngine = () => {
   }, [engine]);
 
   return {
-    // State
+    // State (combine local and cloud state)
     ...state,
+    isRunning: state.isRunning || cloudStatus.isRunning, // Engine is running if either local or cloud is running
     
     // Actions
     startEngine,
@@ -297,6 +321,9 @@ export const useTradingEngine = () => {
     
     // Getters
     getEngineMetrics,
+    
+    // Cloud status
+    cloudStatus,
     
     // Computed values
     winRate: state.riskMetrics?.winRate || 0,

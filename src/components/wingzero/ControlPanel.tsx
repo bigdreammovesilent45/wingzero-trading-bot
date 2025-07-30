@@ -92,7 +92,8 @@ const ControlPanel = () => {
     startEngine,
     stopEngine,
     closeAllPositions,
-    isOperational
+    isOperational,
+    cloudStatus
   } = useTradingEngine();
   
   // Platform account data
@@ -522,6 +523,11 @@ const ControlPanel = () => {
                   {isRunning && (
                     <div className="text-xs text-green-600 mt-1">
                       ✅ VERIFIED ACTIVE
+                    </div>
+                  )}
+                  {cloudStatus.isRunning && (
+                    <div className="text-xs text-blue-600 mt-1">
+                      ☁️ CLOUD ACTIVE 24/7
                     </div>
                   )}
                 </div>
