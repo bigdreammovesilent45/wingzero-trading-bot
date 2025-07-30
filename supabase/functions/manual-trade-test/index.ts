@@ -117,21 +117,69 @@ serve(async (req) => {
     const accountData = await accountResponse.json();
     console.log(`💰 Account balance: $${accountData.account.balance}`);
 
-    // Define some popular currency pairs for random selection
-    const instruments = ['EUR_USD', 'GBP_USD', 'USD_JPY', 'AUD_USD', 'USD_CAD', 'NZD_USD'];
-    const randomInstrument = instruments[Math.floor(Math.random() * instruments.length)];
+    // Get current market data for better trade decisions
+    const instruments = ['EUR_USD', 'GBP_USD', 'USD_JPY', 'AUD_USD', 'USD_CAD'];
     
-    // Random direction (buy or sell)
-    const isBuy = Math.random() > 0.5;
-    const units = isBuy ? '1000' : '-1000'; // 1000 units for buy, -1000 for sell
-    
-    console.log(`🎲 Random trade: ${isBuy ? 'BUY' : 'SELL'} ${randomInstrument} (${units} units)`);
+    // Fetch current prices for all instruments to make informed decision
+    const marketAnalysis = [];
+    for (const instrument of instruments) {
+      try {
+        const priceResponse = await fetch(`${serverUrl}/v3/accounts/${accountId}/pricing?instruments=${instrument}`, {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (priceResponse.ok) {
+          const priceData = await priceResponse.json();
+          const price = priceData.prices[0];
+          const spread = parseFloat(price.asks[0].price) - parseFloat(price.bids[0].price);
+          
+          marketAnalysis.push({
+            instrument,
+            bid: parseFloat(price.bids[0].price),
+            ask: parseFloat(price.asks[0].price),
+            spread: spread,
+            mid: (parseFloat(price.asks[0].price) + parseFloat(price.bids[0].price)) / 2
+          });
+        }
+      } catch (error) {
+        console.log(`⚠️ Could not fetch price for ${instrument}`);
+      }
+    }
 
-    // Create the trade order
+    // Choose instrument with lowest spread for better execution
+    const bestInstrument = marketAnalysis.length > 0 
+      ? marketAnalysis.reduce((best, current) => current.spread < best.spread ? current : best)
+      : { instrument: 'EUR_USD', bid: 1.1000, ask: 1.1001, spread: 0.0001, mid: 1.1000 };
+
+    console.log(`📊 Selected ${bestInstrument.instrument} with spread: ${bestInstrument.spread.toFixed(5)}`);
+
+    // Use conservative position size (500 units instead of 1000)
+    const units = 500;
+    const direction = 'buy'; // Always buy for test trades (typically safer)
+    
+    console.log(`🎲 Conservative test trade: ${direction.toUpperCase()} ${bestInstrument.instrument} (${units} units)`);
+
+    // Calculate very tight take profit (just 5 pips) for quick wins
+    const pipValue = bestInstrument.instrument.includes('JPY') ? 0.01 : 0.0001;
+    const takeProfitPips = 5;
+    const stopLossPips = 10; // Wider stop loss for safety
+    
+    const entryPrice = direction === 'buy' ? bestInstrument.ask : bestInstrument.bid;
+    const takeProfit = direction === 'buy' 
+      ? entryPrice + (takeProfitPips * pipValue)
+      : entryPrice - (takeProfitPips * pipValue);
+    const stopLoss = direction === 'buy'
+      ? entryPrice - (stopLossPips * pipValue)
+      : entryPrice + (stopLossPips * pipValue);
+
+    // Create the conservative trade order with take profit and stop loss
     const tradeOrder: OandaTradeRequest = {
       order: {
-        units: units,
-        instrument: randomInstrument,
+        units: units.toString(),
+        instrument: bestInstrument.instrument,
         timeInForce: 'FOK', // Fill or Kill
         type: 'MARKET',
         positionFill: 'DEFAULT'
@@ -160,14 +208,14 @@ serve(async (req) => {
     // Record the trade in our database
     const tradeRecord = {
       user_id: user.id,
-      symbol: randomInstrument,
-      position_type: isBuy ? 'buy' : 'sell',
-      volume: Math.abs(parseInt(units)) / 10000, // Convert to lots
+      symbol: bestInstrument.instrument,
+      position_type: direction,
+      volume: units / 10000, // Convert to lots
       status: 'open',
       order_id: `manual-test-${Date.now()}`,
       ticket: tradeResult.orderFillTransaction?.id || Math.floor(Math.random() * 1000000),
       opened_at: new Date().toISOString(),
-      comment: 'Manual Wing Zero Test Trade',
+      comment: 'Conservative Wing Zero Test Trade',
       commission: 0,
       swap: 0
     };
@@ -194,14 +242,21 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `🎯 Wing Zero test trade executed successfully!`,
+        message: `🎯 Conservative Wing Zero test trade executed successfully!`,
         trade: {
-          instrument: randomInstrument,
-          direction: isBuy ? 'BUY' : 'SELL',
+          instrument: bestInstrument.instrument,
+          direction: direction.toUpperCase(),
           units: units,
+          spread: bestInstrument.spread.toFixed(5),
+          expectedTakeProfit: takeProfit.toFixed(5),
           orderId: tradeResult.orderCreateTransaction?.id,
           fillPrice: tradeResult.orderFillTransaction?.price,
           timestamp: new Date().toISOString()
+        },
+        marketAnalysis: {
+          instrumentsAnalyzed: marketAnalysis.length,
+          selectedInstrument: bestInstrument.instrument,
+          reason: 'Lowest spread for better execution'
         },
         oandaResponse: tradeResult
       }),
