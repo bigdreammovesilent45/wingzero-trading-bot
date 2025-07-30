@@ -109,9 +109,41 @@ serve(async (req) => {
           });
 
           const aiResponse = await response.json();
+          
+          // Safe JSON parsing with error handling
+          let analysis;
+          try {
+            let content = aiResponse.choices[0].message.content;
+            content = content.trim();
+            if (content.includes('```')) {
+              content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+            }
+            content = content.trim();
+            
+            try {
+              analysis = JSON.parse(content);
+            } catch (parseError) {
+              const jsonMatch = content.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                content = jsonMatch[0];
+              }
+              analysis = JSON.parse(content);
+            }
+          } catch (error) {
+            console.error('Failed to parse AI response:', error);
+            analysis = {
+              headlines: ['Error parsing news'],
+              sentiment: 'neutral',
+              impact: 50,
+              affected_currencies: ['USD'],
+              key_events: ['Error in analysis'],
+              market_implications: 'Analysis unavailable'
+            };
+          }
+          
           return {
             ...news,
-            analysis: JSON.parse(aiResponse.choices[0].message.content)
+            analysis: analysis
           };
         });
 
@@ -194,7 +226,37 @@ serve(async (req) => {
           }),
         });
 
-        const analysis = JSON.parse((await aiResponse.json()).choices[0].message.content);
+        // Safe JSON parsing with error handling
+        let analysis;
+        try {
+          const aiResponseData = await aiResponse.json();
+          let content = aiResponseData.choices[0].message.content;
+          content = content.trim();
+          if (content.includes('```')) {
+            content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          }
+          content = content.trim();
+          
+          try {
+            analysis = JSON.parse(content);
+          } catch (parseError) {
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              content = jsonMatch[0];
+            }
+            analysis = JSON.parse(content);
+          }
+        } catch (error) {
+          console.error('Failed to parse symbol sentiment analysis:', error);
+          analysis = {
+            sentiment: 'neutral',
+            confidence: 50,
+            price_prediction: 'sideways',
+            key_factors: ['Analysis unavailable'],
+            timeframe: 'short',
+            recommendation: 'Hold pending better data'
+          };
+        }
 
         // Store analysis
         await supabaseClient.from('wingzero_market_intelligence').insert({
@@ -251,7 +313,37 @@ serve(async (req) => {
           }),
         });
 
-        const overview = JSON.parse((await aiResponse.json()).choices[0].message.content);
+        // Safe JSON parsing with error handling
+        let overview;
+        try {
+          const aiResponseData = await aiResponse.json();
+          let content = aiResponseData.choices[0].message.content;
+          content = content.trim();
+          if (content.includes('```')) {
+            content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          }
+          content = content.trim();
+          
+          try {
+            overview = JSON.parse(content);
+          } catch (parseError) {
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              content = jsonMatch[0];
+            }
+            overview = JSON.parse(content);
+          }
+        } catch (error) {
+          console.error('Failed to parse market overview:', error);
+          overview = {
+            overall_sentiment: 'neutral',
+            market_volatility: 'medium',
+            top_opportunities: ['Data analysis pending'],
+            risk_factors: ['Analysis unavailable'],
+            recommended_pairs: ['EURUSD', 'GBPUSD'],
+            market_summary: 'Market overview temporarily unavailable due to parsing error'
+          };
+        }
 
         return new Response(JSON.stringify(overview), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
