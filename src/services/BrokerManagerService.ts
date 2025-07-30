@@ -113,14 +113,33 @@ export class BrokerManagerService {
       ? 'https://api-fxpractice.oanda.com' 
       : 'https://api-fxtrade.oanda.com';
     
-    const response = await fetch(`${baseUrl}/v3/accounts`, {
-      headers: {
-        'Authorization': `Bearer ${credentials.apiKey}`,
-        'Content-Type': 'application/json'
+    try {
+      // First validate API key format
+      if (!credentials.apiKey || credentials.apiKey.length < 30) {
+        console.error('Invalid OANDA API key format');
+        return false;
       }
-    });
 
-    return response.ok;
+      // Test with account endpoint to ensure API key is valid
+      const response = await fetch(`${baseUrl}/v3/accounts/${credentials.accountId}`, {
+        headers: {
+          'Authorization': `Bearer ${credentials.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`OANDA API validation failed: ${response.status} - ${response.statusText}`);
+        const errorBody = await response.text();
+        console.error('Error details:', errorBody);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('OANDA credential validation error:', error);
+      return false;
+    }
   }
 
   private async validateCTraderCredentials(credentials: BrokerCredentials): Promise<boolean> {
@@ -178,36 +197,63 @@ export class BrokerManagerService {
   }
 
   async storeBrokerCredentials(userId: string, brokerType: string, credentials: BrokerCredentials): Promise<void> {
-    // Store encrypted credentials in the database
-    const { error } = await supabase
-      .from('wingzero_credentials')
-      .upsert({
-        user_id: userId,
-        broker_type: brokerType,
-        encrypted_api_key: credentials.apiKey, // Should be encrypted in production
-        encrypted_account_id: credentials.accountId, // Should be encrypted in production
-        server_url: credentials.serverUrl || '',
-        environment: credentials.environment
-      });
+    // Validate credentials before storing
+    if (!credentials.apiKey || !credentials.accountId) {
+      throw new Error('Invalid credentials: missing API key or account ID');
+    }
 
-    if (error) throw error;
+    try {
+      // Use base64 encoding to prevent truncation issues
+      const encodedApiKey = btoa(credentials.apiKey);
+      const encodedAccountId = btoa(credentials.accountId);
+      
+      const { error } = await supabase
+        .from('wingzero_credentials')
+        .upsert({
+          user_id: userId,
+          broker_type: brokerType,
+          encrypted_api_key: encodedApiKey,
+          encrypted_account_id: encodedAccountId,
+          server_url: credentials.serverUrl || '',
+          environment: credentials.environment
+        });
+
+      if (error) throw error;
+      
+      console.log(`Successfully stored ${brokerType} credentials for user ${userId}`);
+    } catch (error) {
+      console.error('Failed to store broker credentials:', error);
+      throw error;
+    }
   }
 
   async getBrokerCredentials(userId: string, brokerType: string): Promise<BrokerCredentials | null> {
-    const { data, error } = await supabase
-      .from('wingzero_credentials')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('broker_type', brokerType)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('wingzero_credentials')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('broker_type', brokerType)
+        .single();
 
-    if (error || !data) return null;
+      if (error || !data) {
+        console.log(`No ${brokerType} credentials found for user ${userId}`);
+        return null;
+      }
 
-    return {
-      apiKey: data.encrypted_api_key, // Should be decrypted in production
-      accountId: data.encrypted_account_id, // Should be decrypted in production
-      serverUrl: data.server_url || undefined,
-      environment: data.environment as 'demo' | 'live'
-    };
+      // Decode base64 encoded credentials
+      const apiKey = atob(data.encrypted_api_key);
+      const accountId = atob(data.encrypted_account_id);
+
+      return {
+        apiKey,
+        accountId,
+        serverUrl: data.server_url || undefined,
+        environment: data.environment as 'demo' | 'live'
+      };
+    } catch (error) {
+      console.error('Failed to retrieve broker credentials:', error);
+      return null;
+    }
   }
 }
