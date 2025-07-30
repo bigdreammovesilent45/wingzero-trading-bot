@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { User, Shield, LogOut } from 'lucide-react';
+import { User, Camera, Save, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface Profile {
   id: string;
@@ -16,40 +16,45 @@ interface Profile {
   full_name: string;
   avatar_url?: string;
   created_at: string;
-}
-
-interface UserRole {
-  role: string;
+  updated_at: string;
 }
 
 export const UserProfile = () => {
-  const { user, signOut } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [roles, setRoles] = useState<UserRole[]>([]);
-  const [fullName, setFullName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    avatar_url: ''
+  });
 
   useEffect(() => {
     if (user) {
       fetchProfile();
-      fetchRoles();
     }
   }, [user]);
 
   const fetchProfile = async () => {
+    if (!user) return;
+    
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .maybeSingle();
 
       if (error) throw error;
       
       if (data) {
         setProfile(data);
-        setFullName(data.full_name || '');
+        setFormData({
+          full_name: data.full_name || '',
+          avatar_url: data.avatar_url || ''
+        });
       }
     } catch (error: any) {
       toast({
@@ -57,33 +62,24 @@ export const UserProfile = () => {
         description: "Failed to load profile",
         variant: "destructive",
       });
-    }
-  };
-
-  const fetchRoles = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-      setRoles(data || []);
-    } catch (error: any) {
-      console.error('Failed to fetch roles:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const updateProfile = async () => {
-    setLoading(true);
+    if (!user) return;
+
+    setUpdating(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user?.id,
-          email: user?.email,
-          full_name: fullName,
-        });
+        .update({
+          full_name: formData.full_name,
+          avatar_url: formData.avatar_url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
 
       if (error) throw error;
 
@@ -92,75 +88,128 @@ export const UserProfile = () => {
         description: "Profile updated successfully",
       });
 
-      fetchProfile();
+      await fetchProfile();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to update profile",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setUpdating(false);
     }
   };
 
-  if (!user || !profile) {
-    return <div>Loading profile...</div>;
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile Information
+          </CardTitle>
+          <CardDescription>
+            Manage your account details and preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Avatar Section */}
           <div className="flex items-center space-x-4">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src={profile.avatar_url} />
-              <AvatarFallback>
-                <User className="w-8 h-8" />
+            <Avatar className="w-20 h-20">
+              <AvatarImage src={formData.avatar_url} alt="Profile picture" />
+              <AvatarFallback className="text-lg">
+                {formData.full_name ? getInitials(formData.full_name) : 'U'}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {profile.full_name || 'User'}
-                <Shield className="w-4 h-4 text-primary" />
-              </CardTitle>
-              <CardDescription>{profile.email}</CardDescription>
+            <div className="flex-1">
+              <Label htmlFor="avatar-url">Profile Picture URL</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="avatar-url"
+                  placeholder="https://example.com/avatar.jpg"
+                  value={formData.avatar_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, avatar_url: e.target.value }))}
+                />
+                <Button variant="outline" size="icon">
+                  <Camera className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>Roles</Label>
-            <div className="flex gap-2 mt-1">
-              {roles.length > 0 ? (
-                roles.map((role, index) => (
-                  <Badge key={index} variant="secondary">
-                    {role.role}
-                  </Badge>
-                ))
-              ) : (
-                <Badge variant="outline">user</Badge>
-              )}
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
-            />
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={updateProfile} disabled={loading}>
-              {loading ? 'Updating...' : 'Update Profile'}
-            </Button>
-            <Button variant="outline" onClick={signOut} className="ml-auto">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="full-name">Full Name</Label>
+              <Input
+                id="full-name"
+                value={formData.full_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                placeholder="Enter your full name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email Address</Label>
+              <Input
+                value={user?.email || ''}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed here. Contact support if needed.
+              </p>
+            </div>
+          </div>
+
+          {/* Account Info */}
+          {profile && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Account Created</Label>
+                <p className="text-sm text-muted-foreground">
+                  {format(new Date(profile.created_at), 'PPP')}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Last Updated</Label>
+                <p className="text-sm text-muted-foreground">
+                  {format(new Date(profile.updated_at), 'PPp')}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex justify-end pt-4">
+            <Button onClick={updateProfile} disabled={updating}>
+              {updating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
+                </>
+              )}
             </Button>
           </div>
         </CardContent>

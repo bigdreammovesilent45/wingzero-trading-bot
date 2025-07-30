@@ -17,6 +17,7 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AccountSettings } from "@/components/settings/AccountSettings";
 import { UserProfile } from "@/components/auth/UserProfile";
+import { PasswordReset } from "@/components/auth/PasswordReset";
 import { SecurityMonitor } from "@/components/security/SecurityMonitor";
 import { TradingPreferences } from "@/components/auth/TradingPreferences";
 import { SecurityAudit } from "@/components/auth/SecurityAudit";
@@ -219,6 +220,7 @@ const SettingsPage = () => {
           
           <TabsContent value="account" className="space-y-6">
             <AccountSettings />
+            <PasswordReset />
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
