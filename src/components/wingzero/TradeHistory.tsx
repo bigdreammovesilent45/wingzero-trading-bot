@@ -1,13 +1,47 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Clock, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { useSupabaseTrades } from "@/hooks/useSupabaseTrades";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const TradeHistory = () => {
   const { openPositions, dailyPnL, totalProfit, isRunning, cloudStatus } = useTradingEngine();
-  const { trades, isLoading } = useSupabaseTrades();
+  const { trades, isLoading, fetchTrades } = useSupabaseTrades();
+  const [selectedPlatform] = useLocalStorage('wingzero-platform', 'ctrader');
+  const { toast } = useToast();
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const syncOandaPositions = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-oanda-positions');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Positions Synced",
+        description: `Successfully synced ${data.synced} positions from OANDA`,
+      });
+      
+      // Refresh trades after sync
+      await fetchTrades();
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: "Sync Failed",
+        description: error.message || "Failed to sync positions from OANDA",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
@@ -58,9 +92,23 @@ const TradeHistory = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-[#00AEEF]" />
-          Trade History
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-[#00AEEF]" />
+            Trade History
+          </div>
+          {selectedPlatform === 'oanda' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={syncOandaPositions}
+              disabled={isSyncing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? 'Syncing...' : 'Sync OANDA'}
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
