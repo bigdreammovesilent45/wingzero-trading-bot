@@ -44,6 +44,84 @@ export type Database = {
         }
         Relationships: []
       }
+      advanced_strategies: {
+        Row: {
+          backtest_results: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parameters: Json
+          strategy_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backtest_results?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parameters?: Json
+          strategy_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backtest_results?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parameters?: Json
+          strategy_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_keys: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key: string
+          last_used: string | null
+          name: string
+          permissions: string[]
+          rate_limit: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          last_used?: string | null
+          name: string
+          permissions?: string[]
+          rate_limit?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          last_used?: string | null
+          name?: string
+          permissions?: string[]
+          rate_limit?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -80,6 +158,86 @@ export type Database = {
           table_name?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      portfolio_performance: {
+        Row: {
+          created_at: string
+          daily_pnl: number
+          date: string
+          drawdown: number
+          id: string
+          portfolio_id: string
+          total_return: number
+          total_value: number
+        }
+        Insert: {
+          created_at?: string
+          daily_pnl?: number
+          date?: string
+          drawdown?: number
+          id?: string
+          portfolio_id: string
+          total_return?: number
+          total_value?: number
+        }
+        Update: {
+          created_at?: string
+          daily_pnl?: number
+          date?: string
+          drawdown?: number
+          id?: string
+          portfolio_id?: string
+          total_return?: number
+          total_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_performance_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolios: {
+        Row: {
+          allocation_strategy: Json
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          total_balance: number
+          total_equity: number
+          total_profit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allocation_strategy?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          total_balance?: number
+          total_equity?: number
+          total_profit?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allocation_strategy?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          total_balance?: number
+          total_equity?: number
+          total_profit?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -155,6 +313,131 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          data: Json
+          format: string
+          generated_at: string
+          id: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          format: string
+          generated_at?: string
+          id?: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          format?: string
+          generated_at?: string
+          id?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scheduled_reports: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_run: string | null
+          next_run: string | null
+          report_type: string
+          schedule: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run?: string | null
+          next_run?: string | null
+          report_type: string
+          schedule: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run?: string | null
+          next_run?: string | null
+          report_type?: string
+          schedule?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          id: string
+          joined_at: string
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           close_price: number | null
@@ -199,6 +482,62 @@ export type Database = {
           volume?: number | null
         }
         Relationships: []
+      }
+      trading_accounts: {
+        Row: {
+          account_id: string
+          account_type: string
+          allocation_percentage: number
+          balance: number
+          broker: string
+          created_at: string
+          equity: number
+          free_margin: number
+          id: string
+          is_active: boolean
+          margin: number
+          portfolio_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          account_type: string
+          allocation_percentage?: number
+          balance?: number
+          broker: string
+          created_at?: string
+          equity?: number
+          free_margin?: number
+          id?: string
+          is_active?: boolean
+          margin?: number
+          portfolio_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          account_type?: string
+          allocation_percentage?: number
+          balance?: number
+          broker?: string
+          created_at?: string
+          equity?: number
+          free_margin?: number
+          id?: string
+          is_active?: boolean
+          margin?: number
+          portfolio_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trading_accounts_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
