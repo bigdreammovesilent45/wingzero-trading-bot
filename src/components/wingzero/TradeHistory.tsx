@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { useTradingEngine } from "@/hooks/useTradingEngine";
-import { useSupabaseTrades } from "@/hooks/useSupabaseTrades";
+import { useWingZeroPositions } from "@/hooks/useWingZeroPositions";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,7 @@ import { useState } from "react";
 
 const TradeHistory = () => {
   const { openPositions, dailyPnL, totalProfit, isRunning, cloudStatus } = useTradingEngine();
-  const { trades, isLoading, fetchTrades } = useSupabaseTrades();
+  const { positions, isLoading, fetchPositions } = useWingZeroPositions();
   const [selectedPlatform] = useLocalStorage('wingzero-platform', 'ctrader');
   const { toast } = useToast();
   const [isSyncing, setIsSyncing] = useState(false);
@@ -20,8 +20,10 @@ const TradeHistory = () => {
   const syncOandaTrades = async () => {
     setIsSyncing(true);
     try {
-      // For now, we'll use the same positions sync function
-      // In the future, we can create a separate trades sync function
+      // First clean up old test trades
+      await supabase.functions.invoke('cleanup-test-trades');
+      
+      // Then sync OANDA positions
       const { data, error } = await supabase.functions.invoke('sync-oanda-positions');
       
       if (error) throw error;
@@ -31,8 +33,8 @@ const TradeHistory = () => {
         description: `Successfully synced ${data.synced} positions from OANDA`,
       });
       
-      // Refresh trades after sync
-      await fetchTrades();
+      // Refresh positions after sync
+      await fetchPositions();
     } catch (error) {
       console.error('Sync error:', error);
       toast({
@@ -117,8 +119,8 @@ const TradeHistory = () => {
         {/* Trading Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="text-center p-4 bg-[#00AEEF]/10 rounded-lg">
-            <div className="text-2xl font-bold text-[#00AEEF]">{trades.length}</div>
-            <div className="text-sm text-muted-foreground">Total Trades</div>
+            <div className="text-2xl font-bold text-[#00AEEF]">{positions.length}</div>
+            <div className="text-sm text-muted-foreground">Total Positions</div>
           </div>
           <div className="text-center p-4 bg-green-500/10 rounded-lg">
             <div className={`text-2xl font-bold ${getProfitColor(dailyPnL)}`}>
@@ -159,21 +161,21 @@ const TradeHistory = () => {
             </div>
           )}
 
-          {trades.length === 0 && isRunning && (
+          {positions.length === 0 && isRunning && (
             <div className="text-center py-8">
               <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No trades yet</p>
+              <p className="text-muted-foreground">No positions yet</p>
               <p className="text-sm text-muted-foreground mt-1">
                 Wing Zero is analyzing the market and will execute trades when opportunities arise
               </p>
             </div>
           )}
 
-          {trades.map((trade) => {
-            const TradeIcon = getTradeIcon(trade.trade_type);
+          {positions.map((position) => {
+            const TradeIcon = getTradeIcon(position.position_type);
             return (
               <div
-                key={trade.id}
+                key={position.id}
                 className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted/80 transition-colors"
               >
                 <div className="flex items-center gap-4">
@@ -182,25 +184,34 @@ const TradeHistory = () => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{trade.symbol}</span>
+                      <span className="font-medium">{position.symbol}</span>
                       <Badge variant="outline" className="text-xs">
-                        {trade.trade_type.toUpperCase()}
+                        {position.position_type.toUpperCase()}
                       </Badge>
-                      {getStatusBadge(trade.status)}
+                      {getStatusBadge(position.status)}
+                      {position.strategy === 'OANDA_SYNC' && (
+                        <Badge className="text-xs bg-[#00AEEF]/20 text-[#00AEEF] border-[#00AEEF]/30">
+                          OANDA
+                        </Badge>
+                      )}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Vol: {trade.volume} • Open: {trade.open_price.toFixed(5)}
-                      {trade.close_price && ` • Close: ${trade.close_price.toFixed(5)}`}
+                      Vol: {position.volume} • Open: {position.open_price.toFixed(5)}
+                      {position.current_price && ` • Current: ${position.current_price.toFixed(5)}`}
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className={`text-lg font-bold ${getProfitColor(trade.profit)}`}>
-                    ${trade.profit > 0 ? '+' : ''}{trade.profit.toFixed(2)}
+                  <div className={`text-lg font-bold ${getProfitColor(position.unrealized_pnl)}`}>
+                    ${position.unrealized_pnl > 0 ? '+' : ''}{position.unrealized_pnl.toFixed(2)}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {formatTime(trade.opened_at)}
-                    {trade.closed_at && ` - ${formatTime(trade.closed_at)}`}
+                    {formatTime(position.opened_at)}
+                    {position.strategy && (
+                      <div className="text-xs text-muted-foreground">
+                        {position.strategy}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
