@@ -7,19 +7,52 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useWingZeroPositions } from "@/hooks/useWingZeroPositions";
 import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { RefreshCw } from "lucide-react";
 
-type Platform = 'ctrader' | 'mt5' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance';
+type Platform = 'oanda' | 'ctrader' | 'mt5' | 'ninjatrader' | 'tradingview' | 'interactivebrokers' | 'binance';
 
 export const PlatformLivePositions = () => {
   const [selectedPlatform] = useLocalStorage<Platform>('wingzero-platform', 'ctrader');
-  const { positions, isLoading, getTotalPnL, getOpenPositions } = useWingZeroPositions();
+  const { positions, isLoading, getTotalPnL, getOpenPositions, fetchPositions } = useWingZeroPositions();
   const { closePosition } = useTradingEngine();
+  const { toast } = useToast();
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const openPositions = getOpenPositions();
   const totalPnL = getTotalPnL();
 
+  const syncOandaPositions = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-oanda-positions');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Positions Synced",
+        description: `Successfully synced ${data.synced} positions from OANDA`,
+      });
+      
+      // Refresh positions after sync
+      await fetchPositions();
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: "Sync Failed",
+        description: error.message || "Failed to sync positions from OANDA",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const getPlatformName = (platform: Platform) => {
     const names = {
+      oanda: 'OANDA',
       ctrader: 'cTrader',
       mt5: 'MetaTrader 5',
       ninjatrader: 'NinjaTrader',
@@ -118,9 +151,23 @@ export const PlatformLivePositions = () => {
       {/* Positions Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-[#00AEEF]" />
-            Live {getPlatformName(selectedPlatform)} Positions ({openPositions.length})
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-[#00AEEF]" />
+              Live {getPlatformName(selectedPlatform)} Positions ({openPositions.length})
+            </div>
+            {selectedPlatform === 'oanda' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={syncOandaPositions}
+                disabled={isSyncing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Syncing...' : 'Sync OANDA'}
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
