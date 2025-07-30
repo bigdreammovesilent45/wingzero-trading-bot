@@ -84,6 +84,14 @@ serve(async (req) => {
 
     console.log(`🏦 Fetching positions from account: ${accountId}`);
 
+    // First, clear existing OANDA synced positions to avoid duplicates
+    console.log('🧹 Clearing existing OANDA synced positions...');
+    await supabase
+      .from('wingzero_positions')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('strategy', 'OANDA_SYNC');
+
     // Fetch positions from OANDA (serverUrl already includes https://)
     const oandaResponse = await fetch(`${serverUrl}/v3/accounts/${accountId}/positions`, {
       headers: {
@@ -109,10 +117,18 @@ serve(async (req) => {
 
     console.log(`📊 Found ${positions.length} position instruments from OANDA`);
 
+    // Filter positions to only include those with non-zero units
+    const activePositions = positions.filter(pos => 
+      (pos.long && parseFloat(pos.long.units) !== 0) || 
+      (pos.short && parseFloat(pos.short.units) !== 0)
+    );
+
+    console.log(`📊 Found ${activePositions.length} active positions from OANDA`);
+
     // Convert OANDA positions to Wing Zero format and sync
     const syncedPositions = [];
     
-    for (const pos of positions) {
+    for (const pos of activePositions) {
       // Handle long positions
       if (pos.long && parseFloat(pos.long.units) !== 0) {
         const wingZeroPosition = {
@@ -124,7 +140,7 @@ serve(async (req) => {
           current_price: parseFloat(pos.long.averagePrice), // Will be updated by real-time feeds
           unrealized_pnl: parseFloat(pos.long.unrealizedPL),
           opened_at: new Date().toISOString(),
-          order_id: `oanda_${pos.instrument}_long_${Date.now()}`,
+          order_id: `oanda_${pos.instrument}_long`, // Consistent ID without timestamp
           ticket: parseInt(pos.long.tradeIDs[0] || '0'),
           commission: 0,
           swap: 0,
@@ -132,19 +148,16 @@ serve(async (req) => {
           strategy: 'OANDA_SYNC'
         };
 
-        // Upsert position (insert or update if exists)
-        const { error: upsertError } = await supabase
+        // Insert position directly since we cleared old ones
+        const { error: insertError } = await supabase
           .from('wingzero_positions')
-          .upsert(wingZeroPosition, {
-            onConflict: 'order_id',
-            ignoreDuplicates: false
-          });
+          .insert(wingZeroPosition);
 
-        if (!upsertError) {
+        if (!insertError) {
           syncedPositions.push(wingZeroPosition);
           console.log(`✅ Synced long position: ${pos.instrument} ${wingZeroPosition.volume} units`);
         } else {
-          console.error(`❌ Failed to sync long position ${pos.instrument}:`, upsertError);
+          console.error(`❌ Failed to sync long position ${pos.instrument}:`, insertError);
         }
       }
 
@@ -159,7 +172,7 @@ serve(async (req) => {
           current_price: parseFloat(pos.short.averagePrice), // Will be updated by real-time feeds
           unrealized_pnl: parseFloat(pos.short.unrealizedPL),
           opened_at: new Date().toISOString(),
-          order_id: `oanda_${pos.instrument}_short_${Date.now()}`,
+          order_id: `oanda_${pos.instrument}_short`, // Consistent ID without timestamp
           ticket: parseInt(pos.short.tradeIDs[0] || '0'),
           commission: 0,
           swap: 0,
@@ -167,19 +180,16 @@ serve(async (req) => {
           strategy: 'OANDA_SYNC'
         };
 
-        // Upsert position (insert or update if exists)
-        const { error: upsertError } = await supabase
+        // Insert position directly since we cleared old ones
+        const { error: insertError } = await supabase
           .from('wingzero_positions')
-          .upsert(wingZeroPosition, {
-            onConflict: 'order_id',
-            ignoreDuplicates: false
-          });
+          .insert(wingZeroPosition);
 
-        if (!upsertError) {
+        if (!insertError) {
           syncedPositions.push(wingZeroPosition);
           console.log(`✅ Synced short position: ${pos.instrument} ${wingZeroPosition.volume} units`);
         } else {
-          console.error(`❌ Failed to sync short position ${pos.instrument}:`, upsertError);
+          console.error(`❌ Failed to sync short position ${pos.instrument}:`, insertError);
         }
       }
     }

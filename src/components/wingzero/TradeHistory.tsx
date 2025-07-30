@@ -17,15 +17,17 @@ const TradeHistory = () => {
   const { toast } = useToast();
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const syncOandaPositions = async () => {
+  const syncOandaTrades = async () => {
     setIsSyncing(true);
     try {
+      // For now, we'll use the same positions sync function
+      // In the future, we can create a separate trades sync function
       const { data, error } = await supabase.functions.invoke('sync-oanda-positions');
       
       if (error) throw error;
       
       toast({
-        title: "Positions Synced",
+        title: "OANDA Data Synced",
         description: `Successfully synced ${data.synced} positions from OANDA`,
       });
       
@@ -35,7 +37,7 @@ const TradeHistory = () => {
       console.error('Sync error:', error);
       toast({
         title: "Sync Failed",
-        description: error.message || "Failed to sync positions from OANDA",
+        description: error.message || "Failed to sync data from OANDA",
         variant: "destructive"
       });
     } finally {
@@ -101,7 +103,7 @@ const TradeHistory = () => {
             <Button
               size="sm"
               variant="outline"
-              onClick={syncOandaPositions}
+              onClick={syncOandaTrades}
               disabled={isSyncing}
               className="flex items-center gap-2"
             >
