@@ -52,7 +52,66 @@ export class AdvancedRiskManager {
     this.initializeDefaults();
   }
 
-  private initializeDefaults() {
+  // Initialize the risk manager
+  async initialize(): Promise<void> {
+    console.log('🛡️ Initializing Advanced Risk Manager...');
+    this.initializeDefaults();
+  }
+
+  // Calculate optimal position size using Kelly Criterion
+  async calculateOptimalPositionSize(
+    symbol: string, 
+    winProbability: number, 
+    riskRewardRatio: number
+  ): Promise<number> {
+    // Mock account balance
+    const accountBalance = 100000;
+    
+    // Kelly Criterion: f = (bp - q) / b
+    // where b = risk/reward ratio, p = win probability, q = loss probability
+    const lossProbability = 1 - winProbability;
+    const kellyPercent = (riskRewardRatio * winProbability - lossProbability) / riskRewardRatio;
+    
+    // Apply fractional Kelly (25% of full Kelly for safety)
+    const fractionalKelly = Math.max(0, Math.min(kellyPercent * 0.25, 0.02)); // Cap at 2%
+    
+    return accountBalance * fractionalKelly;
+  }
+
+  // Validate if a trade meets risk criteria
+  async validateTrade(trade: any): Promise<{ approved: boolean; reason?: string }> {
+    // Check daily loss limit
+    const dailyLossLimit = this.riskLimits.find(limit => limit.type === 'daily_loss');
+    if (dailyLossLimit && dailyLossLimit.current >= dailyLossLimit.value) {
+      return { approved: false, reason: 'Daily loss limit exceeded' };
+    }
+
+    // Check position size limit
+    const positionSizeLimit = this.riskLimits.find(limit => limit.type === 'position_size');
+    if (positionSizeLimit && trade.volume > positionSizeLimit.value) {
+      return { approved: false, reason: 'Position size exceeds limit' };
+    }
+
+    // Check correlation limits
+    const correlationLimit = this.riskLimits.find(limit => limit.type === 'correlation');
+    if (correlationLimit && correlationLimit.current >= correlationLimit.value) {
+      return { approved: false, reason: 'Portfolio correlation too high' };
+    }
+
+    return { approved: true };
+  }
+
+  // Get account information
+  async getAccountInfo(): Promise<{ balance: number; equity: number; margin: number }> {
+    // Mock account data - in real implementation this would come from broker API
+    return {
+      balance: 100000,
+      equity: 98500,
+      margin: 5000
+    };
+  }
+
+  initializeDefaults() {
     this.circuitBreakers = [
       {
         id: 'daily_loss',

@@ -21,6 +21,8 @@ import { PasswordReset } from "@/components/auth/PasswordReset";
 import { SecurityMonitor } from "@/components/security/SecurityMonitor";
 import { TradingPreferences } from "@/components/auth/TradingPreferences";
 import { SecurityAudit } from "@/components/auth/SecurityAudit";
+import { AdvancedAnalytics } from "@/components/analytics/AdvancedAnalytics";
+import { MobileTrading } from "@/components/mobile/MobileTrading";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -168,7 +170,7 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="profile">👤 Profile</TabsTrigger>
             <TabsTrigger value="trading">📈 Trading</TabsTrigger>
             <TabsTrigger value="broker">🔗 Live Trading</TabsTrigger>
@@ -176,7 +178,8 @@ const SettingsPage = () => {
             <TabsTrigger value="security">🛡️ Security</TabsTrigger>
             <TabsTrigger value="audit">🔍 Audit</TabsTrigger>
             <TabsTrigger value="account">💰 Account</TabsTrigger>
-            <TabsTrigger value="monitoring">📊 Monitoring</TabsTrigger>
+            <TabsTrigger value="analytics">📊 Analytics</TabsTrigger>
+            <TabsTrigger value="mobile">📱 Mobile</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-6">
@@ -474,8 +477,15 @@ const SettingsPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
           
+          <TabsContent value="analytics" className="space-y-6">
+            <AdvancedAnalytics />
+          </TabsContent>
+          
+          <TabsContent value="mobile" className="space-y-6">
+            <MobileTrading />
+          </TabsContent>
+
           <TabsContent value="monitoring" className="space-y-6">
             <SecurityMonitor />
           </TabsContent>
