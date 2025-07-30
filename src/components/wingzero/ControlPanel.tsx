@@ -35,6 +35,8 @@ interface StrategyConfig {
   
   // Dual Mode Settings (Legacy - when brain disabled)
   dualModeEnabled: boolean;
+  aggressiveModeEnabled: boolean;
+  passiveModeEnabled: boolean;
   aggressiveAllocation: number; // % of balance for aggressive trading
   passiveAllocation: number;    // % of balance for passive income
   
@@ -74,12 +76,6 @@ interface StrategyConfig {
 
 const ControlPanel = () => {
   const { toast } = useToast();
-  const [botEnabled, setBotEnabled] = useState(true);
-  const [autoTrading, setAutoTrading] = useState(true);
-  const [riskManagement, setRiskManagement] = useState(true);
-  const [passiveIncomeMode, setPassiveIncomeMode] = useState(true);
-  const [aggressiveMode, setAggressiveMode] = useState(true);
-  const [dualMode, setDualMode] = useState(true);
   
   // Trading engine integration
   const {
@@ -120,7 +116,7 @@ const ControlPanel = () => {
       return;
     }
     
-    if (!riskManagement) {
+    if (!true) { // Risk management is always enabled
       toast({
         title: "Risk Management Required", 
         description: "Risk management must be enabled for AI trading",
@@ -365,12 +361,12 @@ const ControlPanel = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-[#00AEEF]">
-                  {dualMode ? "Dual-Mode Active" : aggressiveMode ? "Aggressive Mode" : "Passive Mode"}
+                  {strategyConfig.dualModeEnabled ? "Dual-Mode Active" : strategyConfig.aggressiveModeEnabled ? "Aggressive Mode" : "Passive Mode"}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {dualMode 
+                  {strategyConfig.dualModeEnabled 
                     ? "AI-enhanced aggressive trading + family wealth building"
-                    : aggressiveMode 
+                    : strategyConfig.aggressiveModeEnabled 
                       ? "Maximum performance trading with AI enhancement"
                       : "Conservative family wealth building"
                   }
@@ -379,18 +375,18 @@ const ControlPanel = () => {
             </div>
             <div className="text-right space-y-1">
               <div className="text-3xl font-bold text-[#00AEEF]">
-                {dualMode ? winRates.combined.toFixed(1) : aggressiveMode ? winRates.aggressive.toFixed(1) : winRates.passive.toFixed(1)}%
+                {strategyConfig.dualModeEnabled ? winRates.combined.toFixed(1) : strategyConfig.aggressiveModeEnabled ? winRates.aggressive.toFixed(1) : winRates.passive.toFixed(1)}%
               </div>
               <p className="text-xs text-muted-foreground">Expected Win Rate</p>
               <Badge variant="secondary" className="text-xs">
-                {dualMode ? "Dual Strategy" : aggressiveMode ? "High Performance" : "Family-Safe"}
+                {strategyConfig.dualModeEnabled ? "Dual Strategy" : strategyConfig.aggressiveModeEnabled ? "High Performance" : "Family-Safe"}
               </Badge>
             </div>
           </div>
           
           {account && (
             <div className="mt-6 space-y-4">
-              {dualMode && (
+              {strategyConfig.dualModeEnabled && (
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#00AEEF]/20">
                   <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
                     <div className="text-sm font-medium text-green-700 dark:text-green-300">Passive Income</div>
@@ -574,8 +570,8 @@ const ControlPanel = () => {
                 <p className="text-sm text-muted-foreground">Run both aggressive trading + passive income simultaneously</p>
               </div>
               <Switch
-                checked={dualMode}
-                onCheckedChange={setDualMode}
+                checked={strategyConfig.dualModeEnabled || false}
+                onCheckedChange={(checked) => updateStrategyConfig({ dualModeEnabled: checked })}
                 className="data-[state=checked]:bg-[#00AEEF]"
               />
             </div>
@@ -586,8 +582,8 @@ const ControlPanel = () => {
                 <p className="text-sm text-muted-foreground">AI-enhanced high-frequency trading for maximum profits</p>
               </div>
               <Switch
-                checked={aggressiveMode}
-                onCheckedChange={setAggressiveMode}
+                checked={strategyConfig.aggressiveModeEnabled || false}
+                onCheckedChange={(checked) => updateStrategyConfig({ aggressiveModeEnabled: checked })}
                 className="data-[state=checked]:bg-red-500"
               />
             </div>
@@ -598,8 +594,8 @@ const ControlPanel = () => {
                 <p className="text-sm text-muted-foreground">Conservative wealth building for family legacy</p>
               </div>
               <Switch
-                checked={passiveIncomeMode}
-                onCheckedChange={setPassiveIncomeMode}
+                checked={strategyConfig.passiveModeEnabled || false}
+                onCheckedChange={(checked) => updateStrategyConfig({ passiveModeEnabled: checked })}
                 className="data-[state=checked]:bg-green-500"
               />
             </div>
@@ -610,8 +606,8 @@ const ControlPanel = () => {
                 <p className="text-sm text-muted-foreground">Fully automated execution - hands-free operation</p>
               </div>
               <Switch
-                checked={autoTrading}
-                onCheckedChange={setAutoTrading}
+                checked={strategyConfig.brainEnabled}
+                onCheckedChange={(checked) => updateStrategyConfig({ brainEnabled: checked })}
                 className="data-[state=checked]:bg-[#00AEEF]"
               />
             </div>
@@ -622,8 +618,9 @@ const ControlPanel = () => {
                 <p className="text-sm text-muted-foreground">Essential protection for all trading modes</p>
               </div>
               <Switch
-                checked={riskManagement}
-                onCheckedChange={setRiskManagement}
+                checked={true} // Risk Management is always required
+                onCheckedChange={() => {}} // Cannot be disabled
+                disabled
                 className="data-[state=checked]:bg-[#00AEEF]"
               />
             </div>
