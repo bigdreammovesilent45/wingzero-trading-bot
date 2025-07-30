@@ -11,8 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 const TradeHistory = () => {
-  const { openPositions, dailyPnL, totalProfit, isRunning, cloudStatus } = useTradingEngine();
-  const { positions, isLoading, fetchPositions } = useWingZeroPositions();
+  const { openPositions: tradingEnginePositions, dailyPnL, totalProfit, isRunning, cloudStatus } = useTradingEngine();
+  const { positions, isLoading, fetchPositions, getOpenPositions } = useWingZeroPositions();
   const [selectedPlatform] = useLocalStorage('wingzero-platform', 'ctrader');
   const { toast } = useToast();
   const [isSyncing, setIsSyncing] = useState(false);
@@ -46,6 +46,8 @@ const TradeHistory = () => {
       setIsSyncing(false);
     }
   };
+
+  const wingZeroOpenPositions = getOpenPositions();
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
@@ -119,8 +121,8 @@ const TradeHistory = () => {
         {/* Trading Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="text-center p-4 bg-[#00AEEF]/10 rounded-lg">
-            <div className="text-2xl font-bold text-[#00AEEF]">{positions.length}</div>
-            <div className="text-sm text-muted-foreground">Total Positions</div>
+            <div className="text-2xl font-bold text-[#00AEEF]">{wingZeroOpenPositions.length}</div>
+            <div className="text-sm text-muted-foreground">Wing Zero Positions</div>
           </div>
           <div className="text-center p-4 bg-green-500/10 rounded-lg">
             <div className={`text-2xl font-bold ${getProfitColor(dailyPnL)}`}>
@@ -129,8 +131,8 @@ const TradeHistory = () => {
             <div className="text-sm text-muted-foreground">Daily P&L</div>
           </div>
           <div className="text-center p-4 bg-blue-500/10 rounded-lg">
-            <div className="text-2xl font-bold text-blue-500">{openPositions.length}</div>
-            <div className="text-sm text-muted-foreground">Open Positions</div>
+            <div className="text-2xl font-bold text-blue-500">{tradingEnginePositions.length}</div>
+            <div className="text-sm text-muted-foreground">Live Positions</div>
           </div>
         </div>
 
@@ -161,7 +163,7 @@ const TradeHistory = () => {
             </div>
           )}
 
-          {positions.length === 0 && isRunning && (
+          {wingZeroOpenPositions.length === 0 && isRunning && (
             <div className="text-center py-8">
               <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No positions yet</p>
@@ -171,7 +173,7 @@ const TradeHistory = () => {
             </div>
           )}
 
-          {positions.map((position) => {
+          {wingZeroOpenPositions.map((position) => {
             const TradeIcon = getTradeIcon(position.position_type);
             return (
               <div
