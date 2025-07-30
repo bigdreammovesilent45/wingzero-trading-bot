@@ -17,13 +17,15 @@ interface OandaTradeRequest {
 }
 
 serve(async (req) => {
+  console.log(`🎯 Manual trade test initiated - ${new Date().toISOString()}`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('⚡ Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('🎯 Manual trade test initiated');
 
     // Initialize Supabase client with service role for auth verification
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -64,7 +66,9 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
       .eq('broker_type', 'oanda')
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
     console.log(`🔍 Credentials query result:`, { credentials, credError });
     console.log(`🔍 Number of credentials found:`, credentials ? 1 : 0);
