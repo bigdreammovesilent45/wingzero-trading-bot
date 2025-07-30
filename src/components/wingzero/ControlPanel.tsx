@@ -93,7 +93,9 @@ const ControlPanel = () => {
     stopEngine,
     closeAllPositions,
     isOperational,
-    cloudStatus
+    cloudStatus,
+    tradingConfig,
+    setTradingConfig
   } = useTradingEngine();
   
   // Platform account data
@@ -103,59 +105,8 @@ const ControlPanel = () => {
   const { syncPosition } = useWingZeroPositions();
   const [isTestingDb, setIsTestingDb] = useState(false);
   
-  const [strategyConfig, setStrategyConfig] = useLocalStorage<StrategyConfig>('wingzero-strategy', {
-    // AI Trading Brain (Primary Mode)
-    brainEnabled: true,
-    brainMode: 'balanced',
-    minConfidence: 85,
-    maxRiskPerTrade: 0.02, // 2%
-    maxDailyDrawdown: 0.05, // 5%
-    adaptivePositionSizing: true,
-    multiTimeframeAnalysis: true,
-    newsFilterEnabled: true,
-    sentimentWeight: 0.3,
-    technicalWeight: 0.5,
-    fundamentalWeight: 0.2,
-    emergencyStopLoss: 0.10, // 10%
-    
-    // Dual Mode (Legacy - when brain disabled)
-    dualModeEnabled: false,
-    aggressiveAllocation: 30, // 30% for aggressive
-    passiveAllocation: 70,    // 70% for passive income
-    
-    // Passive Income (Conservative)
-    passiveMaxRiskPerTrade: 1.0,
-    passiveMaxDailyLoss: 3,
-    passiveTakeProfitPips: 50,
-    passiveStopLossPips: 20,
-    passiveMinSignalStrength: 80,
-    monthlyTargetPercent: 8,
-    autoCompounding: true,
-    maxPassiveTrades: 3,
-    
-    // Aggressive Trading (High Performance)
-    aggressiveMaxRiskPerTrade: 3.0,
-    aggressiveMaxDailyLoss: 8,
-    aggressiveTakeProfitPips: 25,
-    aggressiveStopLossPips: 10,
-    aggressiveMinSignalStrength: 65,
-    scalping: true,
-    newsTrading: true,
-    highFrequencyMode: true,
-    maxAggressiveTrades: 8,
-    aiEnhancedSignals: true,
-    
-    // Shared Settings
-    trailingStopEnabled: true,
-    trailingStopDistance: 15,
-    riskRewardRatio: 2.5,
-    confluenceRequired: true,
-    trendFilterEnabled: true,
-    momentumFilterEnabled: true,
-    tradingSessionFilter: 'all',
-    dynamicSizing: true,
-    kellyCriterion: true
-  });
+  // Use strategy config from trading engine for consistency
+  const strategyConfig = tradingConfig;
 
   const handleStart = async () => {
     console.log('handleStart called - isConnected:', isConnected, 'isOperational:', isOperational);
@@ -209,27 +160,34 @@ const ControlPanel = () => {
       title: "Strategy Reset to Optimal Dual-Mode",
       description: "Balanced settings for both aggressive trading and passive income",
     });
-    setStrategyConfig({
-      // AI Trading Brain (Primary Mode)
+    setTradingConfig({
+      // AI Trading Brain Settings
       brainEnabled: true,
       brainMode: 'balanced',
       minConfidence: 85,
-      maxRiskPerTrade: 0.02, // 2%
-      maxDailyDrawdown: 0.05, // 5%
+      maxRiskPerTrade: 0.02,
+      maxDailyDrawdown: 0.05,
       adaptivePositionSizing: true,
       multiTimeframeAnalysis: true,
       newsFilterEnabled: true,
       sentimentWeight: 0.3,
       technicalWeight: 0.5,
       fundamentalWeight: 0.2,
-      emergencyStopLoss: 0.10, // 10%
+      emergencyStopLoss: 0.10,
+      stopLossPips: 20,
+      takeProfitPips: 60,
+      minSignalStrength: 70,
+      onePositionPerSymbol: true,
+      closeOnStop: false,
       
-      // Dual Mode (Legacy - when brain disabled)
+      // Dual Mode Settings
       dualModeEnabled: false,
+      aggressiveModeEnabled: false,
+      passiveModeEnabled: false,
       aggressiveAllocation: 30,
       passiveAllocation: 70,
       
-      // Passive Income (Conservative)
+      // Passive Income Settings
       passiveMaxRiskPerTrade: 1.0,
       passiveMaxDailyLoss: 3,
       passiveTakeProfitPips: 50,
@@ -239,7 +197,7 @@ const ControlPanel = () => {
       autoCompounding: true,
       maxPassiveTrades: 3,
       
-      // Aggressive Trading (High Performance)
+      // Aggressive Trading Settings
       aggressiveMaxRiskPerTrade: 3.0,
       aggressiveMaxDailyLoss: 8,
       aggressiveTakeProfitPips: 25,
@@ -265,7 +223,8 @@ const ControlPanel = () => {
   };
 
   const updateStrategyConfig = (updates: Partial<StrategyConfig>) => {
-    setStrategyConfig(prev => ({ ...prev, ...updates }));
+    console.log('Updating strategy config:', updates);
+    setTradingConfig(prev => ({ ...prev, ...updates }));
   };
 
   const testWingZeroDatabase = async () => {

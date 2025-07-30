@@ -54,7 +54,8 @@ export const useTradingEngine = () => {
   const hasInitialized = useRef(false);
   const isRunningRef = useRef(false);
   const isConnectedRef = useRef(false);
-  const [tradingConfig] = useLocalStorage('wingzero-strategy', {
+  const [tradingConfig, setTradingConfig] = useLocalStorage('wingzero-strategy', {
+    // AI Trading Brain Settings
     brainEnabled: true,
     brainMode: 'balanced',
     minConfidence: 85,
@@ -71,7 +72,47 @@ export const useTradingEngine = () => {
     takeProfitPips: 60,
     minSignalStrength: 70,
     onePositionPerSymbol: true,
-    closeOnStop: false
+    closeOnStop: false,
+    
+    // Dual Mode Settings
+    dualModeEnabled: false,
+    aggressiveModeEnabled: false,
+    passiveModeEnabled: false,
+    aggressiveAllocation: 30,
+    passiveAllocation: 70,
+    
+    // Passive Income Settings
+    passiveMaxRiskPerTrade: 1.0,
+    passiveMaxDailyLoss: 3,
+    passiveTakeProfitPips: 50,
+    passiveStopLossPips: 20,
+    passiveMinSignalStrength: 80,
+    monthlyTargetPercent: 8,
+    autoCompounding: true,
+    maxPassiveTrades: 3,
+    
+    // Aggressive Trading Settings
+    aggressiveMaxRiskPerTrade: 3.0,
+    aggressiveMaxDailyLoss: 8,
+    aggressiveTakeProfitPips: 25,
+    aggressiveStopLossPips: 10,
+    aggressiveMinSignalStrength: 65,
+    scalping: true,
+    newsTrading: true,
+    highFrequencyMode: true,
+    maxAggressiveTrades: 8,
+    aiEnhancedSignals: true,
+    
+    // Shared Settings
+    trailingStopEnabled: true,
+    trailingStopDistance: 15,
+    riskRewardRatio: 2.5,
+    confluenceRequired: true,
+    trendFilterEnabled: true,
+    momentumFilterEnabled: true,
+    tradingSessionFilter: 'all',
+    dynamicSizing: true,
+    kellyCriterion: true
   });
   
   const [state, setState] = useState<TradingEngineState>({
@@ -324,6 +365,10 @@ export const useTradingEngine = () => {
     
     // Cloud status
     cloudStatus,
+    
+    // Configuration
+    tradingConfig,
+    setTradingConfig,
     
     // Computed values
     winRate: state.riskMetrics?.winRate || 0,
