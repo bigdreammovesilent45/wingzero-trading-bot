@@ -161,6 +161,33 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       portfolio_performance: {
         Row: {
           created_at: string
@@ -382,6 +409,42 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          created_at: string
+          event_description: string
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_description: string
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_description?: string
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           id: string
@@ -539,6 +602,69 @@ export type Database = {
           },
         ]
       }
+      trading_preferences: {
+        Row: {
+          auto_close_at_loss: number
+          auto_close_at_profit: number
+          created_at: string
+          email_alerts: boolean
+          forbidden_symbols: string[]
+          id: string
+          max_daily_volume: number
+          max_position_size: number
+          notifications_enabled: boolean
+          preferred_symbols: string[]
+          push_notifications: boolean
+          risk_tolerance: string
+          sms_alerts: boolean
+          timezone: string
+          trading_hours_end: string
+          trading_hours_start: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_close_at_loss?: number
+          auto_close_at_profit?: number
+          created_at?: string
+          email_alerts?: boolean
+          forbidden_symbols?: string[]
+          id?: string
+          max_daily_volume?: number
+          max_position_size?: number
+          notifications_enabled?: boolean
+          preferred_symbols?: string[]
+          push_notifications?: boolean
+          risk_tolerance?: string
+          sms_alerts?: boolean
+          timezone?: string
+          trading_hours_end?: string
+          trading_hours_start?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_close_at_loss?: number
+          auto_close_at_profit?: number
+          created_at?: string
+          email_alerts?: boolean
+          forbidden_symbols?: string[]
+          id?: string
+          max_daily_volume?: number
+          max_position_size?: number
+          notifications_enabled?: boolean
+          preferred_symbols?: string[]
+          push_notifications?: boolean
+          risk_tolerance?: string
+          sms_alerts?: boolean
+          timezone?: string
+          trading_hours_end?: string
+          trading_hours_start?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -556,6 +682,60 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_security_settings: {
+        Row: {
+          api_access_enabled: boolean
+          created_at: string
+          failed_login_lockout_duration: number
+          id: string
+          ip_whitelist: unknown[]
+          last_password_change: string | null
+          login_notifications: boolean
+          max_login_attempts: number
+          password_expiry_days: number
+          require_2fa_for_trading: boolean
+          session_timeout: number
+          two_factor_enabled: boolean
+          two_factor_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_access_enabled?: boolean
+          created_at?: string
+          failed_login_lockout_duration?: number
+          id?: string
+          ip_whitelist?: unknown[]
+          last_password_change?: string | null
+          login_notifications?: boolean
+          max_login_attempts?: number
+          password_expiry_days?: number
+          require_2fa_for_trading?: boolean
+          session_timeout?: number
+          two_factor_enabled?: boolean
+          two_factor_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_access_enabled?: boolean
+          created_at?: string
+          failed_login_lockout_duration?: number
+          id?: string
+          ip_whitelist?: unknown[]
+          last_password_change?: string | null
+          login_notifications?: boolean
+          max_login_attempts?: number
+          password_expiry_days?: number
+          require_2fa_for_trading?: boolean
+          session_timeout?: number
+          two_factor_enabled?: boolean
+          two_factor_secret?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
