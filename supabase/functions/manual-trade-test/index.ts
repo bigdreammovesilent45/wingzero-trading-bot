@@ -25,10 +25,10 @@ serve(async (req) => {
   try {
     console.log('🎯 Manual trade test initiated');
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role for auth verification
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get user ID from auth header
     const authHeader = req.headers.get('Authorization');
@@ -37,13 +37,23 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !user) {
       throw new Error('Invalid authentication token');
     }
 
     console.log(`🔐 Authenticated user: ${user.id}`);
+
+    // Create user-scoped Supabase client for database operations
+    const supabaseAnon = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnon, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
 
     // Get user's OANDA credentials
     const { data: credentials, error: credError } = await supabase
