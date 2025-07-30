@@ -30,6 +30,19 @@ export class MarketDataService {
     this.connection = connection;
   }
 
+  async getAdvancedIndicators(symbol: string, timeframe: string = '1h'): Promise<any> {
+    // Mock implementation for now - returns sample indicator data
+    return {
+      rsi: { signal: 'neutral', strength: 50, confidence: 75 },
+      macd: { signal: 'buy', strength: 65, confidence: 80 },
+      bollinger: { signal: 'neutral', strength: 45, confidence: 70 },
+      stochastic: { signal: 'sell', strength: 60, confidence: 75 },
+      williamsR: { signal: 'neutral', strength: 50, confidence: 70 },
+      cci: { signal: 'buy', strength: 55, confidence: 72 },
+      mfi: { signal: 'neutral', strength: 48, confidence: 68 }
+    };
+  }
+
   private async connectToDataFeed(): Promise<void> {
     try {
       // In a real implementation, this would connect to actual broker data feeds

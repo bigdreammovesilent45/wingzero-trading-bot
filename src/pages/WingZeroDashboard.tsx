@@ -11,6 +11,7 @@ import { PlatformConnectionStatus } from "@/components/wingzero/PlatformConnecti
 import { PlatformSelector } from "@/components/wingzero/PlatformSelector";
 import { AIBrainControls } from "@/components/wingzero/AIBrainControls";
 import EnterpriseControls from "@/components/wingzero/EnterpriseControls";
+import ProductionValidation from "@/components/wingzero/ProductionValidation";
 import FixLivePositions from "@/components/wingzero/FixLivePositions";
 import { ArrowLeft, Zap, Settings as SettingsIcon } from "lucide-react";
 import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
@@ -90,10 +91,11 @@ const WingZeroDashboardPage = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="income" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="income">Passive Income</TabsTrigger>
             <TabsTrigger value="control">Control Panel</TabsTrigger>
             <TabsTrigger value="ai-brain">AI Brain</TabsTrigger>
+            <TabsTrigger value="validation">Production</TabsTrigger>
             <TabsTrigger value="positions">Live Positions</TabsTrigger>
             <TabsTrigger value="metrics">Performance</TabsTrigger>
             <TabsTrigger value="trades">Trade History</TabsTrigger>
@@ -117,6 +119,10 @@ const WingZeroDashboardPage = () => {
           <TabsContent value="ai-brain" className="space-y-6">
             <AIBrainControls isConnected={selectedPlatform !== null} />
             <EnterpriseControls isConnected={selectedPlatform !== null} />
+          </TabsContent>
+          
+          <TabsContent value="validation" className="space-y-6">
+            <ProductionValidation isConnected={selectedPlatform !== null} />
           </TabsContent>
           
           <TabsContent value="positions" className="space-y-6">

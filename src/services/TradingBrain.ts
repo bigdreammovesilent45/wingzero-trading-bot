@@ -5,6 +5,8 @@ import { AISignalGenerator } from './AISignalGenerator';
 import { AdvancedMLEngine } from './AdvancedMLEngine';
 import { ProductionHardening } from './ProductionHardening';
 import { EnterpriseFeatures } from './EnterpriseFeatures';
+import { TechnicalIndicators } from './TechnicalIndicators';
+import { PerformanceOptimizer } from './PerformanceOptimizer';
 import { EconomicCalendarService } from './EconomicCalendarService';
 import { OrderManager } from './OrderManager';
 import { Order, RiskMetrics, TradingSignal } from '@/types/broker';
@@ -40,6 +42,7 @@ export class TradingBrain {
   private enterpriseFeatures: EnterpriseFeatures;
   private economicCalendar: EconomicCalendarService;
   private orderManager: OrderManager;
+  private performanceOptimizer: PerformanceOptimizer;
   
   private isActive = false;
   private tradingLoop: NodeJS.Timeout | null = null;
@@ -70,6 +73,7 @@ export class TradingBrain {
     this.mlEngine = new AdvancedMLEngine();
     this.productionHardening = new ProductionHardening();
     this.enterpriseFeatures = new EnterpriseFeatures();
+    this.performanceOptimizer = new PerformanceOptimizer();
   }
 
   async initialize(): Promise<void> {
@@ -84,10 +88,105 @@ export class TradingBrain {
       this.orderManager.initialize(),
       this.mlEngine.initialize(),
       this.productionHardening.initialize(),
-      this.enterpriseFeatures.initialize()
+      this.enterpriseFeatures.initialize(),
+      this.performanceOptimizer.initialize()
     ]);
     
     console.log('🚀 Trading Brain initialized - Ready for autonomous trading');
+  }
+
+  private async performAdvancedTechnicalAnalysis(symbol: string): Promise<any> {
+    try {
+      // Get advanced technical indicators
+      const indicators = await this.marketData.getAdvancedIndicators(symbol, '1h');
+      
+      // Combine all indicators for comprehensive analysis
+      const technicalScore = this.calculateTechnicalScore(indicators);
+      
+      return {
+        indicators,
+        score: technicalScore,
+        signals: this.generateTechnicalSignals(indicators)
+      };
+    } catch (error) {
+      console.error('Advanced technical analysis error:', error);
+      return null;
+    }
+  }
+
+  private calculateTechnicalScore(indicators: any): number {
+    let score = 0;
+    let totalWeight = 0;
+    
+    // RSI contribution (weight: 20%)
+    if (indicators.rsi.signal === 'buy') score += 20;
+    else if (indicators.rsi.signal === 'sell') score -= 20;
+    totalWeight += 20;
+    
+    // MACD contribution (weight: 25%)
+    if (indicators.macd.signal === 'buy') score += 25;
+    else if (indicators.macd.signal === 'sell') score -= 25;
+    totalWeight += 25;
+    
+    // Bollinger Bands contribution (weight: 15%)
+    if (indicators.bollinger.signal === 'buy') score += 15;
+    else if (indicators.bollinger.signal === 'sell') score -= 15;
+    totalWeight += 15;
+    
+    // Stochastic contribution (weight: 15%)
+    if (indicators.stochastic.signal === 'buy') score += 15;
+    else if (indicators.stochastic.signal === 'sell') score -= 15;
+    totalWeight += 15;
+    
+    // Williams %R contribution (weight: 10%)
+    if (indicators.williamsR.signal === 'buy') score += 10;
+    else if (indicators.williamsR.signal === 'sell') score -= 10;
+    totalWeight += 10;
+    
+    // CCI contribution (weight: 10%)
+    if (indicators.cci.signal === 'buy') score += 10;
+    else if (indicators.cci.signal === 'sell') score -= 10;
+    totalWeight += 10;
+    
+    // MFI contribution (weight: 5%)
+    if (indicators.mfi.signal === 'buy') score += 5;
+    else if (indicators.mfi.signal === 'sell') score -= 5;
+    totalWeight += 5;
+    
+    return score / totalWeight; // Normalize to -1 to 1 range
+  }
+
+  private generateTechnicalSignals(indicators: any): any[] {
+    const signals = [];
+    
+    // Strong buy signals
+    if (indicators.rsi.signal === 'buy' && indicators.macd.signal === 'buy') {
+      signals.push({
+        type: 'strong_buy',
+        reason: 'RSI oversold + MACD bullish crossover',
+        strength: (indicators.rsi.strength + indicators.macd.strength) / 2
+      });
+    }
+    
+    // Strong sell signals
+    if (indicators.rsi.signal === 'sell' && indicators.macd.signal === 'sell') {
+      signals.push({
+        type: 'strong_sell',
+        reason: 'RSI overbought + MACD bearish crossover',
+        strength: (indicators.rsi.strength + indicators.macd.strength) / 2
+      });
+    }
+    
+    // Bollinger Band squeeze
+    if (indicators.bollinger.signal !== 'neutral') {
+      signals.push({
+        type: indicators.bollinger.signal,
+        reason: 'Bollinger Band breakout',
+        strength: indicators.bollinger.strength
+      });
+    }
+    
+    return signals;
   }
 
   async start(): Promise<void> {
@@ -197,8 +296,11 @@ export class TradingBrain {
     console.log(`🔍 Analyzing ${symbol}...`);
     
     try {
-      // Get multi-timeframe analysis - simplified for now
+      // Get multi-timeframe analysis with advanced technical indicators
       const signals: TradingSignal[] = await this.signalGenerator.generateSignals(symbol, '1h');
+      
+      // Add advanced technical analysis
+      const technicalAnalysis = await this.performAdvancedTechnicalAnalysis(symbol);
       
       // Get news and sentiment for this symbol
       const symbolNews = await this.marketIntelligence.getSymbolNews(symbol);
