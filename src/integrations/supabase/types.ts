@@ -698,6 +698,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_ai_strategy: {
+        Args: {
+          p_user_id: string
+          p_strategy_name: string
+          p_strategy_type: string
+          p_parameters: Json
+          p_status?: string
+          p_created_by?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "premium"

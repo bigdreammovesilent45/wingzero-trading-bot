@@ -164,14 +164,14 @@ serve(async (req) => {
           strategy = JSON.parse(content);
         }
 
-        // Store strategy in database
-        const { data: insertData, error: insertError } = await supabaseClient.from('wingzero_strategies').insert({
-          user_id: user.id,
-          strategy_name: strategy.strategy_name,
-          strategy_type: 'ai_generated',
-          parameters: strategy,
-          status: 'testing',
-          created_by: 'ai_brain'
+        // Store strategy in database using security definer function
+        const { data: strategyId, error: insertError } = await supabaseClient.rpc('insert_ai_strategy', {
+          p_user_id: user.id,
+          p_strategy_name: strategy.strategy_name,
+          p_strategy_type: 'ai_generated',
+          p_parameters: strategy,
+          p_status: 'testing',
+          p_created_by: 'ai_brain'
         });
 
         if (insertError) {
