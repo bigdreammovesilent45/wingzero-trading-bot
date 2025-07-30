@@ -16,6 +16,7 @@ import FixLivePositions from "@/components/wingzero/FixLivePositions";
 import { TradingNotifications } from "@/components/wingzero/TradingNotifications";
 import { AutoTradingControls } from "@/components/wingzero/AutoTradingControls";
 import { ProductionHealthCheck } from "@/components/wingzero/ProductionHealthCheck";
+import AppDownloadCenter from "@/components/wingzero/AppDownloadCenter";
 import { ArrowLeft, Zap, Settings as SettingsIcon } from "lucide-react";
 import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -94,7 +95,7 @@ const WingZeroDashboardPage = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="income" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="auto">Auto Trade</TabsTrigger>
             <TabsTrigger value="control">Control</TabsTrigger>
@@ -103,6 +104,7 @@ const WingZeroDashboardPage = () => {
             <TabsTrigger value="validation">Production</TabsTrigger>
             <TabsTrigger value="positions">Positions</TabsTrigger>
             <TabsTrigger value="trades">History</TabsTrigger>
+            <TabsTrigger value="download">Download</TabsTrigger>
           </TabsList>
           
           <TabsContent value="income" className="space-y-6">
@@ -146,6 +148,10 @@ const WingZeroDashboardPage = () => {
           <TabsContent value="trades" className="space-y-6">
             <TradeHistory />
             <BotMetrics />
+          </TabsContent>
+          
+          <TabsContent value="download" className="space-y-6">
+            <AppDownloadCenter />
           </TabsContent>
         </Tabs>
       </div>
