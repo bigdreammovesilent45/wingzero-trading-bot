@@ -18,6 +18,8 @@ import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AccountSettings } from "@/components/settings/AccountSettings";
 import { UserProfile } from "@/components/auth/UserProfile";
 import { SecurityMonitor } from "@/components/security/SecurityMonitor";
+import { TradingPreferences } from "@/components/auth/TradingPreferences";
+import { SecurityAudit } from "@/components/auth/SecurityAudit";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -165,17 +167,23 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="profile">👤 Profile</TabsTrigger>
+            <TabsTrigger value="trading">📈 Trading</TabsTrigger>
             <TabsTrigger value="broker">🔗 Live Trading</TabsTrigger>
             <TabsTrigger value="notifications">🔔 Notifications</TabsTrigger>
             <TabsTrigger value="security">🛡️ Security</TabsTrigger>
+            <TabsTrigger value="audit">🔍 Audit</TabsTrigger>
             <TabsTrigger value="account">💰 Account</TabsTrigger>
             <TabsTrigger value="monitoring">📊 Monitoring</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-6">
             <UserProfile />
+          </TabsContent>
+          
+          <TabsContent value="trading" className="space-y-6">
+            <TradingPreferences />
           </TabsContent>
           
           {/* Broker Setup Tab */}
@@ -203,6 +211,10 @@ const SettingsPage = () => {
           
           <TabsContent value="security" className="space-y-6">
             <SecuritySettings />
+          </TabsContent>
+          
+          <TabsContent value="audit" className="space-y-6">
+            <SecurityAudit />
           </TabsContent>
           
           <TabsContent value="account" className="space-y-6">
