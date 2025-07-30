@@ -297,10 +297,29 @@ serve(async (req) => {
           let newsArray = [];
           
           try {
-            const content = data.choices[0].message.content;
-            newsArray = JSON.parse(content);
+            // Check if the response has the expected structure
+            if (data && data.choices && data.choices.length > 0 && data.choices[0].message) {
+              const content = data.choices[0].message.content;
+              if (content && typeof content === 'string') {
+                // Try to extract JSON from the content
+                let jsonContent = content.trim();
+                if (jsonContent.includes('[') && jsonContent.includes(']')) {
+                  // Extract JSON array from markdown or mixed content
+                  const jsonMatch = jsonContent.match(/\[[\s\S]*\]/);
+                  if (jsonMatch) {
+                    jsonContent = jsonMatch[0];
+                  }
+                }
+                newsArray = JSON.parse(jsonContent);
+              } else {
+                throw new Error('No content in response');
+              }
+            } else {
+              throw new Error('Invalid response structure from Perplexity API');
+            }
           } catch (parseError) {
             console.error('Error parsing Perplexity response:', parseError);
+            console.error('Full response:', JSON.stringify(data, null, 2));
             newsArray = getMockFinancialNews();
           }
 
@@ -359,10 +378,29 @@ serve(async (req) => {
           let newsArray = [];
           
           try {
-            const content = data.choices[0].message.content;
-            newsArray = JSON.parse(content);
+            // Check if the response has the expected structure
+            if (data && data.choices && data.choices.length > 0 && data.choices[0].message) {
+              const content = data.choices[0].message.content;
+              if (content && typeof content === 'string') {
+                // Try to extract JSON from the content
+                let jsonContent = content.trim();
+                if (jsonContent.includes('[') && jsonContent.includes(']')) {
+                  // Extract JSON array from markdown or mixed content
+                  const jsonMatch = jsonContent.match(/\[[\s\S]*\]/);
+                  if (jsonMatch) {
+                    jsonContent = jsonMatch[0];
+                  }
+                }
+                newsArray = JSON.parse(jsonContent);
+              } else {
+                throw new Error('No content in response');
+              }
+            } else {
+              throw new Error('Invalid response structure from Perplexity API');
+            }
           } catch (parseError) {
             console.error('Error parsing Perplexity response for symbol:', parseError);
+            console.error('Full response:', JSON.stringify(data, null, 2));
             newsArray = getMockSymbolNews(params.symbol);
           }
 
