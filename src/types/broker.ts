@@ -58,12 +58,15 @@ export interface TradingSignal {
   indicators: {
     trend: 'bullish' | 'bearish' | 'neutral';
     momentum: 'strong' | 'weak' | 'neutral';
-    volume: 'high' | 'low' | 'normal';
+    volume: 'high' | 'low' | 'normal' | 'above_average';
     support: number;
     resistance: number;
     close?: number;
   };
   timestamp: number;
+  riskReward?: number;
+  timeframe?: string;
+  metadata?: any;
 }
 
 export interface RiskMetrics {

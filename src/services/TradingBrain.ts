@@ -2,6 +2,9 @@ import { MarketDataService } from './MarketDataService';
 import { AdvancedRiskManager } from './AdvancedRiskManager';
 import { MarketIntelligenceService } from './MarketIntelligenceService';
 import { AISignalGenerator } from './AISignalGenerator';
+import { AdvancedMLEngine } from './AdvancedMLEngine';
+import { ProductionHardening } from './ProductionHardening';
+import { EnterpriseFeatures } from './EnterpriseFeatures';
 import { EconomicCalendarService } from './EconomicCalendarService';
 import { OrderManager } from './OrderManager';
 import { Order, RiskMetrics, TradingSignal } from '@/types/broker';
@@ -32,6 +35,9 @@ export class TradingBrain {
   private riskManager: AdvancedRiskManager;
   private marketIntelligence: MarketIntelligenceService;
   private signalGenerator: AISignalGenerator;
+  private mlEngine: AdvancedMLEngine;
+  private productionHardening: ProductionHardening;
+  private enterpriseFeatures: EnterpriseFeatures;
   private economicCalendar: EconomicCalendarService;
   private orderManager: OrderManager;
   
@@ -61,6 +67,9 @@ export class TradingBrain {
     this.signalGenerator = new AISignalGenerator();
     this.economicCalendar = new EconomicCalendarService();
     this.orderManager = new OrderManager();
+    this.mlEngine = new AdvancedMLEngine();
+    this.productionHardening = new ProductionHardening();
+    this.enterpriseFeatures = new EnterpriseFeatures();
   }
 
   async initialize(): Promise<void> {
