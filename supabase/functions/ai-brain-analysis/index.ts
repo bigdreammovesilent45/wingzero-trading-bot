@@ -165,7 +165,7 @@ serve(async (req) => {
         }
 
         // Store strategy in database
-        await supabaseClient.from('wingzero_strategies').insert({
+        const { data: insertData, error: insertError } = await supabaseClient.from('wingzero_strategies').insert({
           user_id: user.id,
           strategy_name: strategy.strategy_name,
           strategy_type: 'ai_generated',
@@ -173,6 +173,11 @@ serve(async (req) => {
           status: 'testing',
           created_by: 'ai_brain'
         });
+
+        if (insertError) {
+          console.error('Failed to insert strategy:', insertError);
+          throw new Error(`Database insert failed: ${insertError.message}`);
+        }
 
         return new Response(JSON.stringify(strategy), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -238,7 +243,7 @@ serve(async (req) => {
         }
 
         // Store optimization in database
-        await supabaseClient.from('wingzero_optimizations').insert({
+        const { data: insertData, error: insertError } = await supabaseClient.from('wingzero_optimizations').insert({
           user_id: user.id,
           optimization_type: 'ai_parameter_optimization',
           old_config: data.currentConfig,
@@ -247,6 +252,11 @@ serve(async (req) => {
           trigger_reason: optimization.reasoning,
           status: 'pending'
         });
+
+        if (insertError) {
+          console.error('Failed to insert optimization:', insertError);
+          throw new Error(`Database insert failed: ${insertError.message}`);
+        }
 
         return new Response(JSON.stringify(optimization), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
