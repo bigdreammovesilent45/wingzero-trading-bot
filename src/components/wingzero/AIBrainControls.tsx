@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Brain, TrendingUp, AlertTriangle, Zap, Save, Settings } from 'lucide-react';
 import { useSecureAPI } from '@/hooks/useSecureAPI';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useToast } from '@/hooks/use-toast';
+import SettingsSaveManager from './SettingsSaveManager';
 
 interface AIBrainControlsProps {
   isConnected?: boolean;
@@ -15,6 +19,14 @@ export const AIBrainControls: React.FC<AIBrainControlsProps> = ({ isConnected = 
   const { toast } = useToast();
   const [brainStatus, setBrainStatus] = useState<'idle' | 'analyzing' | 'learning'>('idle');
   const [lastAnalysis, setLastAnalysis] = useState<any>(null);
+  
+  const [brainSettings, setBrainSettings] = useLocalStorage('ai-brain-settings', {
+    autoAnalysis: true,
+    newsScrapingEnabled: true,
+    strategyOptimization: true,
+    learningMode: 'aggressive'
+  });
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const runMarketAnalysis = async () => {
     try {
@@ -110,18 +122,88 @@ export const AIBrainControls: React.FC<AIBrainControlsProps> = ({ isConnected = 
     }
   };
 
+  const saveBrainSettings = async () => {
+    try {
+      // Settings are automatically saved via useLocalStorage
+      setLastSaved(new Date());
+      toast({
+        title: "AI Brain Settings Saved",
+        description: "Brain configuration has been saved",
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save AI brain settings",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateBrainSetting = (key: string, value: any) => {
+    setBrainSettings(prev => ({ ...prev, [key]: value }));
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Brain className="h-5 w-5" />
-          AI Trading Brain
-          <Badge variant={isConnected ? "default" : "secondary"}>
-            {isConnected ? "Connected" : "Offline"}
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              AI Trading Brain
+              <Badge variant={isConnected ? "default" : "secondary"}>
+                {isConnected ? "Connected" : "Offline"}
+              </Badge>
+            </CardTitle>
+            {lastSaved && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Last saved: {lastSaved.toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+          <Button 
+            onClick={saveBrainSettings}
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Brain Settings */}
+        <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
+          <h4 className="font-medium flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Brain Configuration
+          </h4>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Auto Analysis</Label>
+              <Switch
+                checked={brainSettings.autoAnalysis}
+                onCheckedChange={(checked) => updateBrainSetting('autoAnalysis', checked)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">News Scraping</Label>
+              <Switch
+                checked={brainSettings.newsScrapingEnabled}
+                onCheckedChange={(checked) => updateBrainSetting('newsScrapingEnabled', checked)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Strategy Optimization</Label>
+              <Switch
+                checked={brainSettings.strategyOptimization}
+                onCheckedChange={(checked) => updateBrainSetting('strategyOptimization', checked)}
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Button
             onClick={runMarketAnalysis}

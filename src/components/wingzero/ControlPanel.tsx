@@ -152,6 +152,23 @@ const ControlPanel = () => {
     });
   };
 
+  const saveAllSettings = async () => {
+    try {
+      // Save all current settings to localStorage
+      localStorage.setItem('wingzero-strategy-backup', JSON.stringify(strategyConfig));
+      toast({
+        title: "All Settings Saved",
+        description: "Wing Zero configuration has been saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleReset = () => {
     toast({
       title: "Strategy Reset to Optimal Dual-Mode",
@@ -513,7 +530,7 @@ const ControlPanel = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Main Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button 
               onClick={handleStart}
               disabled={isRunning || !isConnected}
@@ -538,6 +555,13 @@ const ControlPanel = () => {
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset to Optimal
+            </Button>
+            <Button 
+              onClick={saveAllSettings}
+              variant="outline"
+              className="border-green-500/20 hover:border-green-500/40 hover:bg-green-500/10"
+            >
+              💾 Save All Settings
             </Button>
           </div>
 

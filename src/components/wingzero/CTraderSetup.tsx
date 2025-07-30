@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, AlertCircle, TrendingUp, Shield, Info, Smartphone } from "lucide-react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { CheckCircle, AlertCircle, TrendingUp, Shield, Info, Smartphone, Save } from "lucide-react";
 
 interface CTraderSetupProps {
   onConfigUpdate: (config: any) => void;
@@ -17,9 +18,9 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
-  const [connectionType, setConnectionType] = useState<'openapi' | 'fix' | 'mobile'>('openapi');
+  const [connectionType, setConnectionType] = useLocalStorage<'openapi' | 'fix' | 'mobile'>('ctrader-connection-type', 'openapi');
   
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useLocalStorage('ctrader-config', {
     // Open API fields
     clientId: '',
     clientSecret: '',
@@ -48,14 +49,17 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
 
       if (isValidConfig) {
         setConnectionStatus('connected');
-        onConfigUpdate({ 
+        const savedConfig = { 
           type: 'ctrader', 
           connectionType,
           ...config,
           platform: 'ctrader'
-        });
+        };
+        // Save to localStorage for persistence
+        localStorage.setItem('ctrader-connection-config', JSON.stringify(savedConfig));
+        onConfigUpdate(savedConfig);
         toast({
-          title: "cTrader Connected",
+          title: "cTrader Connected & Saved",
           description: `Successfully connected to cTrader ${connectionType === 'openapi' ? 'Open API' : connectionType === 'fix' ? 'FIX API' : 'Mobile Integration'}`,
         });
       } else {
@@ -361,7 +365,12 @@ export function CTraderSetup({ onConfigUpdate }: CTraderSetupProps) {
                 size="sm"
                 onClick={() => {
                   setConnectionStatus('disconnected');
+                  localStorage.removeItem('ctrader-connection-config');
                   onConfigUpdate(null);
+                  toast({
+                    title: "Disconnected",
+                    description: "cTrader configuration cleared",
+                  });
                 }}
               >
                 Disconnect

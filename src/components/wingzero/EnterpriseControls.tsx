@@ -3,9 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { EnterpriseFeatures } from '@/services/EnterpriseFeatures';
 import { ProductionHardening } from '@/services/ProductionHardening';
 import { AdvancedMLEngine } from '@/services/AdvancedMLEngine';
+import { Save, Settings, RefreshCw } from 'lucide-react';
+import SettingsSaveManager from './SettingsSaveManager';
 
 interface EnterpriseControlsProps {
   isConnected?: boolean;
@@ -17,9 +20,15 @@ const EnterpriseControls: React.FC<EnterpriseControlsProps> = ({ isConnected = f
   const [productionHardening] = useState(() => new ProductionHardening());
   const [mlEngine] = useState(() => new AdvancedMLEngine());
   
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useLocalStorage('enterprise-initialized', false);
+  const [enterpriseSettings, setEnterpriseSettings] = useLocalStorage('enterprise-settings', {
+    autoEvolution: true,
+    statsRefreshInterval: 10000,
+    healthMonitoring: true
+  });
   const [systemHealth, setSystemHealth] = useState<any>(null);
   const [evolutionStats, setEvolutionStats] = useState<any>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   useEffect(() => {
     if (isConnected && !isInitialized) {
@@ -38,6 +47,9 @@ const EnterpriseControls: React.FC<EnterpriseControlsProps> = ({ isConnected = f
       ]);
       
       setIsInitialized(true);
+      
+      setIsInitialized(true);
+      setLastSaved(new Date());
       
       toast({
         title: "🎯 Enterprise Systems Online",
@@ -66,6 +78,23 @@ const EnterpriseControls: React.FC<EnterpriseControlsProps> = ({ isConnected = f
         title: "Enterprise Initialization Error",
         description: "Some enterprise features may not be available",
         variant: "destructive",
+      });
+    }
+  };
+
+  const saveEnterpriseSettings = async () => {
+    try {
+      // Settings are automatically saved via useLocalStorage
+      setLastSaved(new Date());
+      toast({
+        title: "Enterprise Settings Saved",
+        description: "All enterprise configuration has been saved",
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save enterprise settings",
+        variant: "destructive"
       });
     }
   };
@@ -174,13 +203,31 @@ const EnterpriseControls: React.FC<EnterpriseControlsProps> = ({ isConnected = f
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            🏢 Wing Zero Enterprise Suite
-            {isInitialized && <Badge variant="default">ACTIVE</Badge>}
-          </CardTitle>
-          <CardDescription>
-            Advanced ML Engine, Production Hardening, and Enterprise Features
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                🏢 Wing Zero Enterprise Suite
+                {isInitialized && <Badge variant="default">ACTIVE</Badge>}
+              </CardTitle>
+              <CardDescription>
+                Advanced ML Engine, Production Hardening, and Enterprise Features
+                {lastSaved && (
+                  <span className="block text-xs mt-1">
+                    Last saved: {lastSaved.toLocaleTimeString()}
+                  </span>
+                )}
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={saveEnterpriseSettings}
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Save Settings
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {!isConnected ? (
@@ -281,6 +328,16 @@ const EnterpriseControls: React.FC<EnterpriseControlsProps> = ({ isConnected = f
                 </Button>
               </div>
             </div>
+          )}
+          
+          {/* Settings Save Manager */}
+          {isInitialized && (
+            <SettingsSaveManager
+              panelName="Enterprise Controls"
+              settings={enterpriseSettings}
+              onSave={saveEnterpriseSettings}
+              autoSave={true}
+            />
           )}
         </CardContent>
       </Card>

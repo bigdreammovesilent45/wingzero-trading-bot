@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Pause, Settings, Zap, Shield, Target } from "lucide-react";
+import { Play, Pause, Settings, Zap, Shield, Target, Save, Check } from "lucide-react";
 import { useTradingEngine } from "@/hooks/useTradingEngine";
 import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useToast } from "@/hooks/use-toast";
+import SettingsSaveManager from "./SettingsSaveManager";
 
 interface AutoTradingSettings {
   autoStart: boolean;
@@ -27,7 +29,7 @@ export const AutoTradingControls: React.FC = () => {
   const { hasAutoStarted, resetAutoStart } = useAutoStartTrading();
   const { toast } = useToast();
 
-  const [settings, setSettings] = useState<AutoTradingSettings>({
+  const [settings, setSettings] = useLocalStorage<AutoTradingSettings>('wingzero-auto-trading-settings', {
     autoStart: true,
     aggressiveMode: false,
     riskLevel: 5,
@@ -37,6 +39,9 @@ export const AutoTradingControls: React.FC = () => {
     takeProfitPercent: 3.0,
     trailingStop: true
   });
+
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Auto-update trading config when settings change
   useEffect(() => {
@@ -78,6 +83,27 @@ export const AutoTradingControls: React.FC = () => {
 
   const handleSettingChange = (key: keyof AutoTradingSettings, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const saveSettings = async () => {
+    setIsSaving(true);
+    try {
+      // Settings are automatically saved via useLocalStorage, but we simulate API save
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setLastSaved(new Date());
+      toast({
+        title: "Settings Saved",
+        description: "Auto trading settings have been saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getStatusBadge = () => {
@@ -271,6 +297,14 @@ export const AutoTradingControls: React.FC = () => {
             onCheckedChange={(checked) => handleSettingChange('trailingStop', checked)}
           />
         </div>
+
+        {/* Settings Save Manager */}
+        <SettingsSaveManager
+          panelName="Auto Trading Controls"
+          settings={settings}
+          onSave={saveSettings}
+          autoSave={true}
+        />
 
         {/* Status Summary */}
         <div className="p-4 bg-muted/50 rounded-lg">
