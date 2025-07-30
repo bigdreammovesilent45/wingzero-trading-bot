@@ -84,8 +84,8 @@ serve(async (req) => {
 
     console.log(`🏦 Fetching positions from account: ${accountId}`);
 
-    // Fetch positions from OANDA
-    const oandaResponse = await fetch(`https://${serverUrl}/v3/accounts/${accountId}/positions`, {
+    // Fetch positions from OANDA (serverUrl already includes https://)
+    const oandaResponse = await fetch(`${serverUrl}/v3/accounts/${accountId}/positions`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
