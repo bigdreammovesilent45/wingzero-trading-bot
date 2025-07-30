@@ -497,6 +497,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wingzero_multi_accounts: {
+        Row: {
+          accounts: Json
+          allocation: Json
+          created_at: string
+          id: string
+          name: string
+          risk_distribution: string
+          strategy: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accounts?: Json
+          allocation?: Json
+          created_at?: string
+          id?: string
+          name: string
+          risk_distribution?: string
+          strategy: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accounts?: Json
+          allocation?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          risk_distribution?: string
+          strategy?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wingzero_optimizations: {
         Row: {
           actual_improvement: number | null
@@ -644,6 +680,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wingzero_risk_models: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          lookback: number
+          name: string
+          parameters: Json
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          lookback?: number
+          name: string
+          parameters?: Json
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          lookback?: number
+          name?: string
+          parameters?: Json
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wingzero_strategies: {
         Row: {
           created_at: string | null
@@ -682,6 +754,51 @@ export type Database = {
           strategy_name?: string
           strategy_type?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wingzero_trading_accounts: {
+        Row: {
+          balance: number
+          broker: string
+          created_at: string
+          currency: string
+          encrypted_credentials: string | null
+          environment: string
+          equity: number
+          id: string
+          leverage: number
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          broker: string
+          created_at?: string
+          currency?: string
+          encrypted_credentials?: string | null
+          environment?: string
+          equity?: number
+          id?: string
+          leverage?: number
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          broker?: string
+          created_at?: string
+          currency?: string
+          encrypted_credentials?: string | null
+          environment?: string
+          equity?: number
+          id?: string
+          leverage?: number
+          name?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

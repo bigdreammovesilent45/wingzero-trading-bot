@@ -381,7 +381,10 @@ export class ProductionHardening {
         user_id: (await supabase.auth.getUser()).data.user?.id,
         activity_type: 'system_alert',
         message: alert.message,
-        data: alert
+        data: {
+          ...alert,
+          timestamp: alert.timestamp.toISOString()
+        }
       });
     } catch (error) {
       console.error('Failed to store alert:', error);
@@ -404,7 +407,10 @@ export class ProductionHardening {
         user_id: (await supabase.auth.getUser()).data.user?.id,
         activity_type: 'security_alert',
         message: alert.message,
-        data: alert
+        data: {
+          ...alert,
+          timestamp: alert.timestamp.toISOString()
+        }
       });
     } catch (error) {
       console.error('Failed to store security alert:', error);

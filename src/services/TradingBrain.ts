@@ -81,7 +81,10 @@ export class TradingBrain {
       this.marketIntelligence.initialize(),
       this.signalGenerator.initialize(),
       this.economicCalendar.initialize(),
-      this.orderManager.initialize()
+      this.orderManager.initialize(),
+      this.mlEngine.initialize(),
+      this.productionHardening.initialize(),
+      this.enterpriseFeatures.initialize()
     ]);
     
     console.log('🚀 Trading Brain initialized - Ready for autonomous trading');

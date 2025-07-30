@@ -10,6 +10,7 @@ import PassiveIncomeTracker from "@/components/wingzero/PassiveIncomeTracker";
 import { PlatformConnectionStatus } from "@/components/wingzero/PlatformConnectionStatus";
 import { PlatformSelector } from "@/components/wingzero/PlatformSelector";
 import { AIBrainControls } from "@/components/wingzero/AIBrainControls";
+import EnterpriseControls from "@/components/wingzero/EnterpriseControls";
 import FixLivePositions from "@/components/wingzero/FixLivePositions";
 import { ArrowLeft, Zap, Settings as SettingsIcon } from "lucide-react";
 import { useAutoStartTrading } from "@/hooks/useAutoStartTrading";
@@ -115,6 +116,7 @@ const WingZeroDashboardPage = () => {
           
           <TabsContent value="ai-brain" className="space-y-6">
             <AIBrainControls isConnected={selectedPlatform !== null} />
+            <EnterpriseControls isConnected={selectedPlatform !== null} />
           </TabsContent>
           
           <TabsContent value="positions" className="space-y-6">
