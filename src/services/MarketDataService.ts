@@ -91,17 +91,22 @@ export class MarketDataService {
   }
 
   private startMockDataFeed(): void {
-    const symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'];
+    const symbols = [
+      'EUR_USD', 'GBP_USD', 'USD_JPY', 'USD_CHF', 'AUD_USD', 'USD_CAD', 'NZD_USD',
+      'EUR_GBP', 'EUR_JPY', 'GBP_JPY', 'XAU_USD', 'XAG_USD', 'BTC_USD', 'ETH_USD'
+    ];
     
-    // Initialize with base prices
+    // Initialize with base prices for expanded markets
     const basePrices: { [key: string]: number } = {
-      'EURUSD': 1.0850,
-      'GBPUSD': 1.2650,
-      'USDJPY': 149.50,
-      'USDCHF': 0.9125,
-      'AUDUSD': 0.6580,
-      'USDCAD': 1.3720,
-      'NZDUSD': 0.6120
+      // Major Forex
+      'EUR_USD': 1.0850, 'GBP_USD': 1.2650, 'USD_JPY': 149.50,
+      'USD_CHF': 0.9125, 'AUD_USD': 0.6580, 'USD_CAD': 1.3720, 'NZD_USD': 0.6120,
+      // Cross Pairs
+      'EUR_GBP': 0.8580, 'EUR_JPY': 162.45, 'GBP_JPY': 189.32,
+      // Precious Metals
+      'XAU_USD': 2045.50, 'XAG_USD': 24.85,
+      // Crypto
+      'BTC_USD': 43250.00, 'ETH_USD': 2580.00
     };
 
     // Update prices every second with realistic movements

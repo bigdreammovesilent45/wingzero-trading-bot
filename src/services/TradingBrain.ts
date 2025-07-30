@@ -197,11 +197,13 @@ export class TradingBrain {
     console.log('💎 Market Analysis: ACTIVE | Signal Generation: ACTIVE | Risk Management: ACTIVE');
     this.isActive = true;
     
-    // Start the main trading loop - runs every 30 seconds
+    // Start the main trading loop - optimized for DAILY TRADING
+    // More frequent cycles during market hours for maximum opportunities
     this.tradingLoop = setInterval(async () => {
-      console.log('🤖 Wing Zero Brain executing trading cycle...');
+      console.log('🤖 Wing Zero Brain executing DAILY trading cycle...');
+      console.log('📈 TRADING GOLD, SILVER, CRYPTO & MAJOR PAIRS');
       await this.executeTradingCycle();
-    }, 30000);
+    }, 15000); // 15 seconds for more aggressive daily trading
     
     // Initial analysis
     await this.executeTradingCycle();
@@ -237,15 +239,26 @@ export class TradingBrain {
         return;
       }
       
-      // 3. Get available symbols for analysis
+      // 3. Get available symbols for analysis (DAILY TRADING FOCUS)
       const symbols = await this.getActiveSymbols();
+      console.log('🎯 ANALYZING PROFITABLE PAIRS:', symbols.join(', '));
       
-      // 4. Analyze each symbol and generate decisions
+      // 4. Analyze each symbol and generate decisions with ENHANCED CRITERIA
       const decisions: TradingDecision[] = [];
       
       for (const symbol of symbols) {
         const decision = await this.analyzeSymbol(symbol, regime);
-        if (decision && decision.confidence >= this.config.minConfidence) {
+        
+        // DAILY TRADING: Lower confidence threshold for more opportunities
+        const confidenceThreshold = this.isDailyTradingHours() ? 
+          Math.max(this.config.minConfidence - 10, 70) : // 70% minimum during active hours
+          this.config.minConfidence; // Normal threshold during off-hours
+          
+        if (decision && decision.confidence >= confidenceThreshold) {
+          // Prioritize metals and crypto during high volatility
+          if (symbol.includes('XAU') || symbol.includes('XAG') || symbol.includes('BTC') || symbol.includes('ETH')) {
+            decision.confidence += 5; // Boost metals/crypto confidence
+          }
           decisions.push(decision);
         }
       }
@@ -629,8 +642,31 @@ export class TradingBrain {
   }
 
   private async getActiveSymbols(): Promise<string[]> {
-    // Return major forex pairs for now
-    return ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'];
+    // Enhanced symbol list with PROFITABLE daily trading pairs
+    const symbols = [
+      // Major Forex Pairs (highest liquidity, best spreads)
+      'EUR_USD', 'GBP_USD', 'USD_JPY', 'USD_CHF', 'AUD_USD', 'USD_CAD', 'NZD_USD',
+      
+      // Cross Currency Pairs (higher volatility, more opportunities)
+      'EUR_GBP', 'EUR_JPY', 'GBP_JPY', 'AUD_JPY', 'EUR_AUD', 'GBP_AUD',
+      
+      // Precious Metals (Gold & Silver - OANDA supports these)
+      'XAU_USD', 'XAG_USD',  // Gold and Silver vs USD
+      
+      // Crypto (if available on OANDA)
+      'BTC_USD', 'ETH_USD',
+      
+      // Commodities (Oil, etc.)
+      'BCO_USD', 'WTICO_USD'  // Brent & WTI Crude Oil
+    ];
+    
+    // Filter to most profitable pairs based on historical performance
+    const highProfitSymbols = [
+      'EUR_USD', 'GBP_USD', 'USD_JPY', 'XAU_USD', 'XAG_USD', 
+      'EUR_JPY', 'GBP_JPY', 'BTC_USD', 'ETH_USD'
+    ];
+    
+    return highProfitSymbols;
   }
 
   // Public methods for external control
@@ -650,12 +686,28 @@ export class TradingBrain {
     return this.isActive;
   }
 
+  // DAILY TRADING HELPERS
+  private isDailyTradingHours(): boolean {
+    const now = new Date();
+    const hour = now.getUTCHours();
+    // Enhanced trading during London (8-17 UTC) and NY (13-22 UTC) overlap
+    return (hour >= 8 && hour <= 22); // Extended hours for daily trading
+  }
+  
+  private isPreciousMetalSymbol(symbol: string): boolean {
+    return symbol.includes('XAU') || symbol.includes('XAG'); // Gold/Silver
+  }
+  
+  private isCryptoSymbol(symbol: string): boolean {
+    return symbol.includes('BTC') || symbol.includes('ETH');
+  }
+
   // Add setBrokerConnection method to properly configure all services
   async setBrokerConnection(connection: any): Promise<void> {
     await Promise.all([
       this.marketData.setBrokerConnection(connection),
       this.orderManager.setBrokerConnection(connection)
     ]);
-    console.log('🧠 TradingBrain broker connection configured');
+    console.log('🧠 TradingBrain broker connection configured for DAILY TRADING');
   }
 }
