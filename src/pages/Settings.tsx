@@ -23,6 +23,7 @@ import { TradingPreferences } from "@/components/auth/TradingPreferences";
 import { SecurityAudit } from "@/components/auth/SecurityAudit";
 import { AdvancedAnalytics } from "@/components/analytics/AdvancedAnalytics";
 import { MobileTrading } from "@/components/mobile/MobileTrading";
+import { ComplianceDashboard } from "@/components/compliance/ComplianceDashboard";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -170,7 +171,7 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="profile">👤 Profile</TabsTrigger>
             <TabsTrigger value="trading">📈 Trading</TabsTrigger>
             <TabsTrigger value="broker">🔗 Live Trading</TabsTrigger>
@@ -180,6 +181,7 @@ const SettingsPage = () => {
             <TabsTrigger value="account">💰 Account</TabsTrigger>
             <TabsTrigger value="analytics">📊 Analytics</TabsTrigger>
             <TabsTrigger value="mobile">📱 Mobile</TabsTrigger>
+            <TabsTrigger value="compliance">⚖️ Compliance</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-6">
@@ -484,6 +486,10 @@ const SettingsPage = () => {
           
           <TabsContent value="mobile" className="space-y-6">
             <MobileTrading />
+          </TabsContent>
+          
+          <TabsContent value="compliance" className="space-y-6">
+            <ComplianceDashboard />
           </TabsContent>
 
           <TabsContent value="monitoring" className="space-y-6">
