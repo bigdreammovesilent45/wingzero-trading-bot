@@ -21,12 +21,16 @@ export const AIBrainControls: React.FC<AIBrainControlsProps> = ({ isConnected = 
       setBrainStatus('analyzing');
       
       // Get market overview first
+      console.log('🔍 Getting market overview...');
       const overview = await callMarketIntelligenceAPI('get_market_overview');
+      console.log('📊 Market overview received:', overview);
       
       // Analyze sentiment with AI Brain
+      console.log('🧠 Analyzing market sentiment...');
       const sentiment = await callAIBrainAPI('analyze_market_sentiment', {
         marketData: overview
       });
+      console.log('💡 Sentiment analysis complete:', sentiment);
       
       setLastAnalysis(sentiment);
       setBrainStatus('idle');
@@ -37,7 +41,13 @@ export const AIBrainControls: React.FC<AIBrainControlsProps> = ({ isConnected = 
       });
     } catch (error) {
       setBrainStatus('idle');
-      console.error('Analysis failed:', error);
+      console.error('🚨 Analysis failed:', error);
+      
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: "destructive",
+      });
     }
   };
 

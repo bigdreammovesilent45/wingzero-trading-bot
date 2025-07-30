@@ -75,7 +75,18 @@ serve(async (req) => {
         // Remove any leading/trailing whitespace and newlines
         content = content.trim();
         
-        const analysis = JSON.parse(content);
+        // Find and extract JSON object from the content
+        let analysis;
+        try {
+          analysis = JSON.parse(content);
+        } catch (parseError) {
+          // Try to extract JSON from mixed content
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            content = jsonMatch[0];
+          }
+          analysis = JSON.parse(content);
+        }
 
         // Store analysis in database
         await supabaseClient.from('wingzero_market_intelligence').insert({
@@ -140,7 +151,18 @@ serve(async (req) => {
         // Remove any leading/trailing whitespace and newlines
         content = content.trim();
         
-        const strategy = JSON.parse(content);
+        // Find and extract JSON object from the content
+        let strategy;
+        try {
+          strategy = JSON.parse(content);
+        } catch (parseError) {
+          // Try to extract JSON from mixed content
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            content = jsonMatch[0];
+          }
+          strategy = JSON.parse(content);
+        }
 
         // Store strategy in database
         await supabaseClient.from('wingzero_strategies').insert({
@@ -202,7 +224,18 @@ serve(async (req) => {
         // Remove any leading/trailing whitespace and newlines
         content = content.trim();
         
-        const optimization = JSON.parse(content);
+        // Find and extract JSON object from the content
+        let optimization;
+        try {
+          optimization = JSON.parse(content);
+        } catch (parseError) {
+          // Try to extract JSON from mixed content
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            content = jsonMatch[0];
+          }
+          optimization = JSON.parse(content);
+        }
 
         // Store optimization in database
         await supabaseClient.from('wingzero_optimizations').insert({
