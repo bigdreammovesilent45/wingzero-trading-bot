@@ -56,12 +56,18 @@ serve(async (req) => {
     });
 
     // Get user's OANDA credentials
+    console.log(`🔍 Searching for credentials for user: ${user.id}`);
+    console.log(`🔍 Auth header being used: ${authHeader.substring(0, 20)}...`);
+    
     const { data: credentials, error: credError } = await supabase
       .from('wingzero_credentials')
       .select('*')
       .eq('user_id', user.id)
       .eq('broker_type', 'oanda')
       .maybeSingle();
+
+    console.log(`🔍 Credentials query result:`, { credentials, credError });
+    console.log(`🔍 Number of credentials found:`, credentials ? 1 : 0);
 
     if (credError) {
       console.error('🚨 Database error fetching credentials:', credError);
@@ -70,6 +76,16 @@ serve(async (req) => {
 
     if (!credentials) {
       console.error('🚨 No OANDA credentials found for user:', user.id);
+      
+      // Let's also try to see all credentials for debugging
+      const { data: allCreds, error: allError } = await supabase
+        .from('wingzero_credentials')
+        .select('user_id, broker_type, created_at')
+        .eq('user_id', user.id);
+      
+      console.log('🔍 All credentials for user:', allCreds);
+      console.log('🔍 All credentials error:', allError);
+      
       throw new Error('No OANDA credentials found for user. Please configure OANDA credentials first.');
     }
 
