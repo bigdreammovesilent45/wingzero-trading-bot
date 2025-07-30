@@ -24,6 +24,8 @@ import { SecurityAudit } from "@/components/auth/SecurityAudit";
 import { AdvancedAnalytics } from "@/components/analytics/AdvancedAnalytics";
 import { MobileTrading } from "@/components/mobile/MobileTrading";
 import { ComplianceDashboard } from "@/components/compliance/ComplianceDashboard";
+import AdvancedPortfolioDashboard from "@/components/portfolio/AdvancedPortfolioDashboard";
+import InstitutionalDashboard from "@/components/institutional/InstitutionalDashboard";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -171,7 +173,7 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="profile">👤 Profile</TabsTrigger>
             <TabsTrigger value="trading">📈 Trading</TabsTrigger>
             <TabsTrigger value="broker">🔗 Live Trading</TabsTrigger>
@@ -182,6 +184,8 @@ const SettingsPage = () => {
             <TabsTrigger value="analytics">📊 Analytics</TabsTrigger>
             <TabsTrigger value="mobile">📱 Mobile</TabsTrigger>
             <TabsTrigger value="compliance">⚖️ Compliance</TabsTrigger>
+            <TabsTrigger value="portfolio">💼 Portfolio</TabsTrigger>
+            <TabsTrigger value="institutional">🏛️ Institutional</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-6">
@@ -490,6 +494,14 @@ const SettingsPage = () => {
           
           <TabsContent value="compliance" className="space-y-6">
             <ComplianceDashboard />
+          </TabsContent>
+
+          <TabsContent value="portfolio" className="space-y-6">
+            <AdvancedPortfolioDashboard />
+          </TabsContent>
+
+          <TabsContent value="institutional" className="space-y-6">
+            <InstitutionalDashboard />
           </TabsContent>
 
           <TabsContent value="monitoring" className="space-y-6">
