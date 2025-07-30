@@ -51,10 +51,16 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
       .eq('broker_type', 'oanda')
-      .single();
+      .maybeSingle();
 
-    if (credError || !credentials) {
-      throw new Error('No OANDA credentials found for user');
+    if (credError) {
+      console.error('🚨 Database error fetching credentials:', credError);
+      throw new Error(`Database error: ${credError.message}`);
+    }
+
+    if (!credentials) {
+      console.error('🚨 No OANDA credentials found for user:', user.id);
+      throw new Error('No OANDA credentials found for user. Please configure OANDA credentials first.');
     }
 
     console.log('📋 Retrieved OANDA credentials');
