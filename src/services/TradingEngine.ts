@@ -121,15 +121,32 @@ export class TradingEngine {
     // Calculate position size
     const positionSize = this.riskManager.calculatePositionSize(signal);
     
-    // Create order request
+    // WING ZERO MANDATE: Calculate MANDATORY TP/SL/TS for EVERY trade
+    const currentPrice = signal.currentPrice || signal.indicators?.close || 1.0;
+    const stopLoss = this.calculateStopLoss(signal);
+    const takeProfit = this.calculateTakeProfit(signal);
+    
+    // CRITICAL VALIDATION: NO TRADE WITHOUT PROPER RISK MANAGEMENT
+    if (!stopLoss || stopLoss <= 0) {
+      console.error(`🚨 WING ZERO MANDATE VIOLATION: No Stop Loss calculated for ${signal.symbol}`);
+      return;
+    }
+    
+    if (!takeProfit || takeProfit <= 0) {
+      console.error(`🚨 WING ZERO MANDATE VIOLATION: No Take Profit calculated for ${signal.symbol}`);
+      return;
+    }
+    
+    // Create order request with MANDATORY risk management
     const orderRequest: OrderRequest = {
       symbol: signal.symbol,
       type: 'market',
       side: signal.action as 'buy' | 'sell',
       volume: positionSize,
-      stopLoss: this.calculateStopLoss(signal),
-      takeProfit: this.calculateTakeProfit(signal),
-      comment: `WingZero-${signal.strength}`
+      stopLoss: stopLoss,
+      takeProfit: takeProfit,
+      trailingStop: this.calculateTrailingStop(signal),
+      comment: `WingZero-${signal.strength}-TP:${takeProfit.toFixed(5)}-SL:${stopLoss.toFixed(5)}`
     };
 
     // Execute order
@@ -162,25 +179,39 @@ export class TradingEngine {
   }
 
   private calculateStopLoss(signal: TradingSignal): number {
-    const stopLossPips = this.tradingConfig?.stopLossPips || 20;
+    const stopLossPips = this.tradingConfig?.stopLossPips || 25; // Increased minimum
     const pipValue = this.getPipValue(signal.symbol);
+    const currentPrice = signal.currentPrice || signal.indicators?.close || 1.0;
     
+    // WING ZERO MANDATE: ALWAYS calculate proper stop loss
     if (signal.action === 'buy') {
-      return signal.indicators.support - (stopLossPips * pipValue);
+      return currentPrice - (stopLossPips * pipValue);
     } else {
-      return signal.indicators.resistance + (stopLossPips * pipValue);
+      return currentPrice + (stopLossPips * pipValue);
     }
   }
 
   private calculateTakeProfit(signal: TradingSignal): number {
-    const takeProfitPips = this.tradingConfig?.takeProfitPips || 60;
+    const riskRewardRatio = this.tradingConfig?.riskRewardRatio || 2.0; // Minimum 2:1
+    const stopLossPips = this.tradingConfig?.stopLossPips || 25;
+    const takeProfitPips = stopLossPips * riskRewardRatio;
+    const pipValue = this.getPipValue(signal.symbol);
+    const currentPrice = signal.currentPrice || signal.indicators?.close || 1.0;
+    
+    // WING ZERO MANDATE: ALWAYS calculate proper take profit
+    if (signal.action === 'buy') {
+      return currentPrice + (takeProfitPips * pipValue);
+    } else {
+      return currentPrice - (takeProfitPips * pipValue);
+    }
+  }
+  
+  private calculateTrailingStop(signal: TradingSignal): number {
+    const trailingStopPips = this.tradingConfig?.trailingStopPips || 15;
     const pipValue = this.getPipValue(signal.symbol);
     
-    if (signal.action === 'buy') {
-      return signal.indicators.resistance + (takeProfitPips * pipValue);
-    } else {
-      return signal.indicators.support - (takeProfitPips * pipValue);
-    }
+    // WING ZERO MANDATE: ALWAYS set trailing stop
+    return trailingStopPips * pipValue;
   }
 
   private getPipValue(symbol: string): number {

@@ -13,6 +13,18 @@ interface OandaTradeRequest {
     timeInForce: string;
     type: string;
     positionFill: string;
+    stopLossOnFill?: {
+      price: string;
+      timeInForce: string;
+    };
+    takeProfitOnFill?: {
+      price: string;
+      timeInForce: string;
+    };
+    trailingStopLossOnFill?: {
+      distance: string;
+      timeInForce: string;
+    };
   }
 }
 
@@ -162,10 +174,10 @@ serve(async (req) => {
     
     console.log(`🎲 Conservative test trade: ${direction.toUpperCase()} ${bestInstrument.instrument} (${units} units)`);
 
-    // Calculate very tight take profit (just 5 pips) for quick wins
+    // WING ZERO MANDATE: Calculate PROPER risk management parameters
     const pipValue = bestInstrument.instrument.includes('JPY') ? 0.01 : 0.0001;
-    const takeProfitPips = 5;
-    const stopLossPips = 10; // Wider stop loss for safety
+    const stopLossPips = 25; // Proper stop loss distance
+    const takeProfitPips = 50; // 2:1 risk-reward ratio minimum
     
     const entryPrice = direction === 'buy' ? bestInstrument.ask : bestInstrument.bid;
     const takeProfit = direction === 'buy' 
@@ -174,15 +186,35 @@ serve(async (req) => {
     const stopLoss = direction === 'buy'
       ? entryPrice - (stopLossPips * pipValue)
       : entryPrice + (stopLossPips * pipValue);
+    
+    // Validate risk-reward ratio
+    const riskReward = takeProfitPips / stopLossPips;
+    console.log(`🎯 WING ZERO MANDATE: Trade with R:R = ${riskReward} (TP: ${takeProfit.toFixed(5)}, SL: ${stopLoss.toFixed(5)})`);
+    
+    if (riskReward < 1.5) {
+      throw new Error(`Risk-Reward ratio ${riskReward} does not meet Wing Zero minimum standard of 1.5`);
+    }
 
-    // Create the conservative trade order with take profit and stop loss
+    // WING ZERO MANDATE: Create trade order with MANDATORY risk management
     const tradeOrder: OandaTradeRequest = {
       order: {
         units: units.toString(),
         instrument: bestInstrument.instrument,
         timeInForce: 'FOK', // Fill or Kill
         type: 'MARKET',
-        positionFill: 'DEFAULT'
+        positionFill: 'DEFAULT',
+        stopLossOnFill: {
+          price: stopLoss.toString(),
+          timeInForce: 'GTC'
+        },
+        takeProfitOnFill: {
+          price: takeProfit.toString(),
+          timeInForce: 'GTC'
+        },
+        trailingStopLossOnFill: {
+          distance: (15 * pipValue).toString(), // 15 pips trailing stop
+          timeInForce: 'GTC'
+        }
       }
     };
 
@@ -243,16 +275,20 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: `🎯 Conservative Wing Zero test trade executed successfully!`,
-        trade: {
-          instrument: bestInstrument.instrument,
-          direction: direction.toUpperCase(),
-          units: units,
-          spread: bestInstrument.spread.toFixed(5),
-          expectedTakeProfit: takeProfit.toFixed(5),
-          orderId: tradeResult.orderCreateTransaction?.id,
-          fillPrice: tradeResult.orderFillTransaction?.price,
-          timestamp: new Date().toISOString()
-        },
+      trade: {
+        instrument: bestInstrument.instrument,
+        direction: direction.toUpperCase(),
+        units: units,
+        spread: bestInstrument.spread.toFixed(5),
+        takeProfit: takeProfit.toFixed(5),
+        stopLoss: stopLoss.toFixed(5),
+        riskRewardRatio: riskReward.toFixed(2),
+        trailingStop: (15 * pipValue).toFixed(5),
+        orderId: tradeResult.orderCreateTransaction?.id,
+        fillPrice: tradeResult.orderFillTransaction?.price,
+        timestamp: new Date().toISOString(),
+        wingZeroCompliant: '✅ FULL RISK MANAGEMENT APPLIED'
+      },
         marketAnalysis: {
           instrumentsAnalyzed: marketAnalysis.length,
           selectedInstrument: bestInstrument.instrument,

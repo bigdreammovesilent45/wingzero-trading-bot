@@ -24,6 +24,7 @@ export interface OrderRequest {
   price?: number;
   stopLoss?: number;
   takeProfit?: number;
+  trailingStop?: number;
   comment?: string;
 }
 
@@ -38,6 +39,7 @@ export interface Order {
   currentPrice: number;
   stopLoss?: number;
   takeProfit?: number;
+  trailingStop?: number;
   profit: number;
   commission: number;
   swap: number;
@@ -51,12 +53,15 @@ export interface TradingSignal {
   action: 'buy' | 'sell' | 'close' | 'hold';
   strength: number; // 0-100
   confidence: number; // 0-100
+  currentPrice?: number;
+  price?: number;
   indicators: {
     trend: 'bullish' | 'bearish' | 'neutral';
     momentum: 'strong' | 'weak' | 'neutral';
     volume: 'high' | 'low' | 'normal';
     support: number;
     resistance: number;
+    close?: number;
   };
   timestamp: number;
 }

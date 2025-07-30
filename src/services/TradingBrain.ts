@@ -249,10 +249,31 @@ export class TradingBrain {
       confluence.riskReward
     );
     
-    // Calculate stop loss and take profit
+    // WING ZERO MANDATE: Calculate MANDATORY TP/SL/TS for EVERY trade
     const currentPrice = 1.0875 + (Math.random() - 0.5) * 0.001; // Mock price
     const stopLoss = this.calculateAdaptiveStopLoss(currentPrice, action, regime);
-    const takeProfit = this.calculateAdaptiveTakeProfit(currentPrice, action, confluence.riskReward);
+    const takeProfit = this.calculateAdaptiveTakeProfit(currentPrice, action, Math.max(confluence.riskReward, 2.0)); // Minimum 2:1
+    
+    // CRITICAL VALIDATION: Ensure mandatory risk management parameters
+    if (!stopLoss || stopLoss <= 0) {
+      console.error(`🚨 AI BRAIN VIOLATION: No Stop Loss for ${symbol}`);
+      return null;
+    }
+    
+    if (!takeProfit || takeProfit <= 0) {
+      console.error(`🚨 AI BRAIN VIOLATION: No Take Profit for ${symbol}`);
+      return null;
+    }
+    
+    // Validate minimum risk-reward ratio
+    const stopDistance = Math.abs(currentPrice - stopLoss);
+    const takeProfitDistance = Math.abs(takeProfit - currentPrice);
+    const actualRiskReward = takeProfitDistance / stopDistance;
+    
+    if (actualRiskReward < 1.5) {
+      console.error(`🚨 AI BRAIN VIOLATION: Risk-Reward ${actualRiskReward.toFixed(2)} below minimum 1.5 for ${symbol}`);
+      return null;
+    }
     
     const decision: TradingDecision = {
       action,
@@ -331,7 +352,7 @@ export class TradingBrain {
           continue;
         }
         
-        // Execute the trade
+        // WING ZERO MANDATE: Execute trade with FULL risk management
         await this.orderManager.placeOrder({
           symbol: decision.symbol,
           type: 'market',
@@ -339,7 +360,8 @@ export class TradingBrain {
           volume: decision.volume,
           stopLoss: decision.stopLoss,
           takeProfit: decision.takeProfit,
-          comment: `AI-Brain: ${decision.reasoning.substring(0, 50)}...`
+          trailingStop: this.calculateTrailingStopDistance(decision.symbol),
+          comment: `AI-Brain-FULL-RM: ${decision.reasoning.substring(0, 30)}`
         });
         
         console.log(`✅ Executed ${decision.action} order for ${decision.symbol}`);
@@ -441,22 +463,36 @@ export class TradingBrain {
   }
 
   private calculateAdaptiveStopLoss(price: number, action: 'buy' | 'sell', regime: MarketRegime): number {
-    const baseStop = 0.02; // 2% base stop
-    const volatilityMultiplier = regime.volatility === 'high' ? 1.5 : regime.volatility === 'low' ? 0.7 : 1.0;
-    const adjustedStop = baseStop * volatilityMultiplier;
+    // WING ZERO MANDATE: Minimum stop loss requirements
+    const baseStopPips = 25; // Minimum 25 pips
+    const volatilityMultiplier = regime.volatility === 'high' ? 1.5 : regime.volatility === 'low' ? 1.0 : 1.2;
+    const adjustedStopPips = baseStopPips * volatilityMultiplier;
+    
+    // Convert pips to price difference (assuming 4-digit pricing for most pairs)
+    const pipValue = 0.0001; // Standard pip value
+    const stopDistance = adjustedStopPips * pipValue;
     
     return action === 'buy' 
-      ? price * (1 - adjustedStop)
-      : price * (1 + adjustedStop);
+      ? price - stopDistance
+      : price + stopDistance;
   }
 
   private calculateAdaptiveTakeProfit(price: number, action: 'buy' | 'sell', riskReward: number): number {
-    const stopDistance = Math.abs(price - this.calculateAdaptiveStopLoss(price, action, this.currentRegime!));
-    const takeProfitDistance = stopDistance * riskReward;
+    // WING ZERO MANDATE: Ensure minimum 1.5:1 risk-reward ratio
+    const minRiskReward = Math.max(riskReward, 2.0);
+    const stopLoss = this.calculateAdaptiveStopLoss(price, action, this.currentRegime!);
+    const stopDistance = Math.abs(price - stopLoss);
+    const takeProfitDistance = stopDistance * minRiskReward;
     
     return action === 'buy'
       ? price + takeProfitDistance
       : price - takeProfitDistance;
+  }
+  
+  private calculateTrailingStopDistance(symbol: string): number {
+    // WING ZERO MANDATE: Always set trailing stop
+    const pipValue = 0.0001; // Standard pip value
+    return 15 * pipValue; // 15 pips trailing stop
   }
 
   private calculateTrailingStop(position: Order, currentPrice: number, profit: number): number {

@@ -28,6 +28,34 @@ export class AdvancedRiskManager {
 
   async validateTrade(decision: any): Promise<RiskValidation> {
     try {
+      // CRITICAL: WING ZERO MANDATE - NO TRADE WITHOUT TP/SL/TS
+      if (!decision.stopLoss || decision.stopLoss <= 0) {
+        return {
+          approved: false,
+          reason: 'WING ZERO MANDATE VIOLATION: Every trade MUST have a valid Stop Loss'
+        };
+      }
+      
+      if (!decision.takeProfit || decision.takeProfit <= 0) {
+        return {
+          approved: false,
+          reason: 'WING ZERO MANDATE VIOLATION: Every trade MUST have a valid Take Profit'
+        };
+      }
+      
+      // Validate risk-reward ratio (minimum 1:1.5)
+      const currentPrice = decision.price || decision.currentPrice || 1.0;
+      const stopDistance = Math.abs(currentPrice - decision.stopLoss);
+      const takeProfitDistance = Math.abs(decision.takeProfit - currentPrice);
+      const riskRewardRatio = takeProfitDistance / stopDistance;
+      
+      if (riskRewardRatio < 1.5) {
+        return {
+          approved: false,
+          reason: `WING ZERO MANDATE VIOLATION: Risk-Reward ratio ${riskRewardRatio.toFixed(2)} is below minimum 1.5`
+        };
+      }
+      
       // Check account health
       const account = await this.getAccountInfo();
       
@@ -66,6 +94,7 @@ export class AdvancedRiskManager {
         };
       }
       
+      console.log(`🛡️ WING ZERO TRADE APPROVED: ${decision.symbol} with TP:${decision.takeProfit}, SL:${decision.stopLoss}, R:R=${riskRewardRatio.toFixed(2)}`);
       return { approved: true };
       
     } catch (error) {
@@ -196,5 +225,34 @@ export class AdvancedRiskManager {
       const risk = Math.abs(pos.currentPrice - pos.stopLoss) * pos.volume;
       return heat + risk;
     }, 0);
+  }
+
+  // WING ZERO MANDATORY RISK PARAMETERS
+  public calculateMandatoryStopLoss(price: number, action: 'buy' | 'sell', symbol: string): number {
+    const pipValue = this.getDollarPerPip(symbol);
+    const stopLossPips = 20; // Minimum 20 pips stop loss
+    
+    if (action === 'buy') {
+      return price - (stopLossPips * pipValue);
+    } else {
+      return price + (stopLossPips * pipValue);
+    }
+  }
+  
+  public calculateMandatoryTakeProfit(price: number, action: 'buy' | 'sell', symbol: string, riskRewardRatio: number = 2.0): number {
+    const pipValue = this.getDollarPerPip(symbol);
+    const stopLossPips = 20;
+    const takeProfitPips = stopLossPips * riskRewardRatio; // Minimum 2:1 risk-reward
+    
+    if (action === 'buy') {
+      return price + (takeProfitPips * pipValue);
+    } else {
+      return price - (takeProfitPips * pipValue);
+    }
+  }
+  
+  public calculateTrailingStopDistance(symbol: string): number {
+    const pipValue = this.getDollarPerPip(symbol);
+    return 15 * pipValue; // 15 pips trailing stop distance
   }
 }

@@ -46,7 +46,25 @@ export class OrderManager {
     // Get current market price for execution
     const currentPrice = await this.getCurrentPrice(request.symbol, request.side);
     
-    // Create order object
+    // WING ZERO MANDATE: VALIDATE MANDATORY RISK MANAGEMENT
+    if (!request.stopLoss || request.stopLoss <= 0) {
+      throw new Error(`🚨 WING ZERO MANDATE VIOLATION: Order for ${request.symbol} rejected - NO STOP LOSS`);
+    }
+    
+    if (!request.takeProfit || request.takeProfit <= 0) {
+      throw new Error(`🚨 WING ZERO MANDATE VIOLATION: Order for ${request.symbol} rejected - NO TAKE PROFIT`);
+    }
+    
+    // Validate risk-reward ratio
+    const stopDistance = Math.abs(currentPrice - request.stopLoss);
+    const takeProfitDistance = Math.abs(request.takeProfit - currentPrice);
+    const riskReward = takeProfitDistance / stopDistance;
+    
+    if (riskReward < 1.5) {
+      throw new Error(`🚨 WING ZERO MANDATE VIOLATION: Order for ${request.symbol} rejected - Risk-Reward ${riskReward.toFixed(2)} below minimum 1.5`);
+    }
+    
+    // Create order object with FULL risk management
     const order: Order = {
       id: orderId,
       ticket,
@@ -58,12 +76,13 @@ export class OrderManager {
       currentPrice,
       stopLoss: request.stopLoss,
       takeProfit: request.takeProfit,
+      trailingStop: request.trailingStop || (15 * this.getPipValue(request.symbol)), // Default 15 pips
       profit: 0,
       commission: this.calculateCommission(request.volume, request.symbol),
       swap: 0,
       openTime: new Date().toISOString(),
       status: request.type === 'market' ? 'open' : 'pending',
-      comment: request.comment
+      comment: `${request.comment} [TP:${request.takeProfit.toFixed(5)} SL:${request.stopLoss.toFixed(5)} R:R:${riskReward.toFixed(2)}]`
     };
 
     // Execute order based on type
