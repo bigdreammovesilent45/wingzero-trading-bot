@@ -972,4 +972,304 @@ export class EnhancedWingZeroAPI {
     const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
     return systemIntegration?.getSocialSentiment() || null;
   }
+
+  // Phase 7: Advanced Features API
+  getCopyTradingEngine() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getCopyTradingEngine() || null;
+  }
+
+  getPerformanceAnalyticsEngine() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getPerformanceAnalyticsEngine() || null;
+  }
+
+  getSocialNetworkEngine() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getSocialNetworkEngine() || null;
+  }
+
+  getPrimeBrokerageEngine() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getPrimeBrokerageEngine() || null;
+  }
+
+  getAlgorithmicTradingEngine() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getAlgorithmicTradingEngine() || null;
+  }
+
+  getPortfolioAttributionEngine() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getPortfolioAttributionEngine() || null;
+  }
+
+  async getAdvancedTradingSignals(): Promise<any[]> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('📈 Getting advanced trading signals...');
+
+      const signalsMap = await systemIntegration.getAdvancedTradingSignals();
+      const signals = Array.from(signalsMap.values());
+
+      console.log(`✅ Retrieved ${signals.length} advanced trading signals`);
+      return signals;
+
+    } catch (error) {
+      console.error('❌ Failed to get advanced trading signals:', error);
+      throw error;
+    }
+  }
+
+  async generateAdvancedTradingSignal(symbol: string): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`🎯 Generating advanced trading signal for ${symbol}...`);
+
+      const signal = await systemIntegration.generateAdvancedTradingSignal(symbol);
+
+      console.log(`✅ Advanced trading signal generated for ${symbol}: ${signal.signal.action} with ${(signal.signal.confidence * 100).toFixed(1)}% confidence`);
+      return signal;
+
+    } catch (error) {
+      console.error(`❌ Failed to generate advanced trading signal for ${symbol}:`, error);
+      throw error;
+    }
+  }
+
+  async getAdvancedAlerts(): Promise<any[]> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('🚨 Getting advanced alerts...');
+
+      const alertsMap = await systemIntegration.getAdvancedAlerts();
+      const alerts = Array.from(alertsMap.values());
+
+      console.log(`✅ Retrieved ${alerts.length} advanced alerts`);
+      return alerts;
+
+    } catch (error) {
+      console.error('❌ Failed to get advanced alerts:', error);
+      throw error;
+    }
+  }
+
+  async getCopyTradingSignals(traderId?: string): Promise<any[]> {
+    const copyEngine = this.getCopyTradingEngine();
+
+    if (!copyEngine) {
+      throw new Error('Copy Trading Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`📋 Getting copy trading signals${traderId ? ` for trader ${traderId}` : ''}...`);
+
+      const signals = traderId 
+        ? await copyEngine.getTraderSignals(traderId)
+        : await copyEngine.getAllActiveSignals();
+
+      console.log(`✅ Retrieved ${signals.length} copy trading signals`);
+      return signals;
+
+    } catch (error) {
+      console.error('❌ Failed to get copy trading signals:', error);
+      throw error;
+    }
+  }
+
+  async setupCopyTradingRelationship(followerId: string, traderId: string, options: any): Promise<string> {
+    const copyEngine = this.getCopyTradingEngine();
+
+    if (!copyEngine) {
+      throw new Error('Copy Trading Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`🔗 Setting up copy trading relationship: ${followerId} -> ${traderId}`);
+
+      const relationshipId = await copyEngine.setupCopyRelationship(followerId, traderId, options);
+
+      console.log(`✅ Copy trading relationship established: ${relationshipId}`);
+      return relationshipId;
+
+    } catch (error) {
+      console.error('❌ Failed to setup copy trading relationship:', error);
+      throw error;
+    }
+  }
+
+  async getTraderPerformance(traderId: string, period?: string): Promise<any> {
+    const analyticsEngine = this.getPerformanceAnalyticsEngine();
+
+    if (!analyticsEngine) {
+      throw new Error('Performance Analytics Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`📊 Getting trader performance for ${traderId}${period ? ` (${period})` : ''}...`);
+
+      const performance = await analyticsEngine.calculatePerformance(traderId, period);
+
+      console.log(`✅ Retrieved performance data for ${traderId}`);
+      return performance;
+
+    } catch (error) {
+      console.error(`❌ Failed to get trader performance for ${traderId}:`, error);
+      throw error;
+    }
+  }
+
+  async getTraderLeaderboard(category?: string, limit?: number): Promise<any[]> {
+    const socialEngine = this.getSocialNetworkEngine();
+
+    if (!socialEngine) {
+      throw new Error('Social Network Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`🏆 Getting trader leaderboard${category ? ` for ${category}` : ''}...`);
+
+      const leaderboard = await socialEngine.getLeaderboard(category, limit);
+
+      console.log(`✅ Retrieved leaderboard with ${leaderboard.length} traders`);
+      return leaderboard;
+
+    } catch (error) {
+      console.error('❌ Failed to get trader leaderboard:', error);
+      throw error;
+    }
+  }
+
+  async submitAlgorithmicOrder(orderRequest: any): Promise<string> {
+    const algoEngine = this.getAlgorithmicTradingEngine();
+
+    if (!algoEngine) {
+      throw new Error('Algorithmic Trading Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`🤖 Submitting algorithmic order: ${orderRequest.algorithm.type} for ${orderRequest.symbol}`);
+
+      const orderId = await algoEngine.submitAlgorithmicOrder(orderRequest);
+
+      console.log(`✅ Algorithmic order submitted: ${orderId}`);
+      return orderId;
+
+    } catch (error) {
+      console.error('❌ Failed to submit algorithmic order:', error);
+      throw error;
+    }
+  }
+
+  async getAlgorithmicOrders(status?: string): Promise<any[]> {
+    const algoEngine = this.getAlgorithmicTradingEngine();
+
+    if (!algoEngine) {
+      throw new Error('Algorithmic Trading Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`📋 Getting algorithmic orders${status ? ` with status ${status}` : ''}...`);
+
+      const orders = status === 'active' 
+        ? await algoEngine.getActiveOrders()
+        : await algoEngine.getAllOrders();
+
+      console.log(`✅ Retrieved ${orders.length} algorithmic orders`);
+      return orders;
+
+    } catch (error) {
+      console.error('❌ Failed to get algorithmic orders:', error);
+      throw error;
+    }
+  }
+
+  async submitMultiPrimeOrder(orderRequest: any): Promise<string> {
+    const primeEngine = this.getPrimeBrokerageEngine();
+
+    if (!primeEngine) {
+      throw new Error('Prime Brokerage Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`🏛️ Submitting multi-prime order for ${orderRequest.symbol}`);
+
+      const orderId = await primeEngine.submitMultiPrimeOrder(orderRequest);
+
+      console.log(`✅ Multi-prime order submitted: ${orderId}`);
+      return orderId;
+
+    } catch (error) {
+      console.error('❌ Failed to submit multi-prime order:', error);
+      throw error;
+    }
+  }
+
+  async performPortfolioAttribution(portfolioId: string, benchmarkId: string, period: any): Promise<string> {
+    const attributionEngine = this.getPortfolioAttributionEngine();
+
+    if (!attributionEngine) {
+      throw new Error('Portfolio Attribution Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`📊 Performing portfolio attribution analysis for ${portfolioId} vs ${benchmarkId}`);
+
+      const analysisId = await attributionEngine.performAttributionAnalysis(portfolioId, benchmarkId, period);
+
+      console.log(`✅ Portfolio attribution analysis completed: ${analysisId}`);
+      return analysisId;
+
+    } catch (error) {
+      console.error('❌ Failed to perform portfolio attribution:', error);
+      throw error;
+    }
+  }
+
+  async getPortfolioComparison(portfolioId: string, benchmarkIds: string[], period: any): Promise<string> {
+    const attributionEngine = this.getPortfolioAttributionEngine();
+
+    if (!attributionEngine) {
+      throw new Error('Portfolio Attribution Engine not available. Ensure Phase 7 is enabled.');
+    }
+
+    try {
+      console.log(`📈 Performing portfolio comparison for ${portfolioId}`);
+
+      const comparisonId = await attributionEngine.performPerformanceComparison(portfolioId, benchmarkIds, period);
+
+      console.log(`✅ Portfolio comparison completed: ${comparisonId}`);
+      return comparisonId;
+
+    } catch (error) {
+      console.error('❌ Failed to perform portfolio comparison:', error);
+      throw error;
+    }
+  }
+
+  getAdvancedFeaturesHealth(): any {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getAdvancedFeaturesHealth() || {
+      isRunning: false,
+      overallStatus: 'offline',
+      components: {},
+      metrics: {},
+      lastUpdate: 0
+    };
+  }
 }

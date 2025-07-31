@@ -7,6 +7,7 @@ import { WingZeroAIBrain } from './ai/WingZeroAIBrain';
 import { WingZeroPhase3And4Integration } from './WingZeroPhase3And4Integration';
 import { WingZeroPhase5Integration } from './WingZeroPhase5Integration';
 import { WingZeroPhase6Integration } from './WingZeroPhase6Integration';
+import { WingZeroPhase7Integration } from './WingZeroPhase7Integration';
 import { WingZeroConfig } from '@/types/wingzero';
 import { BrokerCredentials, BrokerConnection } from '@/types/broker';
 
@@ -19,6 +20,7 @@ interface SystemConfiguration {
   enableAdvancedFinancials: boolean;
   enableHighPerformance: boolean;
   enableAdvancedIntegration: boolean;
+  enableAdvancedFeatures: boolean;
   maxConcurrentOperations: number;
   healthCheckInterval: number;
   autoRecoveryEnabled: boolean;
@@ -54,6 +56,40 @@ interface SystemConfiguration {
     enableIntelligentRouting: boolean;
     enablePredictiveAnalysis: boolean;
     prioritySymbols: string[];
+  };
+  // Phase 7 Advanced Features Configuration
+  advancedFeaturesConfig?: {
+    socialTrading: {
+      enabled: boolean;
+      maxCopyPositions: number;
+      defaultCopyAmount: number;
+      maxTraders: number;
+      performanceUpdateInterval: number;
+    };
+    institutional: {
+      enabled: boolean;
+      primeBrokerage: {
+        enabled: boolean;
+        maxBrokers: number;
+        nettingFrequency: number;
+      };
+      algorithmicTrading: {
+        enabled: boolean;
+        supportedAlgorithms: string[];
+        maxConcurrentOrders: number;
+      };
+      portfolioAttribution: {
+        enabled: boolean;
+        benchmarks: string[];
+        analysisFrequency: number;
+      };
+    };
+    integration: {
+      realTimeUpdates: boolean;
+      dataSync: boolean;
+      crossServiceMessaging: boolean;
+      sharedCache: boolean;
+    };
   };
 }
 
@@ -129,6 +165,27 @@ interface SystemHealth {
       };
       lastUpdate: number;
     };
+    advancedFeatures: {
+      isRunning: boolean;
+      overallStatus: string;
+      components: {
+        socialTrading: string;
+        copyTrading: string;
+        performanceAnalytics: string;
+        socialNetwork: string;
+        primeBrokerage: string;
+        algorithmicTrading: string;
+        portfolioAttribution: string;
+      };
+      metrics: {
+        totalTradingSignals: number;
+        activeCopyRelationships: number;
+        algorithmicOrders: number;
+        attributionAnalyses: number;
+        crossServiceMessages: number;
+      };
+      lastUpdate: number;
+    };
   };
   lastHealthCheck: number;
 }
@@ -165,6 +222,7 @@ export class WingZeroSystemIntegration {
   private advancedFinancials: WingZeroPhase3And4Integration | null = null;
   private highPerformanceEngine: WingZeroPhase5Integration | null = null;
   private advancedIntegration: WingZeroPhase6Integration | null = null;
+  private advancedFeatures: WingZeroPhase7Integration | null = null;
 
   // System monitoring
   private healthCheckTimer: NodeJS.Timeout | null = null;
@@ -231,6 +289,10 @@ export class WingZeroSystemIntegration {
 
       if (this.config.enableAdvancedIntegration) {
         await this.initializeAdvancedIntegration();
+      }
+
+      if (this.config.enableAdvancedFeatures) {
+        await this.initializeAdvancedFeatures();
       }
 
       // Set up service integrations
@@ -1426,6 +1488,11 @@ export class WingZeroSystemIntegration {
     
     if (this.isRunning) {
       await this.stop();
+    }
+    
+    // Shutdown Phase 7 components
+    if (this.advancedFeatures) {
+      await this.advancedFeatures.shutdown();
     }
     
     // Shutdown Phase 6 components
