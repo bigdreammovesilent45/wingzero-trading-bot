@@ -4,6 +4,8 @@ import { EnhancedMarketDataService } from './EnhancedMarketDataService';
 import { EnhancedPerformanceProfiler } from './EnhancedPerformanceProfiler';
 import { EnhancedSAWAutomationEngine } from './EnhancedSAWAutomationEngine';
 import { WingZeroAIBrain } from './ai/WingZeroAIBrain';
+import { WingZeroPhase3And4Integration } from './WingZeroPhase3And4Integration';
+import { WingZeroPhase5Integration } from './WingZeroPhase5Integration';
 import { WingZeroConfig } from '@/types/wingzero';
 import { BrokerCredentials, BrokerConnection } from '@/types/broker';
 
@@ -13,9 +15,19 @@ interface SystemConfiguration {
   enablePerformanceMonitoring: boolean;
   enableSAWAutomation: boolean;
   enableAIBrain: boolean;
+  enableAdvancedFinancials: boolean;
+  enableHighPerformance: boolean;
   maxConcurrentOperations: number;
   healthCheckInterval: number;
   autoRecoveryEnabled: boolean;
+  // Phase 5 Performance Configuration
+  performanceConfig: {
+    enableWebAssembly: boolean;
+    enableMultithreading: boolean;
+    enableLowLatencyTrading: boolean;
+    targetThroughput: number;
+    maxLatency: number;
+  };
 }
 
 interface SystemHealth {
@@ -62,6 +74,34 @@ interface SystemHealth {
       };
       lastUpdate: number;
     };
+    advancedFinancials: {
+      isRunning: boolean;
+      portfolioTheory: string;
+      varModels: string;
+      encryptionService: string;
+      mfaService: string;
+      lastUpdate: number;
+    };
+    highPerformance: {
+      isRunning: boolean;
+      overallStatus: string;
+      performanceScore: number;
+      components: {
+        webAssembly: string;
+        multithreading: string;
+        lowLatencyTrading: string;
+        memoryOptimization: string;
+        caching: string;
+        streamProcessing: string;
+      };
+      metrics: {
+        computeThroughput: number;
+        tradingLatency: number;
+        systemLoad: number;
+        errorRate: number;
+      };
+      lastUpdate: number;
+    };
   };
   lastHealthCheck: number;
 }
@@ -93,6 +133,10 @@ export class WingZeroSystemIntegration {
   private performanceProfiler: EnhancedPerformanceProfiler | null = null;
   private sawEngine: EnhancedSAWAutomationEngine | null = null;
   private aiBrain: WingZeroAIBrain | null = null;
+  
+  // Advanced Integration Services
+  private advancedFinancials: WingZeroPhase3And4Integration | null = null;
+  private highPerformanceEngine: WingZeroPhase5Integration | null = null;
 
   // System monitoring
   private healthCheckTimer: NodeJS.Timeout | null = null;
@@ -149,11 +193,19 @@ export class WingZeroSystemIntegration {
         await this.initializeAIBrain();
       }
 
+      if (this.config.enableAdvancedFinancials) {
+        await this.initializeAdvancedFinancials();
+      }
+
+      if (this.config.enableHighPerformance) {
+        await this.initializeHighPerformanceEngine();
+      }
+
       // Set up service integrations
       await this.setupServiceIntegrations();
 
       this.isInitialized = true;
-      console.log('✅ Wing Zero Enhanced System initialized successfully');
+      console.log('✅ Wing Zero Enhanced System with Phase 5 Performance & Scalability initialized successfully');
 
     } catch (error) {
       console.error('❌ Failed to initialize Wing Zero System:', error);
@@ -312,6 +364,51 @@ export class WingZeroSystemIntegration {
     console.log('✅ Wing Zero AI Brain initialized and started');
   }
 
+  private async initializeAdvancedFinancials(): Promise<void> {
+    console.log('📊 Initializing Advanced Financial Calculations (Phase 3 & 4)...');
+    
+    this.advancedFinancials = new WingZeroPhase3And4Integration();
+    await this.advancedFinancials.start();
+    
+    console.log('✅ Advanced Financial Calculations (Phase 3 & 4) initialized and started');
+  }
+
+  private async initializeHighPerformanceEngine(): Promise<void> {
+    console.log('⚡ Initializing High-Performance Engine (Phase 5)...');
+    
+    this.highPerformanceEngine = new WingZeroPhase5Integration({
+      webAssembly: {
+        enableSIMD: this.config.performanceConfig.enableWebAssembly,
+        enableThreads: this.config.performanceConfig.enableWebAssembly,
+        memoryPages: 512, // Increased for better performance
+        optimizationLevel: 'O3'
+      },
+      multithreading: {
+        maxWorkers: Math.min(navigator.hardwareConcurrency || 4, 16),
+        minWorkers: 2,
+        enableDynamicScaling: true,
+        taskQueueMaxSize: 2000, // Increased queue size
+        workerMemoryLimit: 512 * 1024 * 1024 // 512MB per worker
+      },
+      trading: {
+        enableSmartRouting: this.config.performanceConfig.enableLowLatencyTrading,
+        enableHighFrequencyData: true,
+        latencyTarget: this.config.performanceConfig.maxLatency,
+        enableNetworkOptimizations: true
+      },
+      performance: {
+        enableMemoryOptimization: true,
+        enableCaching: true,
+        enableStreamProcessing: true,
+        targetThroughput: this.config.performanceConfig.targetThroughput,
+        maxLatency: this.config.performanceConfig.maxLatency
+      }
+    });
+
+    await this.highPerformanceEngine.start();
+    console.log('✅ High-Performance Engine (Phase 5) initialized and operational');
+  }
+
   // Service integration setup
   private async setupServiceIntegrations(): Promise<void> {
     console.log('🔗 Setting up service integrations...');
@@ -340,7 +437,28 @@ export class WingZeroSystemIntegration {
       });
     }
 
-    console.log('✅ Service integrations configured');
+    // High-Performance Engine Integration
+    if (this.highPerformanceEngine && this.aiBrain) {
+      console.log('🔗 Integrating AI Brain with High-Performance Engine...');
+      // Connect AI Brain decision-making with high-performance execution
+      this.setupAIPerformanceIntegration();
+    }
+
+    // Advanced Financials Integration
+    if (this.advancedFinancials && this.highPerformanceEngine) {
+      console.log('🔗 Integrating Advanced Financials with High-Performance Engine...');
+      // Connect financial calculations with performance optimization
+      this.setupFinancialPerformanceIntegration();
+    }
+
+    // Market Data to High-Performance Trading Integration
+    if (this.marketDataService && this.highPerformanceEngine) {
+      console.log('🔗 Integrating Market Data with High-Performance Trading...');
+      // Connect real-time market data to ultra-fast trading execution
+      this.setupMarketDataPerformanceIntegration();
+    }
+
+    console.log('✅ All service integrations configured including Phase 5 Performance & Scalability');
   }
 
   // Health monitoring
@@ -368,7 +486,10 @@ export class WingZeroSystemIntegration {
           oandaBroker: await this.getOandaBrokerHealth(),
           marketData: await this.getMarketDataHealth(),
           performance: await this.getPerformanceHealth(),
-          sawEngine: await this.getSAWEngineHealth()
+          sawEngine: await this.getSAWEngineHealth(),
+          aiBrain: await this.getAIBrainHealth(),
+          advancedFinancials: await this.getAdvancedFinancialsHealth(),
+          highPerformance: await this.getHighPerformanceHealth()
         },
         lastHealthCheck: Date.now()
       };
@@ -485,6 +606,155 @@ export class WingZeroSystemIntegration {
       return this.sawEngine.getSystemStatus();
     } catch (error) {
       return { status: 'critical', error: error };
+    }
+  }
+
+  private async getAIBrainHealth(): Promise<any> {
+    if (!this.aiBrain) {
+      return { 
+        isRunning: false, 
+        overallStatus: 'offline', 
+        componentStatus: {
+          sentiment_analyzer: 'offline',
+          predictive_models: 'offline',
+          pattern_recognition: 'offline',
+          risk_scoring: 'offline',
+          strategy_optimization: 'offline'
+        },
+        lastUpdate: Date.now()
+      };
+    }
+
+    try {
+      const status = this.aiBrain.getSystemStatus();
+      return {
+        isRunning: status.isRunning,
+        overallStatus: status.overallStatus,
+        componentStatus: status.componentStatus,
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      return { 
+        isRunning: false, 
+        overallStatus: 'critical', 
+        componentStatus: {
+          sentiment_analyzer: 'error',
+          predictive_models: 'error',
+          pattern_recognition: 'error',
+          risk_scoring: 'error',
+          strategy_optimization: 'error'
+        },
+        lastUpdate: Date.now(),
+        error: error 
+      };
+    }
+  }
+
+  private async getAdvancedFinancialsHealth(): Promise<any> {
+    if (!this.advancedFinancials) {
+      return { 
+        isRunning: false, 
+        portfolioTheory: 'offline',
+        varModels: 'offline',
+        encryptionService: 'offline',
+        mfaService: 'offline',
+        lastUpdate: Date.now()
+      };
+    }
+
+    try {
+      const health = this.advancedFinancials.getSystemHealth();
+      return {
+        isRunning: health.overall_status !== 'offline',
+        portfolioTheory: health.components.portfolioTheory || 'online',
+        varModels: health.components.varModels || 'online', 
+        encryptionService: health.components.encryptionService || 'online',
+        mfaService: health.components.mfaService || 'online',
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      return { 
+        isRunning: false,
+        portfolioTheory: 'error',
+        varModels: 'error',
+        encryptionService: 'error',
+        mfaService: 'error',
+        lastUpdate: Date.now(),
+        error: error 
+      };
+    }
+  }
+
+  private async getHighPerformanceHealth(): Promise<any> {
+    if (!this.highPerformanceEngine) {
+      return { 
+        isRunning: false, 
+        overallStatus: 'offline',
+        performanceScore: 0,
+        components: {
+          webAssembly: 'offline',
+          multithreading: 'offline',
+          lowLatencyTrading: 'offline',
+          memoryOptimization: 'offline',
+          caching: 'offline',
+          streamProcessing: 'offline'
+        },
+        metrics: {
+          computeThroughput: 0,
+          tradingLatency: 0,
+          systemLoad: 0,
+          errorRate: 0
+        },
+        lastUpdate: Date.now()
+      };
+    }
+
+    try {
+      const health = this.highPerformanceEngine.getSystemHealth();
+      const metrics = this.highPerformanceEngine.getPerformanceMetrics();
+      
+      return {
+        isRunning: health.overall_status !== 'offline',
+        overallStatus: health.overall_status,
+        performanceScore: health.performanceScore,
+        components: {
+          webAssembly: health.components.webAssembly,
+          multithreading: health.components.multithreading,
+          lowLatencyTrading: health.components.lowLatencyTrading,
+          memoryOptimization: health.components.memoryOptimization,
+          caching: health.components.caching,
+          streamProcessing: health.components.streamProcessing
+        },
+        metrics: {
+          computeThroughput: metrics.wasmComputeThroughput,
+          tradingLatency: metrics.orderSubmissionLatency,
+          systemLoad: metrics.systemLoad,
+          errorRate: metrics.errorRate
+        },
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      return { 
+        isRunning: false,
+        overallStatus: 'critical',
+        performanceScore: 0,
+        components: {
+          webAssembly: 'error',
+          multithreading: 'error', 
+          lowLatencyTrading: 'error',
+          memoryOptimization: 'error',
+          caching: 'error',
+          streamProcessing: 'error'
+        },
+        metrics: {
+          computeThroughput: 0,
+          tradingLatency: 999,
+          systemLoad: 1,
+          errorRate: 1
+        },
+        lastUpdate: Date.now(),
+        error: error 
+      };
     }
   }
 
@@ -650,11 +920,188 @@ export class WingZeroSystemIntegration {
       : (this.metrics.averageResponseTime * 0.9 + responseTime * 0.1);
   }
 
+  // Phase 5 Integration Methods
+  private setupAIPerformanceIntegration(): void {
+    if (!this.aiBrain || !this.highPerformanceEngine) return;
+
+    console.log('🧠⚡ Setting up AI Brain + High-Performance Engine integration...');
+
+    // AI-driven performance optimization
+    setInterval(async () => {
+      try {
+        const marketIntelligence = await this.aiBrain!.gatherMarketIntelligence('EURUSD');
+        const performanceMetrics = this.highPerformanceEngine!.getPerformanceMetrics();
+
+        // Use AI insights to optimize performance configuration
+        if (marketIntelligence.volatility_score > 0.8 && performanceMetrics.averageTaskLatency > 5) {
+          // High volatility + high latency = prioritize trading performance
+          await this.highPerformanceEngine!.updateConfiguration({
+            trading: {
+              enableSmartRouting: true,
+              enableHighFrequencyData: true,
+              latencyTarget: 50, // Reduce latency target
+              enableNetworkOptimizations: true
+            }
+          });
+        }
+
+        // AI-driven computation routing
+        if (marketIntelligence.market_regime === 'high_volatility') {
+          // Use WebAssembly for faster calculations during high volatility
+          console.log('🧠 AI detected high volatility - optimizing for WebAssembly computations');
+        }
+
+      } catch (error) {
+        console.error('❌ AI-Performance integration error:', error);
+      }
+    }, 30000); // Every 30 seconds
+
+    console.log('✅ AI Brain + High-Performance Engine integration active');
+  }
+
+  private setupFinancialPerformanceIntegration(): void {
+    if (!this.advancedFinancials || !this.highPerformanceEngine) return;
+
+    console.log('📊⚡ Setting up Financial Calculations + High-Performance Engine integration...');
+
+    // Expose high-performance financial operations
+    this.exposedMethods = {
+      ...this.exposedMethods,
+      
+      // High-performance portfolio optimization
+      optimizePortfolioHighPerformance: async (portfolios: any[]) => {
+        return this.highPerformanceEngine!.executeParallelAnalysis(
+          portfolios.map(p => ({ id: p.id, data: p, analysisType: 'optimization' }))
+        );
+      },
+
+      // Ultra-fast risk calculations
+      calculateRiskHighPerformance: async (portfolios: any[]) => {
+        const riskTasks = portfolios.map(portfolio => ({
+          type: 'risk_calculation' as const,
+          data: portfolio,
+          priority: 'high' as const
+        }));
+
+        const results = await Promise.all(
+          riskTasks.map(task => 
+            this.highPerformanceEngine!.executeHighPerformanceComputation(
+              task.type, task.data, task.priority
+            )
+          )
+        );
+
+        return results;
+      },
+
+      // Secure high-performance operations
+      secureHighPerformanceOperation: async (operation: any, encryptionLevel: string = 'AES-256') => {
+        // Use Phase 4 encryption with Phase 5 performance
+        const encrypted = await this.advancedFinancials!.secureDataExchange(operation, encryptionLevel);
+        return this.highPerformanceEngine!.executeHighPerformanceComputation(
+          'portfolio_optimization', encrypted, 'critical'
+        );
+      }
+    };
+
+    console.log('✅ Financial Calculations + High-Performance Engine integration active');
+  }
+
+  private setupMarketDataPerformanceIntegration(): void {
+    if (!this.marketDataService || !this.highPerformanceEngine) return;
+
+    console.log('📊⚡ Setting up Market Data + High-Performance Trading integration...');
+
+    // High-frequency market data processing
+    const symbols = ['EUR_USD', 'GBP_USD', 'USD_JPY', 'XAU_USD', 'BTC_USD'];
+    
+    symbols.forEach(symbol => {
+      this.marketDataService!.subscribe(symbol, async (tickData) => {
+        try {
+          // Ultra-fast trade execution based on market conditions
+          const marketData = this.highPerformanceEngine!.getWorkloadDistribution();
+          
+          // Check if trading latency is optimal for high-frequency operations
+          const performanceMetrics = this.highPerformanceEngine!.getPerformanceMetrics();
+          
+          if (performanceMetrics.orderSubmissionLatency < 1 && tickData.volatility > 0.002) {
+            // Market conditions + performance conditions optimal for HFT
+            console.log(`⚡ Optimal HFT conditions detected for ${symbol} (latency: ${performanceMetrics.orderSubmissionLatency}ms)`);
+            
+            // Could trigger automated high-frequency trading here
+            // await this.highPerformanceEngine!.executeUltraFastTrade(...);
+          }
+
+          // Real-time performance optimization based on market data
+          if (tickData.spread && tickData.spread > 0.0005) {
+            // Wide spread detected - optimize for smart order routing
+            await this.highPerformanceEngine!.updateConfiguration({
+              trading: {
+                enableSmartRouting: true,
+                enableHighFrequencyData: true,
+                latencyTarget: 100,
+                enableNetworkOptimizations: true
+              }
+            });
+          }
+
+        } catch (error) {
+          console.error('❌ Market Data + Performance integration error:', error);
+        }
+      });
+    });
+
+    console.log('✅ Market Data + High-Performance Trading integration active');
+  }
+
+  // Exposed methods for external access to integrated functionality
+  private exposedMethods: { [key: string]: Function } = {};
+
+  // Public API for Phase 5 integration
+  public getHighPerformanceEngine() {
+    return this.highPerformanceEngine;
+  }
+
+  public getAdvancedFinancials() {
+    return this.advancedFinancials;
+  }
+
+  public async executeHighPerformanceComputation(type: string, data: any, priority: string = 'normal'): Promise<any> {
+    if (!this.highPerformanceEngine) {
+      throw new Error('High-Performance Engine not initialized');
+    }
+    return this.highPerformanceEngine.executeHighPerformanceComputation(type as any, data, priority as any);
+  }
+
+  public async executeUltraFastTrade(order: any): Promise<string> {
+    if (!this.highPerformanceEngine) {
+      throw new Error('High-Performance Engine not initialized');
+    }
+    return this.highPerformanceEngine.executeUltraFastTrade(order);
+  }
+
+  public async runPerformanceBenchmark(): Promise<any> {
+    if (!this.highPerformanceEngine) {
+      throw new Error('High-Performance Engine not initialized');
+    }
+    return this.highPerformanceEngine.runPerformanceBenchmark();
+  }
+
   private async cleanup(): Promise<void> {
     this.stopHealthMonitoring();
     
     if (this.isRunning) {
       await this.stop();
+    }
+    
+    // Shutdown Phase 5 components
+    if (this.highPerformanceEngine) {
+      await this.highPerformanceEngine.stop();
+    }
+    
+    // Shutdown Phase 3 & 4 components
+    if (this.advancedFinancials) {
+      await this.advancedFinancials.stop();
     }
     
     this.isInitialized = false;
@@ -663,6 +1110,9 @@ export class WingZeroSystemIntegration {
     this.marketDataService = null;
     this.performanceProfiler = null;
     this.sawEngine = null;
+    this.aiBrain = null;
+    this.advancedFinancials = null;
+    this.highPerformanceEngine = null;
   }
 
   // Factory method for easy setup

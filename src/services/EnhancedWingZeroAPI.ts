@@ -9,6 +9,7 @@ import {
   WingZeroApiResponse,
   WingZeroNotification 
 } from '@/types/wingzero';
+import { WingZeroSystemIntegration } from './WingZeroSystemIntegration';
 
 interface CircuitBreakerState {
   isOpen: boolean;
@@ -42,6 +43,9 @@ export class EnhancedWingZeroAPI {
   private wsReconnectTimer: NodeJS.Timeout | null = null;
   private connectionPool: WebSocket[] = [];
   private readonly MAX_POOL_SIZE = 3;
+  
+  // Phase 5: High-Performance System Integration
+  private static systemIntegration: WingZeroSystemIntegration | null = null;
 
   constructor(config: WingZeroConfig) {
     this.config = config;
@@ -534,5 +538,257 @@ export class EnhancedWingZeroAPI {
   resetCircuitBreaker(): void {
     this.initializeCircuitBreaker();
     console.log('🔄 Circuit breaker reset');
+  }
+
+  // Phase 5: High-Performance System Integration Methods
+  static async initializeSystemIntegration(config?: any): Promise<void> {
+    if (EnhancedWingZeroAPI.systemIntegration) {
+      console.log('⚠️ System Integration already initialized');
+      return;
+    }
+
+    console.log('🚀 Initializing Wing Zero System Integration with Phase 5...');
+
+    const systemConfig = {
+      wingZeroConfig: {
+        apiKey: 'system_key',
+        accountId: 'system_account',
+        environment: 'production' as const,
+        baseUrl: 'https://api.wingzero.example.com'
+      },
+      brokerCredentials: {
+        apiKey: process.env.OANDA_API_KEY || 'demo_key',
+        accountId: process.env.OANDA_ACCOUNT_ID || 'demo_account',
+        environment: 'practice' as const
+      },
+      enablePerformanceMonitoring: true,
+      enableSAWAutomation: true,
+      enableAIBrain: true,
+      enableAdvancedFinancials: true,
+      enableHighPerformance: true,
+      maxConcurrentOperations: 100,
+      healthCheckInterval: 30000,
+      autoRecoveryEnabled: true,
+      performanceConfig: {
+        enableWebAssembly: true,
+        enableMultithreading: true,
+        enableLowLatencyTrading: true,
+        targetThroughput: 10000,
+        maxLatency: 10
+      },
+      ...config
+    };
+
+    try {
+      EnhancedWingZeroAPI.systemIntegration = await WingZeroSystemIntegration.createAndStart(systemConfig);
+      console.log('✅ Wing Zero System Integration with Phase 5 fully operational');
+    } catch (error) {
+      console.error('❌ Failed to initialize System Integration:', error);
+      throw error;
+    }
+  }
+
+  static getSystemIntegration(): WingZeroSystemIntegration | null {
+    return EnhancedWingZeroAPI.systemIntegration;
+  }
+
+  // High-Performance Computation API
+  async executeHighPerformanceComputation(
+    type: 'portfolio_optimization' | 'risk_calculation' | 'monte_carlo' | 'matrix_operations',
+    data: any,
+    priority: 'low' | 'normal' | 'high' | 'critical' = 'normal'
+  ): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`⚡ Executing high-performance ${type} computation with ${priority} priority`);
+      
+      const result = await systemIntegration.executeHighPerformanceComputation(type, data, priority);
+      
+      console.log(`✅ High-performance ${type} computation completed successfully`);
+      return result;
+      
+    } catch (error) {
+      console.error(`❌ High-performance ${type} computation failed:`, error);
+      throw error;
+    }
+  }
+
+  // Ultra-Fast Trading API
+  async executeUltraFastTrade(order: {
+    userId: string;
+    symbol: string;
+    side: 'buy' | 'sell';
+    quantity: number;
+    orderType: 'market' | 'limit';
+    price?: number;
+    timeInForce?: 'GTC' | 'IOC' | 'FOK' | 'DAY';
+  }): Promise<string> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`⚡ Executing ultra-fast trade: ${order.side} ${order.quantity} ${order.symbol}`);
+      
+      const orderId = await systemIntegration.executeUltraFastTrade(order);
+      
+      console.log(`✅ Ultra-fast trade executed successfully: ${orderId}`);
+      return orderId;
+      
+    } catch (error) {
+      console.error(`❌ Ultra-fast trade failed:`, error);
+      throw error;
+    }
+  }
+
+  // Performance Benchmark API
+  async runPerformanceBenchmark(): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('🏁 Running comprehensive performance benchmark...');
+      
+      const benchmark = await systemIntegration.runPerformanceBenchmark();
+      
+      console.log(`🏁 Performance benchmark completed with score: ${benchmark.overallScore.toFixed(1)}`);
+      return benchmark;
+      
+    } catch (error) {
+      console.error('❌ Performance benchmark failed:', error);
+      throw error;
+    }
+  }
+
+  // Performance Metrics API
+  async getPerformanceMetrics(): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      const highPerformanceEngine = systemIntegration.getHighPerformanceEngine();
+      if (!highPerformanceEngine) {
+        throw new Error('High-Performance Engine not available');
+      }
+
+      return highPerformanceEngine.getPerformanceMetrics();
+      
+    } catch (error) {
+      console.error('❌ Failed to get performance metrics:', error);
+      throw error;
+    }
+  }
+
+  // Enhanced System Health (includes Phase 5)
+  async getEnhancedSystemHealth(): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    
+    if (!systemIntegration) {
+      return {
+        ...await this.getSystemHealth(),
+        phase5Available: false,
+        message: 'Phase 5 Performance & Scalability not initialized'
+      };
+    }
+
+    try {
+      const systemHealth = systemIntegration.getSystemHealth();
+      const apiHealth = await this.getSystemHealth();
+
+      return {
+        ...apiHealth,
+        phase5Available: true,
+        systemIntegration: systemHealth,
+        performanceEngines: {
+          webAssembly: systemHealth?.components.highPerformance?.components.webAssembly || 'offline',
+          multithreading: systemHealth?.components.highPerformance?.components.multithreading || 'offline',
+          lowLatencyTrading: systemHealth?.components.highPerformance?.components.lowLatencyTrading || 'offline'
+        },
+        overallPerformanceScore: systemHealth?.components.highPerformance?.performanceScore || 0
+      };
+      
+    } catch (error) {
+      console.error('❌ Failed to get enhanced system health:', error);
+      return {
+        ...await this.getSystemHealth(),
+        phase5Available: false,
+        phase5Error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  // Parallel Portfolio Operations
+  async executeParallelPortfolioAnalysis(portfolios: Array<{ id: string; data: any; analysisType: string }>): Promise<any[]> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`📊 Executing parallel portfolio analysis for ${portfolios.length} portfolios`);
+      
+      const highPerformanceEngine = systemIntegration.getHighPerformanceEngine();
+      if (!highPerformanceEngine) {
+        throw new Error('High-Performance Engine not available');
+      }
+
+      const results = await highPerformanceEngine.executeParallelAnalysis(portfolios);
+      
+      console.log(`✅ Parallel portfolio analysis completed for ${portfolios.length} portfolios`);
+      return results;
+      
+    } catch (error) {
+      console.error('❌ Parallel portfolio analysis failed:', error);
+      throw error;
+    }
+  }
+
+  // Secure High-Performance Operations (Phase 4 + Phase 5)
+  async executeSecureHighPerformanceOperation(operation: any, encryptionLevel: string = 'AES-256'): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`🔐⚡ Executing secure high-performance operation with ${encryptionLevel} encryption`);
+      
+      const advancedFinancials = systemIntegration.getAdvancedFinancials();
+      const highPerformanceEngine = systemIntegration.getHighPerformanceEngine();
+      
+      if (!advancedFinancials || !highPerformanceEngine) {
+        throw new Error('Advanced Financials or High-Performance Engine not available');
+      }
+
+      // Encrypt the operation using Phase 4 security
+      const encrypted = await advancedFinancials.secureDataExchange(operation, encryptionLevel);
+      
+      // Execute with high performance using Phase 5
+      const result = await highPerformanceEngine.executeHighPerformanceComputation(
+        'portfolio_optimization', encrypted, 'critical'
+      );
+      
+      console.log('✅ Secure high-performance operation completed successfully');
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Secure high-performance operation failed:', error);
+      throw error;
+    }
   }
 }

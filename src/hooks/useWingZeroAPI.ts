@@ -278,6 +278,142 @@ export const useWingZeroAPI = () => {
     setIsConnected(false);
   }, [setConfig]);
 
+  // Phase 5: High-Performance Operations
+  const executeHighPerformanceComputation = useCallback(async (
+    type: 'portfolio_optimization' | 'risk_calculation' | 'monte_carlo' | 'matrix_operations',
+    data: any,
+    priority: 'low' | 'normal' | 'high' | 'critical' = 'normal'
+  ): Promise<any> => {
+    if (!api || !(api as any).executeHighPerformanceComputation) {
+      throw new Error('High-Performance Engine not available');
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await (api as any).executeHighPerformanceComputation(type, data, priority);
+      
+      toast({
+        title: "⚡ High-Performance Computation Complete",
+        description: `${type} executed successfully with ${priority} priority`,
+      });
+
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'High-performance computation failed';
+      setError(errorMessage);
+      toast({
+        title: "❌ Computation Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [api, toast]);
+
+  const executeUltraFastTrade = useCallback(async (order: {
+    symbol: string;
+    side: 'buy' | 'sell';
+    quantity: number;
+    orderType: 'market' | 'limit';
+    price?: number;
+    timeInForce?: 'GTC' | 'IOC' | 'FOK' | 'DAY';
+  }): Promise<string> => {
+    if (!api || !(api as any).executeUltraFastTrade) {
+      throw new Error('Ultra-Fast Trading Engine not available');
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const orderId = await (api as any).executeUltraFastTrade({
+        userId: 'current_user', // This would come from user context
+        ...order
+      });
+      
+      toast({
+        title: "⚡ Ultra-Fast Trade Executed",
+        description: `Order ${orderId} placed with ultra-low latency`,
+      });
+
+      return orderId;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Ultra-fast trade failed';
+      setError(errorMessage);
+      toast({
+        title: "❌ Ultra-Fast Trade Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [api, toast]);
+
+  const runPerformanceBenchmark = useCallback(async (): Promise<any> => {
+    if (!api || !(api as any).runPerformanceBenchmark) {
+      throw new Error('Performance Benchmark not available');
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const benchmark = await (api as any).runPerformanceBenchmark();
+      
+      toast({
+        title: "🏁 Performance Benchmark Complete",
+        description: `Overall Score: ${benchmark.overallScore.toFixed(1)}`,
+      });
+
+      return benchmark;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Performance benchmark failed';
+      setError(errorMessage);
+      toast({
+        title: "❌ Benchmark Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [api, toast]);
+
+  const getPerformanceMetrics = useCallback(async (): Promise<any> => {
+    if (!api || !(api as any).getPerformanceMetrics) {
+      throw new Error('Performance Metrics not available');
+    }
+
+    try {
+      return await (api as any).getPerformanceMetrics();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get performance metrics';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [api]);
+
+  const getSystemHealth = useCallback(async (): Promise<any> => {
+    if (!api || !(api as any).getSystemHealth) {
+      throw new Error('System Health not available');
+    }
+
+    try {
+      return await (api as any).getSystemHealth();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get system health';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [api]);
+
   // Auto-test connection when config changes (only for mock mode)
   useEffect(() => {
     if (config && !isConnected && useMockData) {
@@ -315,6 +451,13 @@ export const useWingZeroAPI = () => {
     // Trading
     placeOrder,
     closePosition,
+
+    // Phase 5: High-Performance Operations
+    executeHighPerformanceComputation,
+    executeUltraFastTrade,
+    runPerformanceBenchmark,
+    getPerformanceMetrics,
+    getSystemHealth,
 
     // Utilities
     clearError: () => setError(null),
