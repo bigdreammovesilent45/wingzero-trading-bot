@@ -164,6 +164,7 @@ export class WingZeroSystemIntegration {
   // Advanced Integration Services
   private advancedFinancials: WingZeroPhase3And4Integration | null = null;
   private highPerformanceEngine: WingZeroPhase5Integration | null = null;
+  private advancedIntegration: WingZeroPhase6Integration | null = null;
 
   // System monitoring
   private healthCheckTimer: NodeJS.Timeout | null = null;
@@ -226,6 +227,10 @@ export class WingZeroSystemIntegration {
 
       if (this.config.enableHighPerformance) {
         await this.initializeHighPerformanceEngine();
+      }
+
+      if (this.config.enableAdvancedIntegration) {
+        await this.initializeAdvancedIntegration();
       }
 
       // Set up service integrations
@@ -436,6 +441,78 @@ export class WingZeroSystemIntegration {
     console.log('✅ High-Performance Engine (Phase 5) initialized and operational');
   }
 
+  private async initializeAdvancedIntegration(): Promise<void> {
+    if (!this.config.enableAdvancedIntegration) {
+      console.log('⚠️ Advanced Integration (Phase 6) disabled in configuration');
+      return;
+    }
+
+    console.log('🚀 Initializing Advanced Integration (Phase 6)...');
+
+    const defaultConfig = {
+      brokerConfiguration: {
+        enableUnifiedAPI: true,
+        enableAdvancedOMS: true,
+        enablePositionReconciliation: true,
+        maxBrokers: 5,
+        defaultAllocation: { 'oanda': 0.5, 'ic_markets': 0.5 },
+        riskLimits: {
+          maxPositionSize: 1000000,
+          maxOrderValue: 500000,
+          maxDailyVolume: 10000000
+        }
+      },
+      dataConfiguration: {
+        enableMarketDataAggregation: true,
+        enableEconomicCalendar: true,
+        enableSocialSentiment: true,
+        dataRefreshRate: 1000,
+        prioritySymbols: ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD'],
+        qualityThresholds: {
+          minLatency: 100,
+          minReliability: 95,
+          minAccuracy: 98
+        }
+      },
+      integrationSettings: {
+        enableRealTimeSync: true,
+        enableCrossServiceAlerts: true,
+        enableIntelligentRouting: true,
+        enablePredictiveAnalysis: true,
+        performanceMonitoring: true,
+        autoFailover: true,
+        maxRetryAttempts: 3,
+        healthCheckInterval: this.config.healthCheckInterval
+      },
+      apiConfiguration: {
+        enableRESTAPI: true,
+        enableWebSocketAPI: true,
+        enableGraphQLAPI: false,
+        rateLimiting: {
+          requestsPerSecond: 100,
+          requestsPerHour: 10000,
+          burstLimit: 200
+        },
+        authentication: {
+          enableAPIKeys: true,
+          enableJWT: true,
+          enableOAuth: false
+        }
+      }
+    };
+
+    // Merge with user configuration if provided
+    const phase6Config = {
+      ...defaultConfig,
+      ...this.config.advancedIntegrationConfig
+    };
+
+    this.advancedIntegration = new WingZeroPhase6Integration(phase6Config);
+    await this.advancedIntegration.initialize();
+    
+    console.log('✅ Advanced Integration (Phase 6) initialized and operational');
+  }
+
   // Service integration setup
   private async setupServiceIntegrations(): Promise<void> {
     console.log('🔗 Setting up service integrations...');
@@ -516,7 +593,8 @@ export class WingZeroSystemIntegration {
           sawEngine: await this.getSAWEngineHealth(),
           aiBrain: await this.getAIBrainHealth(),
           advancedFinancials: await this.getAdvancedFinancialsHealth(),
-          highPerformance: await this.getHighPerformanceHealth()
+          highPerformance: await this.getHighPerformanceHealth(),
+          advancedIntegration: await this.getAdvancedIntegrationHealth()
         },
         lastHealthCheck: Date.now()
       };
@@ -781,6 +859,63 @@ export class WingZeroSystemIntegration {
         },
         lastUpdate: Date.now(),
         error: error 
+      };
+    }
+  }
+
+  private async getAdvancedIntegrationHealth(): Promise<any> {
+    if (!this.advancedIntegration) {
+      return {
+        isRunning: false,
+        status: 'offline',
+        message: 'Advanced Integration (Phase 6) not initialized'
+      };
+    }
+
+    try {
+      const health = await this.advancedIntegration.getSystemHealth();
+      const metrics = this.advancedIntegration.getPerformanceMetrics();
+      
+      return {
+        isRunning: this.advancedIntegration.isSystemInitialized(),
+        status: health.status,
+        components: {
+          unifiedBrokerAPI: health.components.unifiedBrokerAPI.status,
+          orderManagement: health.components.orderManagement.status,
+          positionReconciliation: health.components.positionReconciliation.status,
+          marketDataAggregator: health.components.marketDataAggregator.status,
+          economicCalendar: health.components.economicCalendar.status,
+          socialSentiment: health.components.socialSentiment.status
+        },
+        performance: {
+          totalThroughput: health.performance.totalThroughput,
+          averageLatency: health.performance.averageLatency,
+          errorRate: health.performance.errorRate,
+          memoryUsage: health.performance.memoryUsage,
+          cpuUsage: health.performance.cpuUsage
+        },
+        integration: {
+          crossServiceEvents: health.integration.crossServiceEvents,
+          intelligentRoutingDecisions: health.integration.intelligentRoutingDecisions,
+          predictiveAccuracy: health.integration.predictiveAccuracy,
+          autoFailoverEvents: health.integration.autoFailoverEvents
+        },
+        metrics: {
+          totalSignalsGenerated: metrics.totalSignalsGenerated,
+          totalAlertsGenerated: metrics.totalAlertsGenerated,
+          totalOrdersExecuted: metrics.totalOrdersExecuted,
+          averageSignalAccuracy: metrics.averageSignalAccuracy,
+          systemUptime: metrics.systemUptime
+        },
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      console.error('❌ Error getting advanced integration health:', error);
+      return {
+        isRunning: false,
+        status: 'offline',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        lastUpdate: Date.now()
       };
     }
   }
