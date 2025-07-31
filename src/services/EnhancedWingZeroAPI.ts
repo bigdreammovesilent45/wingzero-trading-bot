@@ -973,6 +973,373 @@ export class EnhancedWingZeroAPI {
     return systemIntegration?.getSocialSentiment() || null;
   }
 
+  // Phase 1: Enhanced API & Core Services API
+  getWingZeroAPIService() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getWingZeroAPI() || null;
+  }
+
+  getOandaBrokerService() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getOandaBroker() || null;
+  }
+
+  getMarketDataServiceInstance() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getMarketDataService() || null;
+  }
+
+  getPerformanceProfilerService() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getPerformanceProfiler() || null;
+  }
+
+  getSAWEngineService() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getSAWEngine() || null;
+  }
+
+  async executeAutomatedWorkflow(workflow: any): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`⚙️ Executing automated workflow: ${workflow.name}...`);
+
+      const result = await systemIntegration.executeAutomatedWorkflow(workflow);
+
+      console.log(`✅ Workflow executed successfully: ${result.status}`);
+      return result;
+
+    } catch (error) {
+      console.error('❌ Failed to execute workflow:', error);
+      throw error;
+    }
+  }
+
+  getCoreServicesHealth(): any {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getCoreServicesHealth() || {
+      wingZeroAPI: 'offline',
+      oandaBroker: 'offline',
+      marketDataService: 'offline',
+      performanceProfiler: 'offline',
+      sawEngine: 'offline'
+    };
+  }
+
+  // Phase 2: AI Brain & Advanced Analytics API
+  getAIBrain() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getAIBrain() || null;
+  }
+
+  async analyzeSentiment(text: string): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('🧠 Analyzing sentiment...');
+
+      const sentiment = await systemIntegration.analyzeSentiment(text);
+
+      console.log(`✅ Sentiment analysis completed: ${sentiment.sentiment} (${sentiment.confidence})`);
+      return sentiment;
+
+    } catch (error) {
+      console.error('❌ Failed to analyze sentiment:', error);
+      throw error;
+    }
+  }
+
+  async generatePrediction(symbol: string, timeframe: string): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`🔮 Generating prediction for ${symbol} (${timeframe})...`);
+
+      const prediction = await systemIntegration.generatePrediction(symbol, timeframe);
+
+      console.log(`✅ Prediction generated: ${prediction.direction} with ${(prediction.confidence * 100).toFixed(1)}% confidence`);
+      return prediction;
+
+    } catch (error) {
+      console.error('❌ Failed to generate prediction:', error);
+      throw error;
+    }
+  }
+
+  async recognizePattern(data: any[]): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('🔍 Recognizing patterns...');
+
+      const patterns = await systemIntegration.recognizePattern(data);
+
+      console.log(`✅ Pattern recognition completed: ${patterns.length} patterns found`);
+      return patterns;
+
+    } catch (error) {
+      console.error('❌ Failed to recognize patterns:', error);
+      throw error;
+    }
+  }
+
+  async calculateRiskScore(portfolio: any): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('⚠️ Calculating risk score...');
+
+      const riskScore = await systemIntegration.calculateRiskScore(portfolio);
+
+      console.log(`✅ Risk score calculated: ${riskScore.score} (${riskScore.level})`);
+      return riskScore;
+
+    } catch (error) {
+      console.error('❌ Failed to calculate risk score:', error);
+      throw error;
+    }
+  }
+
+  async optimizeStrategy(strategy: any, constraints: any): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('🎯 Optimizing strategy...');
+
+      const optimizedStrategy = await systemIntegration.optimizeStrategy(strategy, constraints);
+
+      console.log(`✅ Strategy optimized with ${optimizedStrategy.improvements.length} improvements`);
+      return optimizedStrategy;
+
+    } catch (error) {
+      console.error('❌ Failed to optimize strategy:', error);
+      throw error;
+    }
+  }
+
+  getAIBrainHealth(): any {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getAIBrainHealth() || {
+      isRunning: false,
+      overallStatus: 'offline',
+      componentStatus: {},
+      lastUpdate: 0
+    };
+  }
+
+  // Phase 3 & 4: Advanced Financial Models & Security API
+  getModernPortfolioTheory() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getModernPortfolioTheory() || null;
+  }
+
+  getAdvancedVaRModels() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getAdvancedVaRModels() || null;
+  }
+
+  getAdvancedEncryptionService() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getAdvancedEncryptionService() || null;
+  }
+
+  getMultifactorAuthenticationService() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getMultifactorAuthenticationService() || null;
+  }
+
+  async calculatePortfolioOptimization(assets: any[], constraints: any): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('📊 Calculating portfolio optimization...');
+
+      const optimization = await systemIntegration.calculatePortfolioOptimization(assets, constraints);
+
+      console.log('✅ Portfolio optimization calculated successfully');
+      return optimization;
+
+    } catch (error) {
+      console.error('❌ Failed to calculate portfolio optimization:', error);
+      throw error;
+    }
+  }
+
+  async calculateAdvancedVaR(portfolio: any, method: string, confidenceLevel: number): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`📈 Calculating ${method} VaR at ${confidenceLevel * 100}% confidence...`);
+
+      const varResult = await systemIntegration.calculateAdvancedVaR(portfolio, method, confidenceLevel);
+
+      console.log(`✅ VaR calculated: ${varResult.var}`);
+      return varResult;
+
+    } catch (error) {
+      console.error('❌ Failed to calculate VaR:', error);
+      throw error;
+    }
+  }
+
+  async encryptSensitiveData(data: any): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('🔒 Encrypting sensitive data...');
+
+      const encrypted = await systemIntegration.encryptSensitiveData(data);
+
+      console.log('✅ Data encrypted successfully');
+      return encrypted;
+
+    } catch (error) {
+      console.error('❌ Failed to encrypt data:', error);
+      throw error;
+    }
+  }
+
+  async validateMFA(userId: string, token: string): Promise<boolean> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`🔐 Validating MFA for user ${userId}...`);
+
+      const isValid = await systemIntegration.validateMFA(userId, token);
+
+      console.log(`✅ MFA validation: ${isValid ? 'Valid' : 'Invalid'}`);
+      return isValid;
+
+    } catch (error) {
+      console.error('❌ Failed to validate MFA:', error);
+      throw error;
+    }
+  }
+
+  getAdvancedFinancialsHealth(): any {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getAdvancedFinancialsHealth() || {
+      isRunning: false,
+      portfolioTheory: 'offline',
+      varModels: 'offline',
+      encryptionService: 'offline',
+      mfaService: 'offline',
+      lastUpdate: 0
+    };
+  }
+
+  // Phase 5: High-Performance & Scalability API
+  getHighPerformanceEngine() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getHighPerformanceEngine() || null;
+  }
+
+  async executeHighPerformanceComputation(computation: any): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('⚡ Executing high-performance computation...');
+
+      const result = await systemIntegration.executeHighPerformanceComputation(computation);
+
+      console.log('✅ High-performance computation completed');
+      return result;
+
+    } catch (error) {
+      console.error('❌ Failed to execute high-performance computation:', error);
+      throw error;
+    }
+  }
+
+  async executeLowLatencyTrade(tradeRequest: any): Promise<any> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`🚀 Executing low-latency trade for ${tradeRequest.symbol}...`);
+
+      const result = await systemIntegration.executeLowLatencyTrade(tradeRequest);
+
+      console.log(`✅ Low-latency trade executed in ${result.latency}ms`);
+      return result;
+
+    } catch (error) {
+      console.error('❌ Failed to execute low-latency trade:', error);
+      throw error;
+    }
+  }
+
+  getPerformanceMetrics(): any {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getPerformanceMetrics() || {
+      computeThroughput: 0,
+      tradingLatency: 0,
+      systemLoad: 0,
+      errorRate: 0,
+      cacheHitRate: 0
+    };
+  }
+
+  getHighPerformanceHealth(): any {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getHighPerformanceHealth() || {
+      isRunning: false,
+      overallStatus: 'offline',
+      performanceScore: 0,
+      components: {},
+      metrics: {},
+      lastUpdate: 0
+    };
+  }
+
   // Phase 7: Advanced Features API
   getCopyTradingEngine() {
     const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
