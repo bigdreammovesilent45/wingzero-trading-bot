@@ -1,4 +1,5 @@
 import { WingZeroSystemIntegration } from './WingZeroSystemIntegration';
+import { WingZeroAIBrain } from './ai/WingZeroAIBrain';
 import { WingZeroConfig } from '@/types/wingzero';
 import { BrokerCredentials } from '@/types/broker';
 

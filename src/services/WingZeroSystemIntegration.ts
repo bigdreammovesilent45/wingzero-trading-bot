@@ -3,6 +3,7 @@ import { EnhancedOandaBrokerService } from './EnhancedOandaBrokerService';
 import { EnhancedMarketDataService } from './EnhancedMarketDataService';
 import { EnhancedPerformanceProfiler } from './EnhancedPerformanceProfiler';
 import { EnhancedSAWAutomationEngine } from './EnhancedSAWAutomationEngine';
+import { WingZeroAIBrain } from './ai/WingZeroAIBrain';
 import { WingZeroConfig } from '@/types/wingzero';
 import { BrokerCredentials, BrokerConnection } from '@/types/broker';
 
@@ -11,6 +12,7 @@ interface SystemConfiguration {
   brokerCredentials: BrokerCredentials;
   enablePerformanceMonitoring: boolean;
   enableSAWAutomation: boolean;
+  enableAIBrain: boolean;
   maxConcurrentOperations: number;
   healthCheckInterval: number;
   autoRecoveryEnabled: boolean;
@@ -78,6 +80,7 @@ export class WingZeroSystemIntegration {
   private marketDataService: EnhancedMarketDataService | null = null;
   private performanceProfiler: EnhancedPerformanceProfiler | null = null;
   private sawEngine: EnhancedSAWAutomationEngine | null = null;
+  private aiBrain: WingZeroAIBrain | null = null;
 
   // System monitoring
   private healthCheckTimer: NodeJS.Timeout | null = null;
@@ -128,6 +131,10 @@ export class WingZeroSystemIntegration {
       
       if (this.config.enableSAWAutomation) {
         await this.initializeSAWEngine();
+      }
+
+      if (this.config.enableAIBrain) {
+        await this.initializeAIBrain();
       }
 
       // Set up service integrations
