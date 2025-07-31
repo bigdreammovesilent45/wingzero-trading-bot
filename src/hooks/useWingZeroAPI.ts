@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from './useLocalStorage';
+import { EnhancedWingZeroAPI } from '@/services/EnhancedWingZeroAPI';
 import { WingZeroAPI, MockWingZeroAPI } from '@/services/WingZeroAPI';
 import { 
   WingZeroConfig, 
@@ -20,9 +21,9 @@ export const useWingZeroAPI = () => {
   const [useMockData, setUseMockData] = useLocalStorage('wingzero_mock_mode', true);
   const { toast } = useToast();
 
-  // Initialize API instance
+  // Initialize API instance with enhanced capabilities
   const api = config 
-    ? (useMockData ? new MockWingZeroAPI(config) : new WingZeroAPI(config))
+    ? (useMockData ? new MockWingZeroAPI(config) : new EnhancedWingZeroAPI(config))
     : null;
 
   // Test connection
