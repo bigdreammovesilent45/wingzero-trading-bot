@@ -6,6 +6,7 @@ import { EnhancedSAWAutomationEngine } from './EnhancedSAWAutomationEngine';
 import { WingZeroAIBrain } from './ai/WingZeroAIBrain';
 import { WingZeroPhase3And4Integration } from './WingZeroPhase3And4Integration';
 import { WingZeroPhase5Integration } from './WingZeroPhase5Integration';
+import { WingZeroPhase6Integration } from './WingZeroPhase6Integration';
 import { WingZeroConfig } from '@/types/wingzero';
 import { BrokerCredentials, BrokerConnection } from '@/types/broker';
 
@@ -17,6 +18,7 @@ interface SystemConfiguration {
   enableAIBrain: boolean;
   enableAdvancedFinancials: boolean;
   enableHighPerformance: boolean;
+  enableAdvancedIntegration: boolean;
   maxConcurrentOperations: number;
   healthCheckInterval: number;
   autoRecoveryEnabled: boolean;
@@ -27,6 +29,31 @@ interface SystemConfiguration {
     enableLowLatencyTrading: boolean;
     targetThroughput: number;
     maxLatency: number;
+  };
+  // Phase 6 Advanced Integration Configuration
+  enableAdvancedIntegration?: boolean;
+  advancedIntegrationConfig?: {
+    enableUnifiedAPI: boolean;
+    enableAdvancedOMS: boolean;
+    enablePositionReconciliation: boolean;
+    enableMarketDataAggregation: boolean;
+    enableEconomicCalendar: boolean;
+    enableSocialSentiment: boolean;
+    enableIntelligentRouting: boolean;
+    enablePredictiveAnalysis: boolean;
+    prioritySymbols: string[];
+  };
+  // Phase 6 Advanced Integration Configuration
+  advancedIntegrationConfig?: {
+    enableUnifiedAPI: boolean;
+    enableAdvancedOMS: boolean;
+    enablePositionReconciliation: boolean;
+    enableMarketDataAggregation: boolean;
+    enableEconomicCalendar: boolean;
+    enableSocialSentiment: boolean;
+    enableIntelligentRouting: boolean;
+    enablePredictiveAnalysis: boolean;
+    prioritySymbols: string[];
   };
 }
 
