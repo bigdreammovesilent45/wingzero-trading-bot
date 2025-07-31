@@ -452,14 +452,89 @@ export const useWingZeroAPI = () => {
     placeOrder,
     closePosition,
 
-    // Phase 5: High-Performance Operations
-    executeHighPerformanceComputation,
-    executeUltraFastTrade,
-    runPerformanceBenchmark,
-    getPerformanceMetrics,
-    getSystemHealth,
+            // Phase 5: High-Performance Operations
+        executeHighPerformanceComputation,
+        executeUltraFastTrade,
+        runPerformanceBenchmark,
+        getPerformanceMetrics,
+        getSystemHealth,
 
-    // Utilities
-    clearError: () => setError(null),
+        // Phase 6: Advanced Integration Operations
+        getIntegratedTradingSignals: useCallback(async (symbol?: string): Promise<any[]> => {
+          if (!api || !(api as any).getIntegratedTradingSignals) {
+            throw new Error('Advanced Integration not available');
+          }
+
+          setIsLoading(true);
+          setError(null);
+
+          try {
+            const signals = await (api as any).getIntegratedTradingSignals(symbol);
+
+            toast({
+              title: "📊 Trading Signals Retrieved",
+              description: `Retrieved ${signals.length} integrated signals${symbol ? ` for ${symbol}` : ''}`,
+            });
+
+            return signals;
+          } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to get trading signals';
+            setError(errorMessage);
+            toast({
+              title: "❌ Failed to Get Signals",
+              description: errorMessage,
+              variant: "destructive",
+            });
+            throw err;
+          } finally {
+            setIsLoading(false);
+          }
+        }, [api, toast]),
+
+        getCrossServiceAlerts: useCallback(async (type?: string, severity?: string): Promise<any[]> => {
+          if (!api || !(api as any).getCrossServiceAlerts) {
+            throw new Error('Advanced Integration not available');
+          }
+
+          try {
+            return await (api as any).getCrossServiceAlerts(type, severity);
+          } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to get alerts';
+            setError(errorMessage);
+            throw err;
+          }
+        }, [api]),
+
+        // Phase 6: Service Component Access
+        getUnifiedBroker: useCallback(() => {
+          if (!api || !(api as any).getUnifiedBroker) {
+            return null;
+          }
+          return (api as any).getUnifiedBroker();
+        }, [api]),
+
+        getMarketDataAggregator: useCallback(() => {
+          if (!api || !(api as any).getMarketDataAggregator) {
+            return null;
+          }
+          return (api as any).getMarketDataAggregator();
+        }, [api]),
+
+        getEconomicCalendar: useCallback(() => {
+          if (!api || !(api as any).getEconomicCalendar) {
+            return null;
+          }
+          return (api as any).getEconomicCalendar();
+        }, [api]),
+
+        getSocialSentiment: useCallback(() => {
+          if (!api || !(api as any).getSocialSentiment) {
+            return null;
+          }
+          return (api as any).getSocialSentiment();
+        }, [api]),
+
+        // Utilities
+        clearError: () => setError(null),
   };
 };

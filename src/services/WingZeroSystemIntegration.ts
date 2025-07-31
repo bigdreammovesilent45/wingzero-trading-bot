@@ -920,6 +920,120 @@ export class WingZeroSystemIntegration {
     }
   }
 
+  private async getAdvancedIntegrationHealth(): Promise<any> {
+    if (!this.advancedIntegration) {
+      return {
+        isRunning: false,
+        status: 'offline',
+        message: 'Advanced Integration (Phase 6) not initialized'
+      };
+    }
+
+    try {
+      const health = await this.advancedIntegration.getSystemHealth();
+      const metrics = this.advancedIntegration.getPerformanceMetrics();
+      
+      return {
+        isRunning: this.advancedIntegration.isSystemInitialized(),
+        status: health.status,
+        components: {
+          unifiedBrokerAPI: health.components.unifiedBrokerAPI.status,
+          orderManagement: health.components.orderManagement.status,
+          positionReconciliation: health.components.positionReconciliation.status,
+          marketDataAggregator: health.components.marketDataAggregator.status,
+          economicCalendar: health.components.economicCalendar.status,
+          socialSentiment: health.components.socialSentiment.status
+        },
+        performance: {
+          totalThroughput: health.performance.totalThroughput,
+          averageLatency: health.performance.averageLatency,
+          errorRate: health.performance.errorRate,
+          memoryUsage: health.performance.memoryUsage,
+          cpuUsage: health.performance.cpuUsage
+        },
+        integration: {
+          crossServiceEvents: health.integration.crossServiceEvents,
+          intelligentRoutingDecisions: health.integration.intelligentRoutingDecisions,
+          predictiveAccuracy: health.integration.predictiveAccuracy,
+          autoFailoverEvents: health.integration.autoFailoverEvents
+        },
+        metrics: {
+          totalSignalsGenerated: metrics.totalSignalsGenerated,
+          totalAlertsGenerated: metrics.totalAlertsGenerated,
+          totalOrdersExecuted: metrics.totalOrdersExecuted,
+          averageSignalAccuracy: metrics.averageSignalAccuracy,
+          systemUptime: metrics.systemUptime
+        },
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      console.error('❌ Error getting advanced integration health:', error);
+      return {
+        isRunning: false,
+        status: 'offline',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        lastUpdate: Date.now()
+      };
+    }
+  }
+
+  private async getAdvancedIntegrationHealth(): Promise<any> {
+    if (!this.advancedIntegration) {
+      return {
+        isRunning: false,
+        status: 'offline',
+        message: 'Advanced Integration (Phase 6) not initialized'
+      };
+    }
+
+    try {
+      const health = await this.advancedIntegration.getSystemHealth();
+      const metrics = this.advancedIntegration.getPerformanceMetrics();
+      
+      return {
+        isRunning: this.advancedIntegration.isSystemInitialized(),
+        status: health.status,
+        components: {
+          unifiedBrokerAPI: health.components.unifiedBrokerAPI.status,
+          orderManagement: health.components.orderManagement.status,
+          positionReconciliation: health.components.positionReconciliation.status,
+          marketDataAggregator: health.components.marketDataAggregator.status,
+          economicCalendar: health.components.economicCalendar.status,
+          socialSentiment: health.components.socialSentiment.status
+        },
+        performance: {
+          totalThroughput: health.performance.totalThroughput,
+          averageLatency: health.performance.averageLatency,
+          errorRate: health.performance.errorRate,
+          memoryUsage: health.performance.memoryUsage,
+          cpuUsage: health.performance.cpuUsage
+        },
+        integration: {
+          crossServiceEvents: health.integration.crossServiceEvents,
+          intelligentRoutingDecisions: health.integration.intelligentRoutingDecisions,
+          predictiveAccuracy: health.integration.predictiveAccuracy,
+          autoFailoverEvents: health.integration.autoFailoverEvents
+        },
+        metrics: {
+          totalSignalsGenerated: metrics.totalSignalsGenerated,
+          totalAlertsGenerated: metrics.totalAlertsGenerated,
+          totalOrdersExecuted: metrics.totalOrdersExecuted,
+          averageSignalAccuracy: metrics.averageSignalAccuracy,
+          systemUptime: metrics.systemUptime
+        },
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      console.error('❌ Error getting advanced integration health:', error);
+      return {
+        isRunning: false,
+        status: 'offline',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        lastUpdate: Date.now()
+      };
+    }
+  }
+
   // Auto-recovery mechanisms
   private async performAutoRecovery(): Promise<void> {
     console.log('🔄 Performing automatic system recovery...');
@@ -1249,11 +1363,74 @@ export class WingZeroSystemIntegration {
     return this.highPerformanceEngine.runPerformanceBenchmark();
   }
 
+  // Phase 6: Advanced Integration Public API
+  getAdvancedIntegration(): WingZeroPhase6Integration | null {
+    return this.advancedIntegration;
+  }
+
+  async getIntegratedTradingSignals(symbol?: string): Promise<any[]> {
+    if (!this.advancedIntegration) {
+      throw new Error('Advanced Integration (Phase 6) not initialized');
+    }
+    return this.advancedIntegration.getTradingSignals(symbol);
+  }
+
+  async getCrossServiceAlerts(type?: string, severity?: string): Promise<any[]> {
+    if (!this.advancedIntegration) {
+      throw new Error('Advanced Integration (Phase 6) not initialized');
+    }
+    return this.advancedIntegration.getCrossServiceAlerts(type, severity);
+  }
+
+  async subscribeToAdvancedIntegration(callback: (data: any) => void, filters?: any): Promise<string> {
+    if (!this.advancedIntegration) {
+      throw new Error('Advanced Integration (Phase 6) not initialized');
+    }
+    return this.advancedIntegration.subscribe(callback, filters);
+  }
+
+  async unsubscribeFromAdvancedIntegration(subscriptionId: string): Promise<void> {
+    if (!this.advancedIntegration) {
+      throw new Error('Advanced Integration (Phase 6) not initialized');
+    }
+    return this.advancedIntegration.unsubscribe(subscriptionId);
+  }
+
+  // Phase 6: Service Component Access
+  getUnifiedBroker() {
+    return this.advancedIntegration?.getUnifiedBroker() || null;
+  }
+
+  getOrderManagement() {
+    return this.advancedIntegration?.getOrderManagement() || null;
+  }
+
+  getPositionReconciliation() {
+    return this.advancedIntegration?.getPositionReconciliation() || null;
+  }
+
+  getMarketDataAggregator() {
+    return this.advancedIntegration?.getMarketDataAggregator() || null;
+  }
+
+  getEconomicCalendar() {
+    return this.advancedIntegration?.getEconomicCalendar() || null;
+  }
+
+  getSocialSentiment() {
+    return this.advancedIntegration?.getSocialSentiment() || null;
+  }
+
   private async cleanup(): Promise<void> {
     this.stopHealthMonitoring();
     
     if (this.isRunning) {
       await this.stop();
+    }
+    
+    // Shutdown Phase 6 components
+    if (this.advancedIntegration) {
+      await this.advancedIntegration.shutdown();
     }
     
     // Shutdown Phase 5 components
@@ -1275,6 +1452,7 @@ export class WingZeroSystemIntegration {
     this.aiBrain = null;
     this.advancedFinancials = null;
     this.highPerformanceEngine = null;
+    this.advancedIntegration = null;
   }
 
   // Factory method for easy setup

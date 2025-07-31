@@ -566,6 +566,7 @@ export class EnhancedWingZeroAPI {
       enableAIBrain: true,
       enableAdvancedFinancials: true,
       enableHighPerformance: true,
+      enableAdvancedIntegration: true,
       maxConcurrentOperations: 100,
       healthCheckInterval: 30000,
       autoRecoveryEnabled: true,
@@ -757,6 +758,96 @@ export class EnhancedWingZeroAPI {
     }
   }
 
+  // Phase 6: Advanced Integration API
+  async getIntegratedTradingSignals(symbol?: string): Promise<any[]> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`📊 Getting integrated trading signals${symbol ? ` for ${symbol}` : ''}`);
+
+      const signals = await systemIntegration.getIntegratedTradingSignals(symbol);
+
+      console.log(`✅ Retrieved ${signals.length} integrated trading signals`);
+      return signals;
+
+    } catch (error) {
+      console.error('❌ Failed to get integrated trading signals:', error);
+      throw error;
+    }
+  }
+
+  async getCrossServiceAlerts(type?: string, severity?: string): Promise<any[]> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`🚨 Getting cross-service alerts${type ? ` of type ${type}` : ''}${severity ? ` with severity ${severity}` : ''}`);
+
+      const alerts = await systemIntegration.getCrossServiceAlerts(type, severity);
+
+      console.log(`✅ Retrieved ${alerts.length} cross-service alerts`);
+      return alerts;
+
+    } catch (error) {
+      console.error('❌ Failed to get cross-service alerts:', error);
+      throw error;
+    }
+  }
+
+  async subscribeToAdvancedIntegration(callback: (data: any) => void, filters?: any): Promise<string> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('📡 Subscribing to advanced integration events');
+
+      const subscriptionId = await systemIntegration.subscribeToAdvancedIntegration(callback, filters);
+
+      console.log(`✅ Advanced integration subscription created: ${subscriptionId}`);
+      return subscriptionId;
+
+    } catch (error) {
+      console.error('❌ Failed to subscribe to advanced integration:', error);
+      throw error;
+    }
+  }
+
+  // Phase 6: Service Component Access
+  getUnifiedBroker() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getUnifiedBroker() || null;
+  }
+
+  getOrderManagement() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getOrderManagement() || null;
+  }
+
+  getMarketDataAggregator() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getMarketDataAggregator() || null;
+  }
+
+  getEconomicCalendar() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getEconomicCalendar() || null;
+  }
+
+  getSocialSentiment() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getSocialSentiment() || null;
+  }
+
   // Secure High-Performance Operations (Phase 4 + Phase 5)
   async executeSecureHighPerformanceOperation(operation: any, encryptionLevel: string = 'AES-256'): Promise<any> {
     const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
@@ -790,5 +881,95 @@ export class EnhancedWingZeroAPI {
       console.error('❌ Secure high-performance operation failed:', error);
       throw error;
     }
+  }
+
+  // Phase 6: Advanced Integration API
+  async getIntegratedTradingSignals(symbol?: string): Promise<any[]> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`📊 Getting integrated trading signals${symbol ? ` for ${symbol}` : ''}`);
+
+      const signals = await systemIntegration.getIntegratedTradingSignals(symbol);
+
+      console.log(`✅ Retrieved ${signals.length} integrated trading signals`);
+      return signals;
+
+    } catch (error) {
+      console.error('❌ Failed to get integrated trading signals:', error);
+      throw error;
+    }
+  }
+
+  async getCrossServiceAlerts(type?: string, severity?: string): Promise<any[]> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log(`🚨 Getting cross-service alerts${type ? ` of type ${type}` : ''}${severity ? ` with severity ${severity}` : ''}`);
+
+      const alerts = await systemIntegration.getCrossServiceAlerts(type, severity);
+
+      console.log(`✅ Retrieved ${alerts.length} cross-service alerts`);
+      return alerts;
+
+    } catch (error) {
+      console.error('❌ Failed to get cross-service alerts:', error);
+      throw error;
+    }
+  }
+
+  async subscribeToAdvancedIntegration(callback: (data: any) => void, filters?: any): Promise<string> {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+
+    if (!systemIntegration) {
+      throw new Error('System Integration not initialized. Call EnhancedWingZeroAPI.initializeSystemIntegration() first');
+    }
+
+    try {
+      console.log('📡 Subscribing to advanced integration events');
+
+      const subscriptionId = await systemIntegration.subscribeToAdvancedIntegration(callback, filters);
+
+      console.log(`✅ Advanced integration subscription created: ${subscriptionId}`);
+      return subscriptionId;
+
+    } catch (error) {
+      console.error('❌ Failed to subscribe to advanced integration:', error);
+      throw error;
+    }
+  }
+
+  // Phase 6: Service Component Access
+  getUnifiedBroker() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getUnifiedBroker() || null;
+  }
+
+  getOrderManagement() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getOrderManagement() || null;
+  }
+
+  getMarketDataAggregator() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getMarketDataAggregator() || null;
+  }
+
+  getEconomicCalendar() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getEconomicCalendar() || null;
+  }
+
+  getSocialSentiment() {
+    const systemIntegration = EnhancedWingZeroAPI.getSystemIntegration();
+    return systemIntegration?.getSocialSentiment() || null;
   }
 }
