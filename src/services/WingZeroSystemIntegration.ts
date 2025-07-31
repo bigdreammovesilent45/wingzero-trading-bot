@@ -575,6 +575,70 @@ export class WingZeroSystemIntegration {
     console.log('✅ Advanced Integration (Phase 6) initialized and operational');
   }
 
+  private async initializeAdvancedFeatures(): Promise<void> {
+    if (!this.config.enableAdvancedFeatures) {
+      console.log('⚠️ Advanced Features (Phase 7) disabled in configuration');
+      return;
+    }
+
+    console.log('🚀 Initializing Advanced Features (Phase 7)...');
+
+    const defaultConfig = {
+      socialTrading: {
+        enabled: true,
+        maxCopyPositions: 100,
+        defaultCopyAmount: 1000,
+        maxTraders: 10000,
+        performanceUpdateInterval: 60000,
+        riskLimits: {
+          maxCopyAmount: 10000,
+          maxDrawdown: 0.15,
+          maxSlippage: 0.02
+        }
+      },
+      institutional: {
+        enabled: true,
+        primeBrokerage: {
+          enabled: true,
+          maxBrokers: 5,
+          nettingFrequency: 300000,
+          supportedBrokers: ['goldman_sachs', 'morgan_stanley', 'jp_morgan', 'citi', 'barclays']
+        },
+        algorithmicTrading: {
+          enabled: true,
+          supportedAlgorithms: ['TWAP', 'VWAP', 'Iceberg', 'POV', 'Implementation_Shortfall'],
+          maxConcurrentOrders: 1000,
+          maxOrderSize: 1000000
+        },
+        portfolioAttribution: {
+          enabled: true,
+          benchmarks: ['SP500', 'NASDAQ', 'DOW', 'RUSSELL2000', 'VIX'],
+          analysisFrequency: 3600000,
+          attributionMethods: ['brinson', 'fama_french', 'carhart']
+        }
+      },
+      integration: {
+        realTimeUpdates: true,
+        dataSync: true,
+        crossServiceMessaging: true,
+        sharedCache: true,
+        eventDriven: true,
+        performanceMonitoring: true
+      }
+    };
+
+    // Merge with user configuration if provided
+    const phase7Config = {
+      ...defaultConfig,
+      ...this.config.advancedFeaturesConfig
+    };
+
+    this.advancedFeatures = new WingZeroPhase7Integration(phase7Config);
+    await this.advancedFeatures.initialize();
+    
+    console.log('✅ Advanced Features (Phase 7) initialized and operational');
+  }
+
   // Service integration setup
   private async setupServiceIntegrations(): Promise<void> {
     console.log('🔗 Setting up service integrations...');
@@ -656,7 +720,8 @@ export class WingZeroSystemIntegration {
           aiBrain: await this.getAIBrainHealth(),
           advancedFinancials: await this.getAdvancedFinancialsHealth(),
           highPerformance: await this.getHighPerformanceHealth(),
-          advancedIntegration: await this.getAdvancedIntegrationHealth()
+          advancedIntegration: await this.getAdvancedIntegrationHealth(),
+          advancedFeatures: await this.getAdvancedFeaturesHealthInternal()
         },
         lastHealthCheck: Date.now()
       };
@@ -1483,6 +1548,169 @@ export class WingZeroSystemIntegration {
     return this.advancedIntegration?.getSocialSentiment() || null;
   }
 
+  // Phase 7: Advanced Features Public API
+  getCopyTradingEngine() {
+    return this.advancedFeatures?.getCopyTradingEngine() || null;
+  }
+
+  getPerformanceAnalyticsEngine() {
+    return this.advancedFeatures?.getPerformanceAnalyticsEngine() || null;
+  }
+
+  getSocialNetworkEngine() {
+    return this.advancedFeatures?.getSocialNetworkEngine() || null;
+  }
+
+  getPrimeBrokerageEngine() {
+    return this.advancedFeatures?.getPrimeBrokerageEngine() || null;
+  }
+
+  getAlgorithmicTradingEngine() {
+    return this.advancedFeatures?.getAlgorithmicTradingEngine() || null;
+  }
+
+  getPortfolioAttributionEngine() {
+    return this.advancedFeatures?.getPortfolioAttributionEngine() || null;
+  }
+
+  getAdvancedTradingSignals() {
+    return this.advancedFeatures?.getActiveTradingSignals() || new Map();
+  }
+
+  getAdvancedAlerts() {
+    return this.advancedFeatures?.getActiveAlerts() || new Map();
+  }
+
+  async generateAdvancedTradingSignal(symbol: string) {
+    if (!this.advancedFeatures) {
+      throw new Error('Advanced Features (Phase 7) not initialized');
+    }
+    return await this.advancedFeatures.generateAdvancedTradingSignal(symbol);
+  }
+
+  getAdvancedFeaturesHealth() {
+    if (!this.advancedFeatures) {
+      return {
+        isRunning: false,
+        overallStatus: 'offline',
+        components: {
+          socialTrading: 'offline',
+          copyTrading: 'offline',
+          performanceAnalytics: 'offline',
+          socialNetwork: 'offline',
+          primeBrokerage: 'offline',
+          algorithmicTrading: 'offline',
+          portfolioAttribution: 'offline',
+        },
+        metrics: {
+          totalTradingSignals: 0,
+          activeCopyRelationships: 0,
+          algorithmicOrders: 0,
+          attributionAnalyses: 0,
+          crossServiceMessages: 0,
+        },
+        lastUpdate: 0
+      };
+    }
+
+    const metrics = this.advancedFeatures.getMetrics();
+    return {
+      isRunning: true,
+      overallStatus: 'healthy',
+      components: {
+        socialTrading: 'healthy',
+        copyTrading: 'healthy',
+        performanceAnalytics: 'healthy',
+        socialNetwork: 'healthy',
+        primeBrokerage: 'healthy',
+        algorithmicTrading: 'healthy',
+        portfolioAttribution: 'healthy',
+      },
+      metrics: {
+        totalTradingSignals: metrics.socialTrading.totalCopyTrades + metrics.institutional.algorithmicOrders,
+        activeCopyRelationships: metrics.socialTrading.activeCopyRelationships,
+        algorithmicOrders: metrics.institutional.algorithmicOrders,
+        attributionAnalyses: metrics.institutional.attributionAnalyses,
+        crossServiceMessages: metrics.crossService.messagesPassed,
+      },
+      lastUpdate: Date.now()
+    };
+  }
+
+  private async getAdvancedFeaturesHealthInternal() {
+    if (!this.advancedFeatures) {
+      return {
+        isRunning: false,
+        overallStatus: 'offline',
+        components: {
+          socialTrading: 'offline',
+          copyTrading: 'offline',
+          performanceAnalytics: 'offline',
+          socialNetwork: 'offline',
+          primeBrokerage: 'offline',
+          algorithmicTrading: 'offline',
+          portfolioAttribution: 'offline',
+        },
+        metrics: {
+          totalTradingSignals: 0,
+          activeCopyRelationships: 0,
+          algorithmicOrders: 0,
+          attributionAnalyses: 0,
+          crossServiceMessages: 0,
+        },
+        lastUpdate: 0
+      };
+    }
+
+    try {
+      const metrics = this.advancedFeatures.getMetrics();
+      return {
+        isRunning: true,
+        overallStatus: 'healthy',
+        components: {
+          socialTrading: 'healthy',
+          copyTrading: 'healthy',
+          performanceAnalytics: 'healthy',
+          socialNetwork: 'healthy',
+          primeBrokerage: 'healthy',
+          algorithmicTrading: 'healthy',
+          portfolioAttribution: 'healthy',
+        },
+        metrics: {
+          totalTradingSignals: metrics.socialTrading.totalCopyTrades + metrics.institutional.algorithmicOrders,
+          activeCopyRelationships: metrics.socialTrading.activeCopyRelationships,
+          algorithmicOrders: metrics.institutional.algorithmicOrders,
+          attributionAnalyses: metrics.institutional.attributionAnalyses,
+          crossServiceMessages: metrics.crossService.messagesPassed,
+        },
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      console.error('Error getting Phase 7 health:', error);
+      return {
+        isRunning: false,
+        overallStatus: 'critical',
+        components: {
+          socialTrading: 'critical',
+          copyTrading: 'critical',
+          performanceAnalytics: 'critical',
+          socialNetwork: 'critical',
+          primeBrokerage: 'critical',
+          algorithmicTrading: 'critical',
+          portfolioAttribution: 'critical',
+        },
+        metrics: {
+          totalTradingSignals: 0,
+          activeCopyRelationships: 0,
+          algorithmicOrders: 0,
+          attributionAnalyses: 0,
+          crossServiceMessages: 0,
+        },
+        lastUpdate: Date.now()
+      };
+    }
+  }
+
   private async cleanup(): Promise<void> {
     this.stopHealthMonitoring();
     
@@ -1520,6 +1748,7 @@ export class WingZeroSystemIntegration {
     this.advancedFinancials = null;
     this.highPerformanceEngine = null;
     this.advancedIntegration = null;
+    this.advancedFeatures = null;
   }
 
   // Factory method for easy setup
