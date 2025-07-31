@@ -50,6 +50,18 @@ interface SystemHealth {
       completedJobs: number;
       averageTransactionTime: number;
     };
+    aiBrain: {
+      isRunning: boolean;
+      overallStatus: string;
+      componentStatus: {
+        sentiment_analyzer: string;
+        predictive_models: string;
+        pattern_recognition: string;
+        risk_scoring: string;
+        strategy_optimization: string;
+      };
+      lastUpdate: number;
+    };
   };
   lastHealthCheck: number;
 }
@@ -279,6 +291,25 @@ export class WingZeroSystemIntegration {
       jobProcessingInterval: 5000,
       maxConcurrentJobs: 5
     });
+  }
+
+  private async initializeAIBrain(): Promise<void> {
+    console.log('🧠 Initializing Wing Zero AI Brain...');
+    
+    this.aiBrain = new WingZeroAIBrain({
+      enable_sentiment_analysis: true,
+      enable_predictive_modeling: true,
+      enable_pattern_recognition: true,
+      enable_risk_scoring: true,
+      enable_strategy_optimization: true,
+      decision_threshold: 0.7,
+      max_concurrent_positions: 5,
+      risk_tolerance: 'moderate',
+      update_frequency: 60000
+    });
+
+    await this.aiBrain.start();
+    console.log('✅ Wing Zero AI Brain initialized and started');
   }
 
   // Service integration setup

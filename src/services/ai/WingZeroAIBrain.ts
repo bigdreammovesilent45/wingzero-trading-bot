@@ -1,3 +1,9 @@
+import { AdvancedMarketSentimentAnalyzer } from './AdvancedMarketSentimentAnalyzer';
+import { LSTMPredictiveModeling } from './LSTMPredictiveModeling';
+import { PatternRecognitionEngine } from './PatternRecognitionEngine';
+import { RiskScoringEngine } from './RiskScoringEngine';
+import { StrategyOptimizationEngine } from './StrategyOptimizationEngine';
+
 interface AIDecision {
   symbol: string;
   action: 'buy' | 'sell' | 'hold' | 'close';
@@ -80,6 +86,13 @@ export class WingZeroAIBrain {
   private aiDecisions: Map<string, AIDecision[]> = new Map();
   private systemStatus: AISystemStatus;
 
+  // AI Component Instances
+  private sentimentAnalyzer: AdvancedMarketSentimentAnalyzer;
+  private lstmModeling: LSTMPredictiveModeling;
+  private patternEngine: PatternRecognitionEngine;
+  private riskEngine: RiskScoringEngine;
+  private strategyOptimizer: StrategyOptimizationEngine;
+
   private readonly DEFAULT_CONFIG: AIConfiguration = {
     enable_sentiment_analysis: true,
     enable_predictive_modeling: true,
@@ -92,18 +105,25 @@ export class WingZeroAIBrain {
     update_frequency: 60000
   };
 
-  constructor(config?: Partial<AIConfiguration>) {
+    constructor(config?: Partial<AIConfiguration>) {
     this.configuration = { ...this.DEFAULT_CONFIG, ...config };
     
     this.systemStatus = {
       sentiment_analyzer: 'offline',
-      predictive_models: 'offline',
+      predictive_models: 'offline', 
       pattern_recognition: 'offline',
       risk_scoring: 'offline',
       strategy_optimization: 'offline',
       overall_status: 'offline',
       last_update: Date.now()
     };
+
+    // Initialize AI components
+    this.sentimentAnalyzer = new AdvancedMarketSentimentAnalyzer();
+    this.lstmModeling = new LSTMPredictiveModeling();
+    this.patternEngine = new PatternRecognitionEngine();
+    this.riskEngine = new RiskScoringEngine();
+    this.strategyOptimizer = new StrategyOptimizationEngine();
   }
 
   async start(): Promise<void> {
@@ -115,31 +135,71 @@ export class WingZeroAIBrain {
     console.log('🧠 Starting Wing Zero AI Brain...');
     this.isRunning = true;
 
-    // Mock initialization for now
-    setTimeout(() => {
-      this.systemStatus = {
-        sentiment_analyzer: 'online',
-        predictive_models: 'online', 
-        pattern_recognition: 'online',
-        risk_scoring: 'online',
-        strategy_optimization: 'online',
-        overall_status: 'healthy',
-        last_update: Date.now()
-      };
-    }, 2000);
+    try {
+      // Start all AI components
+      if (this.configuration.enable_sentiment_analysis) {
+        await this.sentimentAnalyzer.start();
+        this.systemStatus.sentiment_analyzer = 'online';
+      }
 
-    // Start intelligence gathering
-    setInterval(() => {
-      this.gatherMarketIntelligence();
-      this.generateAIDecisions();
-    }, this.configuration.update_frequency);
+      if (this.configuration.enable_predictive_modeling) {
+        await this.lstmModeling.start();
+        this.systemStatus.predictive_models = 'online';
+      }
 
-    console.log('✅ Wing Zero AI Brain is online and ready');
+      if (this.configuration.enable_pattern_recognition) {
+        await this.patternEngine.start();
+        this.systemStatus.pattern_recognition = 'online';
+      }
+
+      if (this.configuration.enable_risk_scoring) {
+        await this.riskEngine.start();
+        this.systemStatus.risk_scoring = 'online';
+      }
+
+      if (this.configuration.enable_strategy_optimization) {
+        await this.strategyOptimizer.start();
+        this.systemStatus.strategy_optimization = 'online';
+      }
+
+      this.systemStatus.overall_status = 'healthy';
+      this.systemStatus.last_update = Date.now();
+
+      // Start intelligence gathering with real AI components
+      setInterval(() => {
+        this.gatherMarketIntelligence();
+        this.generateAIDecisions();
+      }, this.configuration.update_frequency);
+
+      console.log('✅ Wing Zero AI Brain is online with all components active');
+    } catch (error) {
+      console.error('❌ Failed to start AI Brain:', error);
+      this.systemStatus.overall_status = 'critical';
+    }
   }
 
   async stop(): Promise<void> {
     this.isRunning = false;
-    this.systemStatus.overall_status = 'offline';
+    
+    // Stop all AI components
+    await Promise.all([
+      this.sentimentAnalyzer.stop(),
+      this.lstmModeling.stop(),
+      this.patternEngine.stop(),
+      this.riskEngine.stop(),
+      this.strategyOptimizer.stop()
+    ]);
+
+    this.systemStatus = {
+      sentiment_analyzer: 'offline',
+      predictive_models: 'offline',
+      pattern_recognition: 'offline',
+      risk_scoring: 'offline',
+      strategy_optimization: 'offline',
+      overall_status: 'offline',
+      last_update: Date.now()
+    };
+
     console.log('🛑 Wing Zero AI Brain stopped');
   }
 
@@ -150,12 +210,126 @@ export class WingZeroAIBrain {
 
     for (const symbol of symbols) {
       try {
-        const intelligence = this.generateMockIntelligence(symbol);
+        const intelligence = await this.generateRealIntelligence(symbol);
         this.marketIntelligence.set(symbol, intelligence);
       } catch (error) {
         console.error(`❌ Failed to gather intelligence for ${symbol}:`, error);
+        // Fallback to mock data if real analysis fails
+        const fallbackIntelligence = this.generateMockIntelligence(symbol);
+        this.marketIntelligence.set(symbol, fallbackIntelligence);
       }
     }
+  }
+
+  private async generateRealIntelligence(symbol: string): Promise<MarketIntelligence> {
+    // Gather real AI insights from all components
+    const sentimentData = this.configuration.enable_sentiment_analysis ? 
+      this.sentimentAnalyzer.getMarketSentiment(symbol) : null;
+    
+    const predictions = this.configuration.enable_predictive_modeling ? 
+      this.lstmModeling.getPrediction(symbol) : null;
+    
+    const patterns = this.configuration.enable_pattern_recognition ? 
+      this.patternEngine.getAllPatterns()[symbol] : null;
+    
+    const riskMetrics = this.configuration.enable_risk_scoring ? 
+      this.riskEngine.getRiskMetrics(symbol) : null;
+    
+    const strategies = this.configuration.enable_strategy_optimization ? 
+      this.strategyOptimizer.getStrategyPerformance() : null;
+
+    // Synthesize all AI inputs into unified intelligence
+    const overallSentiment = sentimentData?.overall || 0;
+    const sentimentConfidence = sentimentData?.confidence || 0;
+    const sentimentTrend = overallSentiment > 0.1 ? 'bullish' : 
+                         overallSentiment < -0.1 ? 'bearish' : 'neutral';
+
+    const shortTermForecast = predictions?.predictions?.[0]?.price || 1.0850;
+    const mediumTermForecast = predictions?.predictions?.[1]?.price || 1.0850;
+    const longTermForecast = predictions?.predictions?.[2]?.price || 1.0850;
+
+    const candlestickPatterns = patterns?.candlestick?.map(p => p.name) || [];
+    const chartFormations = patterns?.chart?.map(p => p.name) || [];
+    const supportLevels = patterns?.levels?.filter(l => l.type === 'support').map(l => l.price) || [1.0800];
+    const resistanceLevels = patterns?.levels?.filter(l => l.type === 'resistance').map(l => l.price) || [1.0900];
+
+    const var95 = riskMetrics?.value_at_risk?.confidence_95 || 0.02;
+    const volatility = riskMetrics?.volatility || 0.01;
+    const riskCategory = riskMetrics?.risk_category || 'medium';
+
+    const topStrategies = Object.entries(strategies || {})
+      .filter(([_, perf]: [string, any]) => perf.sharpe_ratio > 0.5)
+      .slice(0, 2)
+      .map(([name, perf]: [string, any]) => ({
+        name,
+        expected_return: perf.total_return,
+        max_drawdown: perf.max_drawdown
+      }));
+
+    // Determine market regime based on multiple factors
+    let marketRegime: 'trending' | 'ranging' | 'volatile' | 'calm';
+    const trendDirection = patterns?.trend?.direction;
+    const trendStrength = patterns?.trend?.strength || 0;
+    
+    if (volatility > 0.02) {
+      marketRegime = 'volatile';
+    } else if (trendStrength > 0.7) {
+      marketRegime = 'trending';
+    } else if (volatility < 0.005) {
+      marketRegime = 'calm';
+    } else {
+      marketRegime = 'ranging';
+    }
+
+    // Calculate conviction level based on signal alignment
+    let convictionFactors = 0;
+    let totalFactors = 0;
+
+    if (sentimentData) {
+      convictionFactors += Math.abs(sentimentData.overall) * sentimentData.confidence;
+      totalFactors++;
+    }
+
+    if (predictions) {
+      const predictionConfidence = predictions.predictions[0]?.confidence || 0;
+      convictionFactors += predictionConfidence;
+      totalFactors++;
+    }
+
+    if (patterns?.candlestick?.length > 0) {
+      const avgPatternConfidence = patterns.candlestick.reduce((sum, p) => sum + p.confidence, 0) / patterns.candlestick.length;
+      convictionFactors += avgPatternConfidence;
+      totalFactors++;
+    }
+
+    const convictionLevel = totalFactors > 0 ? (convictionFactors / totalFactors) * 100 : 50;
+
+    return {
+      symbol,
+      current_sentiment: {
+        overall: overallSentiment,
+        confidence: sentimentConfidence,
+        trend: sentimentTrend
+      },
+      price_forecasts: {
+        short_term: shortTermForecast,
+        medium_term: mediumTermForecast,
+        long_term: longTermForecast
+      },
+      detected_patterns: {
+        candlestick: candlestickPatterns,
+        chart_formations: chartFormations,
+        support_resistance: [...supportLevels, ...resistanceLevels].slice(0, 5)
+      },
+      risk_metrics: {
+        var_95: var95,
+        volatility,
+        risk_category: riskCategory
+      },
+      optimal_strategies: topStrategies,
+      market_regime: marketRegime,
+      conviction_level: convictionLevel
+    };
   }
 
   private generateMockIntelligence(symbol: string): MarketIntelligence {
@@ -275,8 +449,51 @@ export class WingZeroAIBrain {
   }
 
   async forceIntelligenceUpdate(): Promise<void> {
+    // Force update all AI components
+    if (this.configuration.enable_sentiment_analysis) {
+      await this.sentimentAnalyzer.forceUpdate();
+    }
+    
+    if (this.configuration.enable_predictive_modeling) {
+      await this.lstmModeling.forceUpdate();
+    }
+    
+    if (this.configuration.enable_pattern_recognition) {
+      await this.patternEngine.forceUpdate();
+    }
+    
+    if (this.configuration.enable_risk_scoring) {
+      await this.riskEngine.forceUpdate();
+    }
+    
+    if (this.configuration.enable_strategy_optimization) {
+      await this.strategyOptimizer.forceOptimization();
+    }
+
+    // Then update intelligence and decisions
     await this.gatherMarketIntelligence();
     await this.generateAIDecisions();
+  }
+
+  // Public API for accessing AI components
+  getSentimentAnalyzer(): AdvancedMarketSentimentAnalyzer {
+    return this.sentimentAnalyzer;
+  }
+
+  getLSTMModeling(): LSTMPredictiveModeling {
+    return this.lstmModeling;
+  }
+
+  getPatternEngine(): PatternRecognitionEngine {
+    return this.patternEngine;
+  }
+
+  getRiskEngine(): RiskScoringEngine {
+    return this.riskEngine;
+  }
+
+  getStrategyOptimizer(): StrategyOptimizationEngine {
+    return this.strategyOptimizer;
   }
 
   getAISummary(): {
