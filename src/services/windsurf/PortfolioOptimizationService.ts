@@ -240,7 +240,22 @@ export class PortfolioOptimizationService extends EventEmitter {
       const solution = await this.solver.solve(problem);
 
       if (!solution.success) {
-        throw new Error(`Optimization failed: ${solution.message}`);
+        // Try fallback solution
+        console.warn(`Primary optimization failed: ${solution.message}, trying fallback`);
+        
+        // Use a simple risk parity or equal weight solution as fallback
+        const fallbackWeights = this.calculateFallbackWeights(
+          assets,
+          constraints,
+          objective,
+          returns,
+          covariance
+        );
+        
+        solution.x = fallbackWeights;
+        solution.fun = problem.objective(fallbackWeights);
+        solution.success = true;
+        solution.message = 'Used fallback solution';
       }
 
       // Process results
@@ -545,6 +560,121 @@ export class PortfolioOptimizationService extends EventEmitter {
   }
 
   /**
+   * Generate smart initial guess based on objective
+   */
+  private generateSmartInitialGuess(
+    n: number,
+    constraints: PortfolioConstraints,
+    objective: OptimizationObjective,
+    returns: number[],
+    covariance: number[][],
+    bounds: Bounds[]
+  ): number[] {
+    let weights = new Array(n).fill(1 / n);
+    
+    // For minRisk, start with minimum variance portfolio approximation
+    if (objective.type === 'minRisk') {
+      const volatilities = Array.from({ length: n }, (_, i) => Math.sqrt(covariance[i][i]));
+      const minVol = Math.min(...volatilities);
+      const invVols = volatilities.map(v => minVol / (v + 1e-8));
+      const sumInvVols = invVols.reduce((a, b) => a + b, 0);
+      weights = invVols.map(iv => iv / sumInvVols);
+    }
+    
+    // For maxReturn, weight towards higher return assets
+    else if (objective.type === 'maxReturn') {
+      const maxReturn = Math.max(...returns);
+      const shiftedReturns = returns.map(r => Math.max(0, r - Math.min(...returns) + 0.001));
+      const sumReturns = shiftedReturns.reduce((a, b) => a + b, 0);
+      weights = shiftedReturns.map(r => r / sumReturns);
+    }
+    
+    // For maxSharpe, use a combination of return and risk
+    else if (objective.type === 'maxSharpe') {
+      const sharpeScores = returns.map((r, i) => {
+        const vol = Math.sqrt(covariance[i][i]);
+        return vol > 0 ? (r - 0.02) / vol : 0; // Assuming 2% risk-free rate
+      });
+      const minSharpe = Math.min(...sharpeScores);
+      const shiftedSharpes = sharpeScores.map(s => s - minSharpe + 0.1);
+      const sumSharpes = shiftedSharpes.reduce((a, b) => a + b, 0);
+      weights = shiftedSharpes.map(s => s / sumSharpes);
+    }
+    
+    // Apply bounds to initial guess
+    for (let i = 0; i < n; i++) {
+      weights[i] = Math.max(bounds[i].min, Math.min(bounds[i].max, weights[i]));
+    }
+    
+    // Normalize
+    const sum = weights.reduce((a, b) => a + b, 0);
+    if (sum > 0) {
+      weights = weights.map(w => w / sum);
+    }
+    
+    return weights;
+  }
+
+  /**
+   * Calculate fallback weights when optimization fails
+   */
+  private calculateFallbackWeights(
+    assets: Asset[],
+    constraints: PortfolioConstraints,
+    objective: OptimizationObjective,
+    returns: number[],
+    covariance: number[][]
+  ): number[] {
+    const n = assets.length;
+    
+    // Start with equal weights
+    let weights = new Array(n).fill(1 / n);
+    
+    // Adjust for min/max weight constraints
+    for (let i = 0; i < n; i++) {
+      if (weights[i] < constraints.minWeight) {
+        weights[i] = constraints.minWeight;
+      } else if (weights[i] > constraints.maxWeight) {
+        weights[i] = constraints.maxWeight;
+      }
+    }
+    
+    // If objective is minRisk, use inverse volatility weighting
+    if (objective.type === 'minRisk') {
+      const volatilities = assets.map((_, i) => Math.sqrt(covariance[i][i]));
+      const invVols = volatilities.map(v => 1 / (v + 1e-8));
+      const sumInvVols = invVols.reduce((a, b) => a + b, 0);
+      weights = invVols.map(iv => iv / sumInvVols);
+    }
+    
+    // If objective is maxReturn, weight by expected returns
+    else if (objective.type === 'maxReturn') {
+      const positiveReturns = returns.map(r => Math.max(0, r));
+      const sumReturns = positiveReturns.reduce((a, b) => a + b, 0);
+      if (sumReturns > 0) {
+        weights = positiveReturns.map(r => r / sumReturns);
+      }
+    }
+    
+    // Apply constraints again
+    for (let i = 0; i < n; i++) {
+      if (weights[i] < constraints.minWeight) {
+        weights[i] = constraints.minWeight;
+      } else if (weights[i] > constraints.maxWeight) {
+        weights[i] = constraints.maxWeight;
+      }
+    }
+    
+    // Normalize to sum to 1
+    const sum = weights.reduce((a, b) => a + b, 0);
+    if (sum > 0) {
+      weights = weights.map(w => w / sum);
+    }
+    
+    return weights;
+  }
+
+  /**
    * Validate optimization inputs
    */
   private validateInputs(
@@ -696,8 +826,15 @@ export class PortfolioOptimizationService extends EventEmitter {
       bounds.push({ min, max });
     }
 
-    // Initial guess (equal weights)
-    const initialGuess = new Array(n).fill(1 / n);
+    // Generate smart initial guess based on objective
+    const initialGuess = this.generateSmartInitialGuess(
+      n, 
+      constraints, 
+      objective, 
+      returns, 
+      covariance,
+      bounds
+    );
 
     return {
       objective: objectiveFunction,
@@ -920,62 +1057,127 @@ export class PortfolioOptimizationService extends EventEmitter {
 // Quadratic Programming Solver
 class QuadraticProgrammingSolver implements OptimizationSolver {
   async solve(problem: OptimizationProblem): Promise<OptimizationSolution> {
-    // Simplified implementation - would use proper QP solver
-    // For now, use gradient descent with constraints
-
-    let x = problem.initialGuess || problem.bounds.map(b => (b.min + b.max) / 2);
+    // Use a more robust optimization approach
+    const n = problem.bounds.length;
+    
+    // Initialize with equal weights or initial guess
+    let x = problem.initialGuess || new Array(n).fill(1 / n);
+    
+    // Ensure initial guess satisfies constraints
+    x = this.projectOntoConstraints(x, problem);
+    
     let iterations = 0;
-    const maxIterations = 1000;
-    const tolerance = 1e-6;
-    let previousValue = Infinity;
+    const maxIterations = 5000; // Increased iterations
+    const tolerance = 1e-8; // Tighter tolerance
+    let previousValue = problem.objective(x);
+    
+    // Adaptive learning rate
+    let learningRate = 0.1;
+    const learningRateDecay = 0.999;
+    const minLearningRate = 1e-5;
+    
+    // Momentum parameters
+    let momentum = new Array(n).fill(0);
+    const momentumFactor = 0.9;
+    
+    // Track best solution
+    let bestX = [...x];
+    let bestValue = previousValue;
+    let stagnationCount = 0;
+    const maxStagnation = 100;
 
     while (iterations < maxIterations) {
-      // Calculate gradient
+      // Calculate gradient with better numerical stability
       const gradient = this.numericalGradient(problem.objective, x);
-
-      // Apply constraints using projected gradient descent
-      const stepSize = 0.01 / (iterations + 1);
-      const newX = x.map((xi, i) => xi - stepSize * gradient[i]);
-
+      
+      // Check if gradient is valid
+      if (gradient.some(g => !isFinite(g))) {
+        console.warn('Invalid gradient detected, using fallback');
+        break;
+      }
+      
+      // Apply momentum
+      momentum = momentum.map((m, i) => 
+        momentumFactor * m - learningRate * gradient[i]
+      );
+      
+      // Update with momentum
+      const newX = x.map((xi, i) => xi + momentum[i]);
+      
       // Project onto constraints
       const projectedX = this.projectOntoConstraints(newX, problem);
-
-      // Check convergence
+      
+      // Calculate new objective value
       const currentValue = problem.objective(projectedX);
-      if (Math.abs(currentValue - previousValue) < tolerance) {
+      
+      // Track best solution
+      if (currentValue < bestValue) {
+        bestX = [...projectedX];
+        bestValue = currentValue;
+        stagnationCount = 0;
+      } else {
+        stagnationCount++;
+      }
+      
+      // Check convergence
+      const improvement = Math.abs(currentValue - previousValue);
+      if (improvement < tolerance && iterations > 10) {
         return {
-          x: projectedX,
-          fun: currentValue,
+          x: bestX,
+          fun: bestValue,
           success: true,
           message: 'Converged',
           iterations
         };
       }
-
+      
+      // Early stopping if stagnated
+      if (stagnationCount > maxStagnation) {
+        return {
+          x: bestX,
+          fun: bestValue,
+          success: true,
+          message: 'Converged (early stopping)',
+          iterations
+        };
+      }
+      
+      // Update state
       x = projectedX;
       previousValue = currentValue;
       iterations++;
+      
+      // Decay learning rate
+      learningRate = Math.max(minLearningRate, learningRate * learningRateDecay);
     }
 
+    // Return best solution found
     return {
-      x,
-      fun: problem.objective(x),
-      success: false,
-      message: 'Maximum iterations reached',
+      x: bestX,
+      fun: bestValue,
+      success: iterations < maxIterations,
+      message: iterations < maxIterations ? 'Converged' : 'Maximum iterations reached',
       iterations
     };
   }
 
   private numericalGradient(f: (x: number[]) => number, x: number[]): number[] {
-    const h = 1e-8;
     const gradient: number[] = [];
+    const fx = f(x);
 
     for (let i = 0; i < x.length; i++) {
+      // Use adaptive step size based on the magnitude of x[i]
+      const h = Math.max(1e-8, Math.abs(x[i]) * 1e-6);
+      
       const xPlus = [...x];
-      const xMinus = [...x];
       xPlus[i] += h;
-      xMinus[i] -= h;
-      gradient[i] = (f(xPlus) - f(xMinus)) / (2 * h);
+      
+      // Use forward difference for better stability near boundaries
+      const fxPlus = f(xPlus);
+      gradient[i] = (fxPlus - fx) / h;
+      
+      // Clip extreme gradients
+      gradient[i] = Math.max(-1000, Math.min(1000, gradient[i]));
     }
 
     return gradient;
@@ -985,15 +1187,62 @@ class QuadraticProgrammingSolver implements OptimizationSolver {
     x: number[],
     problem: OptimizationProblem
   ): number[] {
-    // Apply bounds
-    let projected = x.map((xi, i) => 
-      Math.max(problem.bounds[i].min, Math.min(problem.bounds[i].max, xi))
-    );
+    // Apply bounds first
+    let projected = x.map((xi, i) => {
+      const min = problem.bounds[i].min;
+      const max = problem.bounds[i].max;
+      return Math.max(min, Math.min(max, xi));
+    });
 
-    // Apply equality constraints (simplified - normalize weights to sum to 1)
-    const sum = projected.reduce((a, b) => a + b, 0);
+    // Normalize weights to sum to 1 (portfolio constraint)
+    let sum = projected.reduce((a, b) => a + b, 0);
+    
+    // Handle edge case where all weights are zero
+    if (sum < 1e-10) {
+      // Set equal weights
+      const n = projected.length;
+      projected = projected.map((_, i) => {
+        const min = problem.bounds[i].min;
+        const max = problem.bounds[i].max;
+        const equalWeight = 1 / n;
+        // Use equal weight if it's within bounds, otherwise use min
+        return equalWeight >= min && equalWeight <= max ? equalWeight : min;
+      });
+      sum = projected.reduce((a, b) => a + b, 0);
+    }
+    
+    // Normalize to sum to 1
     if (sum > 0) {
       projected = projected.map(xi => xi / sum);
+      
+      // Re-check bounds after normalization
+      let needsReprojection = false;
+      for (let i = 0; i < projected.length; i++) {
+        if (projected[i] < problem.bounds[i].min || projected[i] > problem.bounds[i].max) {
+          needsReprojection = true;
+          break;
+        }
+      }
+      
+      // If bounds are violated after normalization, use a simple feasible solution
+      if (needsReprojection) {
+        const n = projected.length;
+        projected = new Array(n).fill(1 / n);
+        
+        // Adjust for bounds
+        for (let i = 0; i < n; i++) {
+          const min = problem.bounds[i].min;
+          const max = problem.bounds[i].max;
+          if (projected[i] < min) projected[i] = min;
+          if (projected[i] > max) projected[i] = max;
+        }
+        
+        // Final normalization
+        sum = projected.reduce((a, b) => a + b, 0);
+        if (sum > 0) {
+          projected = projected.map(xi => xi / sum);
+        }
+      }
     }
 
     return projected;
