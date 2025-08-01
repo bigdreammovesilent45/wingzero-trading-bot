@@ -423,4 +423,83 @@ export class ComplianceService {
   private calculateAveragePriceImprovement(trades: any[]): number {
     return trades.reduce((sum, t) => sum + (t.price_improvement || 0), 0) / trades.length;
   }
+
+  /**
+   * Check MiFID II compliance
+   */
+  static async checkMiFIDII(data: any): Promise<{ compliant: boolean; issues: string[] }> {
+    const issues: string[] = [];
+    
+    // Check best execution requirements
+    if (!data.bestExecutionPolicy) {
+      issues.push('Missing best execution policy');
+    }
+    
+    // Check transaction reporting
+    if (!data.transactionReporting || !data.transactionReporting.enabled) {
+      issues.push('Transaction reporting not enabled');
+    }
+    
+    // Check pre-trade transparency
+    if (!data.preTradeTranparency) {
+      issues.push('Pre-trade transparency requirements not met');
+    }
+    
+    // Check post-trade transparency
+    if (!data.postTradeTranparency) {
+      issues.push('Post-trade transparency requirements not met');
+    }
+    
+    // Check record keeping
+    if (!data.recordKeeping || data.recordKeeping.retentionPeriod < 5) {
+      issues.push('Record keeping must be at least 5 years');
+    }
+    
+    return {
+      compliant: issues.length === 0,
+      issues
+    };
+  }
+
+  /**
+   * Check GDPR compliance
+   */
+  static async checkGDPR(data: any): Promise<{ compliant: boolean; issues: string[] }> {
+    const issues: string[] = [];
+    
+    // Check data privacy policy
+    if (!data.privacyPolicy) {
+      issues.push('Missing privacy policy');
+    }
+    
+    // Check consent management
+    if (!data.consentManagement || !data.consentManagement.enabled) {
+      issues.push('Consent management not implemented');
+    }
+    
+    // Check data subject rights
+    if (!data.dataSubjectRights) {
+      issues.push('Data subject rights not implemented');
+    }
+    
+    // Check data portability
+    if (!data.dataPortability) {
+      issues.push('Data portability not implemented');
+    }
+    
+    // Check right to erasure
+    if (!data.rightToErasure) {
+      issues.push('Right to erasure (right to be forgotten) not implemented');
+    }
+    
+    // Check data breach notification
+    if (!data.breachNotification || data.breachNotification.timeframe > 72) {
+      issues.push('Data breach notification must be within 72 hours');
+    }
+    
+    return {
+      compliant: issues.length === 0,
+      issues
+    };
+  }
 }

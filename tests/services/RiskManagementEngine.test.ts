@@ -1,4 +1,4 @@
-import { RiskManagementEngine } from '../../src/services/windsurf';
+import { RiskManagementEngine } from '../../src/services/windsurf/RiskManagementEngine';
 
 describe('RiskManagementEngine', () => {
   let engine: RiskManagementEngine;

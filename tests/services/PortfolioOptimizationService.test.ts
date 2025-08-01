@@ -1,4 +1,4 @@
-import { PortfolioOptimizationService } from '../../src/services/windsurf';
+import { PortfolioOptimizationService } from '../../src/services/windsurf/PortfolioOptimizationService';
 
 describe('PortfolioOptimizationService', () => {
   let service: PortfolioOptimizationService;
