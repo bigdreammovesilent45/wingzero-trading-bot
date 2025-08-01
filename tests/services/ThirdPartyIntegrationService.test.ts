@@ -1,10 +1,13 @@
 import { ThirdPartyIntegrationService } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 describe('ThirdPartyIntegrationService', () => {
-  let integrationService: ThirdPartyIntegrationService;
+  let service: ThirdPartyIntegrationService;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
-    integrationService = ThirdPartyIntegrationService.getInstance();
+    service = ThirdPartyIntegrationService.getInstance();
+    testDataService = TestDataService.getInstance();
   });
 
   it('should return the same instance (singleton)', () => {
@@ -22,10 +25,10 @@ describe('ThirdPartyIntegrationService', () => {
       retryAttempts: 3
     };
 
-    const result = await integrationService.addIntegration('test-provider', config);
+    const result = await service.addIntegration('test-provider', config);
     expect(result).toBe(true);
 
-    const status = integrationService.getIntegrationStatus('test-provider');
+    const status = service.getIntegrationStatus('test-provider');
     expect(status).toHaveProperty('provider', 'test-provider');
     expect(status).toHaveProperty('isConnected', true);
   });

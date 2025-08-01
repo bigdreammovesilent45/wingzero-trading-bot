@@ -1,10 +1,13 @@
 import { PerformanceCacheService } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 describe('PerformanceCacheService', () => {
   let cacheService: PerformanceCacheService;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
     cacheService = PerformanceCacheService.getInstance();
+    testDataService = TestDataService.getInstance();
   });
 
   afterEach(async () => {
@@ -17,12 +20,24 @@ describe('PerformanceCacheService', () => {
     expect(instance1).toBe(instance2);
   });
 
-  it('should set and get cached data', async () => {
-    const testData = { test: 'value', number: 123 };
-    await cacheService.set('test-key', testData);
+  it('should cache real Wing Zero performance data', async () => {
+    // Get real positions for performance caching
+    const realPositions = await testDataService.getRealWingZeroPositions();
+    expect(realPositions.length).toBeGreaterThan(0);
+
+    const performanceData = {
+      symbol: realPositions[0].symbol,
+      totalPnL: realPositions.reduce((sum, p) => sum + p.unrealized_pnl, 0),
+      positionCount: realPositions.length,
+      timestamp: new Date().toISOString(),
+      realDataSource: true
+    };
     
-    const retrieved = await cacheService.get('test-key');
-    expect(retrieved).toEqual(testData);
+    await cacheService.set(`performance_${realPositions[0].symbol}`, performanceData);
+    
+    const retrieved = await cacheService.get(`performance_${realPositions[0].symbol}`);
+    expect(retrieved).toEqual(performanceData);
+    expect(retrieved.positionCount).toBe(realPositions.length);
   });
 
   it('should return null for non-existent keys', async () => {

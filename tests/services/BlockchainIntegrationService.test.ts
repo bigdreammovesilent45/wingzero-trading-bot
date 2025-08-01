@@ -1,4 +1,5 @@
 import { BlockchainIntegrationService } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 // Mock window.ethereum for testing
 const mockEthereum = {
@@ -11,15 +12,17 @@ Object.defineProperty(window, 'ethereum', {
 });
 
 describe('BlockchainIntegrationService', () => {
-  let blockchainService: BlockchainIntegrationService;
+  let service: BlockchainIntegrationService;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
-    blockchainService = BlockchainIntegrationService.getInstance();
+    service = BlockchainIntegrationService.getInstance();
+    testDataService = TestDataService.getInstance();
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    blockchainService.disconnectWallet();
+    service.disconnectWallet();
   });
 
   it('should return the same instance (singleton)', () => {
