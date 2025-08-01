@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { Histogram, Counter, Gauge, register } from 'prom-client';
 import * as tf from '@tensorflow/tfjs';
-import { KolmogorovSmirnovTest, ChiSquareTest } from 'simple-statistics';
+import * as ss from 'simple-statistics';
 
 // Types and Interfaces
 export interface Prediction {

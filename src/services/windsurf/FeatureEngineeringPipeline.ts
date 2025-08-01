@@ -373,9 +373,9 @@ export class FeatureEngineeringPipeline extends EventEmitter {
         features.bb_upper = lastBB.upper || 0;
         features.bb_lower = lastBB.lower || 0;
         features.bb_middle = lastBB.middle || 0;
-        features.bb_width = (features.bb_upper - features.bb_lower) / features.bb_middle;
-        features.bb_position = (candles[candles.length - 1].close - features.bb_lower) / 
-                              (features.bb_upper - features.bb_lower);
+        features.bb_width = ((features.bb_upper as number) - (features.bb_lower as number)) / (features.bb_middle as number);
+        features.bb_position = (candles[candles.length - 1].close - (features.bb_lower as number)) / 
+                              ((features.bb_upper as number) - (features.bb_lower as number));
       }
 
       // MACD
@@ -385,7 +385,7 @@ export class FeatureEngineeringPipeline extends EventEmitter {
         features.macd_line = lastMACD.MACD || 0;
         features.macd_signal = lastMACD.signal || 0;
         features.macd_histogram = lastMACD.histogram || 0;
-        features.macd_cross = Math.sign(features.macd_line - features.macd_signal);
+        features.macd_cross = Math.sign((features.macd_line as number) - (features.macd_signal as number));
       }
 
       // Volume indicators

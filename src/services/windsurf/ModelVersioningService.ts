@@ -23,6 +23,7 @@ export interface ModelMetadata {
   features: string[];
   hyperparameters: Record<string, any>;
   trainingMetrics: TrainingMetrics;
+  storagePath?: string;
 }
 
 export interface TrainingMetrics {
