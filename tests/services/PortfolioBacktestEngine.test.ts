@@ -1,10 +1,13 @@
 import { PortfolioBacktestEngine } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 describe('PortfolioBacktestEngine', () => {
   let engine: PortfolioBacktestEngine;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
     engine = PortfolioBacktestEngine.getInstance();
+    testDataService = TestDataService.getInstance();
   });
 
   test('should be a singleton', () => {
@@ -13,34 +16,30 @@ describe('PortfolioBacktestEngine', () => {
     expect(instance1).toBe(instance2);
   });
 
-  test('should run backtest with simple buy-and-hold strategy', async () => {
-    // Mock market data
-    const marketData = {
-      AAPL: [
-        { date: new Date('2023-01-01'), price: 100 },
-        { date: new Date('2023-01-02'), price: 102 },
-        { date: new Date('2023-01-03'), price: 98 },
-        { date: new Date('2023-01-04'), price: 105 },
-        { date: new Date('2023-01-05'), price: 107 }
-      ],
-      GOOGL: [
-        { date: new Date('2023-01-01'), price: 200 },
-        { date: new Date('2023-01-02'), price: 205 },
-        { date: new Date('2023-01-03'), price: 195 },
-        { date: new Date('2023-01-04'), price: 210 },
-        { date: new Date('2023-01-05'), price: 215 }
-      ]
+  test('should run backtest with real Wing Zero market data', async () => {
+    // Get real position data from Wing Zero
+    const realPositions = await testDataService.getRealWingZeroPositions();
+    const marketData = testDataService.getRealMarketData(realPositions);
+    
+    expect(realPositions.length).toBeGreaterThan(0);
+    expect(Object.keys(marketData).length).toBeGreaterThan(0);
+
+    // Create strategy based on real symbols from data
+    const symbols = Object.keys(marketData);
+    const equalWeight = 1 / symbols.length;
+    const strategy = () => {
+      const weights: { [key: string]: number } = {};
+      symbols.forEach(symbol => {
+        weights[symbol] = equalWeight;
+      });
+      return weights;
     };
 
-    // Simple equal-weight strategy
-    const strategy = () => ({
-      AAPL: 0.5,
-      GOOGL: 0.5
-    });
-
+    // Use real date range from position data
+    const dates = realPositions.map(p => new Date(p.opened_at)).sort();
     const config = {
-      startDate: new Date('2023-01-01'),
-      endDate: new Date('2023-01-05'),
+      startDate: dates[0] || new Date('2024-01-01'),
+      endDate: dates[dates.length - 1] || new Date(),
       initialCapital: 10000,
       rebalanceFrequency: 'daily' as const,
       transactionCosts: 0.001,

@@ -1,10 +1,13 @@
 import { SecurityEncryptionService } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 describe('SecurityEncryptionService', () => {
   let encryptionService: SecurityEncryptionService;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
     encryptionService = SecurityEncryptionService.getInstance();
+    testDataService = TestDataService.getInstance();
   });
 
   it('should return the same instance (singleton)', () => {
@@ -13,8 +16,17 @@ describe('SecurityEncryptionService', () => {
     expect(instance1).toBe(instance2);
   });
 
-  it('should encrypt and decrypt data', async () => {
-    const originalData = 'sensitive trading data';
+  it('should encrypt and decrypt real Wing Zero trading data', async () => {
+    // Get real position data to encrypt
+    const realPositions = await testDataService.getRealWingZeroPositions();
+    expect(realPositions.length).toBeGreaterThan(0);
+    
+    const originalData = JSON.stringify({
+      positions: realPositions.slice(0, 2),
+      timestamp: new Date().toISOString(),
+      source: 'wing_zero_real_data'
+    });
+    
     const encrypted = await encryptionService.encrypt(originalData);
     
     expect(encrypted).not.toBe(originalData);

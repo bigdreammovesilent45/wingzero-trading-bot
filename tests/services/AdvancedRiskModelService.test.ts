@@ -1,10 +1,13 @@
 import { AdvancedRiskModelService } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 describe('AdvancedRiskModelService', () => {
   let service: AdvancedRiskModelService;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
     service = AdvancedRiskModelService.getInstance();
+    testDataService = TestDataService.getInstance();
   });
 
   test('should be a singleton', () => {
@@ -13,9 +16,17 @@ describe('AdvancedRiskModelService', () => {
     expect(instance1).toBe(instance2);
   });
 
-  test('should calculate risk metrics', async () => {
-    const portfolioReturns = [0.01, 0.02, -0.01, 0.03, -0.005, 0.015, 0.008];
-    const benchmarkReturns = [0.008, 0.015, -0.008, 0.025, -0.003, 0.012, 0.006];
+  test('should calculate risk metrics with real Wing Zero data', async () => {
+    // Get real position data and calculate returns
+    const realPositions = await testDataService.getRealWingZeroPositions();
+    expect(realPositions.length).toBeGreaterThanOrEqual(7);
+    
+    const portfolioReturns = realPositions.slice(0, 7).map(p => 
+      (p.current_price - p.open_price) / p.open_price
+    );
+    
+    // Create benchmark returns (could be market average)
+    const benchmarkReturns = portfolioReturns.map(ret => ret * 0.8 + Math.random() * 0.05 - 0.025);
 
     const metrics = await service.calculateRiskMetrics(portfolioReturns, benchmarkReturns);
 

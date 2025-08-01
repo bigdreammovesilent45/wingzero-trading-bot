@@ -1,10 +1,13 @@
 import { MultiFactorAnalysisEngine } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 describe('MultiFactorAnalysisEngine', () => {
   let engine: MultiFactorAnalysisEngine;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
     engine = MultiFactorAnalysisEngine.getInstance();
+    testDataService = TestDataService.getInstance();
   });
 
   test('should be a singleton', () => {
@@ -21,13 +24,18 @@ describe('MultiFactorAnalysisEngine', () => {
     expect(models.some(m => m.id === 'carhart_4')).toBe(true);
   });
 
-  test('should analyze factor exposure', async () => {
-    const assetReturns = [0.01, 0.02, -0.01, 0.03, -0.005];
-    const factorReturns = {
-      market: [0.008, 0.015, -0.008, 0.025, -0.003],
-      smb: [0.002, -0.001, 0.003, 0.001, 0.002],
-      hml: [0.001, 0.002, -0.001, 0.002, 0.001]
-    };
+  test('should analyze factor exposure with real Wing Zero data', async () => {
+    // Get real position data and calculate returns
+    const realPositions = await testDataService.getRealWingZeroPositions();
+    expect(realPositions.length).toBeGreaterThan(0);
+    
+    // Calculate asset returns from first position
+    const assetReturns = realPositions.slice(0, 5).map(p => 
+      (p.current_price - p.open_price) / p.open_price
+    );
+    
+    // Generate factor returns based on real data
+    const factorReturns = testDataService.getRealFactorReturns(realPositions.slice(0, 5));
 
     const result = await engine.analyzeFactorExposure(assetReturns, factorReturns);
 

@@ -21,6 +21,7 @@ export * from './DatabaseOptimizationService';
 export * from './ThirdPartyIntegrationService';
 export * from './CloudInfrastructureService';
 export * from './BlockchainIntegrationService';
+export * from './TestDataService';
 
 // Existing services
 export * from './AdvancedMLEngine';

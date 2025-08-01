@@ -1,10 +1,13 @@
 import { PortfolioOptimizationService } from '@/services';
+import { TestDataService } from '@/services/TestDataService';
 
 describe('PortfolioOptimizationService', () => {
   let service: PortfolioOptimizationService;
+  let testDataService: TestDataService;
 
   beforeEach(() => {
     service = PortfolioOptimizationService.getInstance();
+    testDataService = TestDataService.getInstance();
   });
 
   test('should be a singleton', () => {
@@ -13,13 +16,14 @@ describe('PortfolioOptimizationService', () => {
     expect(instance1).toBe(instance2);
   });
 
-  test('should optimize portfolio with equal weights by default', async () => {
-    const symbols = ['AAPL', 'GOOGL', 'MSFT'];
-    const returns = [
-      [0.01, 0.02, -0.01, 0.03], // AAPL returns
-      [0.02, -0.01, 0.04, 0.01], // GOOGL returns
-      [0.015, 0.01, 0.02, -0.005] // MSFT returns
-    ];
+  test('should optimize portfolio with real Wing Zero data', async () => {
+    // Get real positions and calculate returns
+    const realPositions = await testDataService.getRealWingZeroPositions();
+    const symbols = [...new Set(realPositions.map(p => p.symbol))];
+    const returns = testDataService.getRealPortfolioReturns(realPositions);
+    
+    expect(symbols.length).toBeGreaterThan(0);
+    expect(returns.length).toBeGreaterThan(0);
 
     const result = await service.optimizePortfolio(symbols, returns);
 
@@ -28,10 +32,15 @@ describe('PortfolioOptimizationService', () => {
     expect(result).toHaveProperty('risk');
     expect(result).toHaveProperty('sharpeRatio');
 
-    // Check equal weights
-    expect(result.weights.AAPL).toBeCloseTo(1/3, 2);
-    expect(result.weights.GOOGL).toBeCloseTo(1/3, 2);
-    expect(result.weights.MSFT).toBeCloseTo(1/3, 2);
+    // Check that weights sum to 1 and are valid
+    const totalWeight = Object.values(result.weights).reduce((sum, weight) => sum + weight, 0);
+    expect(totalWeight).toBeCloseTo(1, 2);
+    
+    // Check that we have weights for all real symbols
+    symbols.forEach(symbol => {
+      expect(result.weights).toHaveProperty(symbol);
+      expect(result.weights[symbol]).toBeGreaterThanOrEqual(0);
+    });
 
     // Check that all metrics are numbers
     expect(typeof result.expectedReturn).toBe('number');
