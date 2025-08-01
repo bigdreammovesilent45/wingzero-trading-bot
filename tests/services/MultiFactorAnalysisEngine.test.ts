@@ -9,7 +9,7 @@ describe('MultiFactorAnalysisEngine', () => {
 
   describe('feature extraction', () => {
     it('should extract multiple technical factors from market data', async () => {
-      const marketData = Array.from({ length: 100 }, (_, i) => ({
+      const candles = Array.from({ length: 100 }, (_, i) => ({
         timestamp: Date.now() - (100 - i) * 60000,
         open: 100 + Math.sin(i / 10) * 5,
         high: 102 + Math.sin(i / 10) * 5,
@@ -18,7 +18,7 @@ describe('MultiFactorAnalysisEngine', () => {
         volume: 1000000 + Math.random() * 500000
       }));
 
-      const features = await pipeline.computeRealTimeFeatures(marketData);
+      const features = await pipeline.computeRealTimeFeatures(candles);
 
       expect(features).toBeDefined();
       expect(features.timestamp).toBeDefined();
@@ -36,10 +36,14 @@ describe('MultiFactorAnalysisEngine', () => {
 
     it('should normalize features for model input', async () => {
       const rawFeatures = {
-        price: 50000,
-        volume: 1000000,
-        rsi: 65,
-        volatility: 0.02
+        numerical: {
+          price: 50000,
+          volume: 1000000,
+          rsi: 65,
+          volatility: 0.02
+        },
+        categorical: {},
+        temporal: {}
       };
 
       const transformConfig = {

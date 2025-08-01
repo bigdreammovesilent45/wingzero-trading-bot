@@ -137,8 +137,8 @@ describe('RiskManagementEngine', () => {
       expect(results).toBeDefined();
       expect(results.length).toBe(scenarios.length);
       expect(results[0].scenarioName).toBe('Market Crash');
-      expect(results[0].portfolioLoss).toBeLessThan(0);
-      expect(results[0].worstCaseValue).toBeLessThan(portfolio.totalValue);
+      expect(results[0].impact.totalLoss).toBeLessThan(0);
+      expect(results[0].impact.portfolioValue).toBeLessThan(portfolio.totalValue);
     });
   });
 });

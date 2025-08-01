@@ -217,12 +217,12 @@ describe('AdvancedRiskModelService', () => {
 
       expect(results).toHaveLength(2);
       expect(results[0].scenarioName).toBe('COVID-19 Scenario');
-      expect(results[0].portfolioLoss).toBeLessThan(0);
-      expect(results[0].worstCaseValue).toBeLessThan(portfolio.totalValue);
+      expect(results[0].impact.totalLoss).toBeLessThan(0);
+      expect(results[0].impact.portfolioValue).toBeLessThan(portfolio.totalValue);
       
       // Gold should provide some hedge in market crash
-      const spyLoss = results[0].positionImpacts?.find(p => p.symbol === 'SPY')?.loss || 0;
-      const gldLoss = results[0].positionImpacts?.find(p => p.symbol === 'GLD')?.loss || 0;
+      const spyLoss = results[0].impact.positionImpacts?.find(p => p.position.symbol === 'SPY')?.impactAmount || 0;
+      const gldLoss = results[0].impact.positionImpacts?.find(p => p.position.symbol === 'GLD')?.impactAmount || 0;
       expect(Math.abs(gldLoss)).toBeLessThan(Math.abs(spyLoss));
     });
   });
