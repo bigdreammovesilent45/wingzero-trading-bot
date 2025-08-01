@@ -87,7 +87,7 @@ export class ComplianceService {
 
     try {
       // Fetch trade data for the period
-      const { data: trades, error } = await supabase
+      const { data: trades, error } = await (supabase as any)
         .from('trades')
         .select('*')
         .gte('created_at', startDate)
@@ -109,7 +109,7 @@ export class ComplianceService {
       report.status = 'completed';
 
       // Store report in database (using existing reports table)
-      const { error: insertError } = await supabase
+      const { error: insertError } = await (supabase as any)
         .from('reports')
         .insert({
           user_id: 'system',
@@ -133,7 +133,7 @@ export class ComplianceService {
   async reconstructTrade(tradeId: string): Promise<TradeReconstruction> {
     try {
       // Get trade details
-      const { data: trade, error: tradeError } = await supabase
+      const { data: trade, error: tradeError } = await (supabase as any)
         .from('trades')
         .select('*')
         .eq('id', tradeId)
@@ -142,7 +142,7 @@ export class ComplianceService {
       if (tradeError) throw tradeError;
 
       // Get audit trail for this trade (using existing audit_logs table)
-      const { data: auditLogs, error: auditError } = await supabase
+      const { data: auditLogs, error: auditError } = await (supabase as any)
         .from('audit_logs')
         .select('*')
         .eq('record_id', tradeId)
@@ -262,7 +262,7 @@ export class ComplianceService {
       complianceFlags: this.generateComplianceFlags(action, entityType, newValues)
     };
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('audit_logs')
       .insert(auditEntry);
 
