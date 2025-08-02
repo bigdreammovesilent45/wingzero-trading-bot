@@ -165,19 +165,32 @@ export const useTradingEngine = () => {
     }));
   }, [state.isRunning, state.isConnected, cloudStatus.isRunning]);
 
-  // Update state periodically when engine is running
+  // FIXED: Update state periodically when engine is running - prevent infinite loops
   useEffect(() => {
-    if (!isRunningRef.current || !isConnectedRef.current) return;
+    // Check if engine should run status updates
+    const shouldRun = isRunningRef.current && isConnectedRef.current;
+    
+    if (!shouldRun) {
+      console.log('Engine not running or not connected, skipping status updates');
+      return;
+    }
 
     console.log('Starting trading engine status updates...');
+    let intervalCleared = false;
     
     const updateInterval = setInterval(async () => {
+      // Double check refs are still valid to prevent stale updates
+      if (!isRunningRef.current || !isConnectedRef.current || intervalCleared) {
+        console.log('Engine stopped or interval cleared, stopping updates');
+        return;
+      }
+
       try {
         const status = engine.getEngineStatus();
         const orders = engine.getCurrentOrders();
         const metrics = engine.getCurrentRiskMetrics();
         
-        // Sync positions to Supabase for real-time mirroring
+        // Sync positions to Supabase for real-time mirroring (throttled)
         for (const order of orders) {
           if (order.status === 'open') {
             await syncPosition(order);
@@ -199,13 +212,14 @@ export const useTradingEngine = () => {
           error: 'Failed to update engine status'
         }));
       }
-    }, 2000);
+    }, 3000); // Increased interval to 3 seconds to reduce load
 
     return () => {
       console.log('Stopping trading engine status updates');
+      intervalCleared = true;
       clearInterval(updateInterval);
     };
-  }, []); // Empty dependency array since we use refs
+  }, [isRunningRef.current, isConnectedRef.current]); // Fixed dependencies to prevent stale closures
 
   const startEngine = useCallback(async () => {
     console.log('handleStart called - isConnected:', state.isConnected, 'isOperational:', state.isConnected && !state.error, 'error:', state.error);
